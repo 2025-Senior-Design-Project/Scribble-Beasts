@@ -1,5 +1,6 @@
 import express from 'express';
 import { WebSocket, WebSocketServer } from 'ws';
+import { handleNewConnection } from './lib/scripts/roomless-handler.js';
 
 const app = express();
 if (!process.env.SERVER_PORT) {
@@ -17,17 +18,7 @@ const httpServer = app.listen(SERVER_PORT, () => {
 const wss = new WebSocketServer({ server: httpServer });
 
 wss.on('connection', function connection(ws: WebSocket) {
-    console.log('New WebSocket connection');
-    ws.on('error', console.error);
-
-    ws.on('message', function message(data) {
-        if (data.toString() === 'ping') {
-            ws.send('pong')
-        }
-        else {
-            ws.send('Huh???')
-        }
-    });
+    handleNewConnection(ws);
 });
 
 // Graceful shutdown handler
