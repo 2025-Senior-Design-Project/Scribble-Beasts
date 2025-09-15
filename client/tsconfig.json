@@ -1,11 +1,18 @@
 {
   "extends": "@tsconfig/svelte/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "../",
+    "paths": {
+      "@shared/*": ["shared/*"]
+    }
+  },
   "include": [
     "src/**/*.d.ts",
     "src/**/*.ts",
     "src/**/*.js",
     "src/**/*.tsx",
-    "src/**/*.svelte"
+    "src/**/*.svelte",
+    "../shared/**/*"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

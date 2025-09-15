@@ -21,6 +21,10 @@ class CWebsocket {
         };
     }
 
+    addEventListener(type: string, listener: (this: WebSocket, ev: Event) => any): void {
+        this.#ws.addEventListener(type, listener);
+    }
+
     sendMessage(msg: string): void {
         if (this.#ws.readyState === WebSocket.OPEN) {
             this.#ws.send(msg);

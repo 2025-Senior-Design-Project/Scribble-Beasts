@@ -17,6 +17,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./client:/app
+      - ./shared:/app/shared
       - /app/node_modules
     environment:
       - PORT=${CLIENT_PORT}
@@ -31,6 +32,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./server:/app
+      - ./shared:/app/shared
       - /app/node_modules
     environment:
       - PORT=${SERVER_PORT}
