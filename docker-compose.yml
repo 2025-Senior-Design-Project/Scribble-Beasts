@@ -1,0 +1,40 @@
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - ${NGINX_PORT}:${NGINX_PORT}
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+    depends_on:
+      - client
+      - server
+    env_file:
+      - .env
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    environment:
+      - PORT=${CLIENT_PORT}
+    ports:
+      - ${CLIENT_PORT}:${CLIENT_PORT}
+    env_file:
+      - .env
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    environment:
+      - PORT=${SERVER_PORT}
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    env_file:
+      - .env

@@ -1,0 +1,49 @@
+{
+  "name": "scribble-beasts",
+  "version": "1.0.0",
+  "description": "A web game where players collaboratively create beasts out of scribbles to save the world",
+  "scripts": {
+    "setup": "npm i && npm-run-all setup:*",
+    "setup:client": "cd client && npm install",
+    "setup:server": "cd server && npm install",
+    "dev": "echo '\n🚀 Client running at http://localhost:'${NGINX_PORT:-80}'\n' && docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
+    "prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans && npm run build && docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build",
+    "down": "docker compose down",
+    "down:clean": "docker compose down --rmi all -v",
+    "build": "npm-run-all build:*",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "clean": "npm-run-all clean:*",
+    "clean:client": "cd client && rm -rf node_modules dist",
+    "clean:server": "cd server && rm -rf node_modules dist",
+    "lint": "eslint . --ext .ts,.svelte",
+    "lint:fix": "eslint . --ext .ts,.svelte --fix",
+    "format": "prettier --write \"**/*.{ts,svelte,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,svelte,json,md}\""
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.59.0",
+    "@typescript-eslint/parser": "^5.59.0",
+    "eslint": "^8.38.0",
+    "eslint-plugin-svelte3": "^4.0.0",
+    "nodemon": "^3.1.10",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.8.7",
+    "prettier-plugin-svelte": "^2.10.0",
+    "typescript": "^5.0.4"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "keywords": [
+    "svelte",
+    "nodejs",
+    "websockets",
+    "docker",
+    "nginx",
+    "game"
+  ],
+  "author": "Jasmine Mogadam",
+  "license": "ISC"
+}

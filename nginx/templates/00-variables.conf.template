@@ -1,0 +1,7 @@
+map $host $nginx_port {
+    default "${NGINX_PORT}";
+}
+
+map $host $ws_port {
+    default "${WS_PORT}";
+}
