@@ -10,7 +10,7 @@ My college courses have given me important skills that will guide me through thi
 ### Co-op experiences
 My co-op experience has also prepared me to work on this project. At Close the Loop, I worked as a Web App Developer and learned how to use Docker and connect systems with APIs. I also strengthened my skills in HTML, CSS, and JavaScript, which will all be helpful in building out the game’s frontend. Beyond the technical side, I developed non-technical skills such as communication, problem-solving, and workflow improvement. For example, I learned how to communicate effectively with my team, solve unexpected issues, and improve processes to keep projects running smoothly. These lessons will help me contribute to the project in a well-rounded way. I will apply both the technical and professional skills I gained from Close the Loop to ensure our team stays organized and productive.
 
-## Motivation for the project
+## Project's Motivation
 I am excited to work on Scribble Beasts because the idea feels unique, and it gives me the chance to learn something I have wanted to explore for a long time (websockets for synchronous multiplayer rooms). I previously worked on a project that used multiplayer rooms, but I never had the opportunity to actually learn how to build them. This project finally gives me that chance. I am also motivated because it allows me to keep building on tools I already know, like Svelte and Docker, while also challenging myself to learn new ones. That combination makes the project both exciting and rewarding. I believe this will be one of the most meaningful projects I have worked on during college.
 
 ## Preliminary Project Approach
