@@ -1,5 +1,3 @@
-Five total paragraphs; Minimum of 6 sentences per paragraph.
-
 # Jasmine Mogadam's Individual Capstone Assessment
 
 ## Introduction
