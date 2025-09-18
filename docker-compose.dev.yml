@@ -2,15 +2,9 @@ services:
   client:
     build:
       target: development
-    command: npm run dev
-    volumes:
-      - ./client:/app
-      - /app/node_modules
+    command: ["npm", "run", "dev"]
 
   server:
     build:
       target: development
-    command: npm run dev
-    volumes:
-      - ./server:/app
-      - /app/node_modules
+    command: ["npm", "run", "dev"]

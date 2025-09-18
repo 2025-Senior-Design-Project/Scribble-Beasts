@@ -97,6 +97,7 @@ Duplicate `.env.sample` as `.env` and modify the ports to your heart's content. 
 - The client and server directories are mounted as volumes, so changes will be reflected immediately without rebuilding the containers
 - Use `docker-compose up --build` when you modify the Dockerfile or add new dependencies
 - Check container logs using `docker-compose logs -f [service_name]`
+- If there's a weird build error, try running `npm run down` before running `npm run dev` again
 
 # Production
 
@@ -106,5 +107,6 @@ To generate the production build, run:
 
 ```bash
 npm run down
+npm run setup
 npm run prod
 ```

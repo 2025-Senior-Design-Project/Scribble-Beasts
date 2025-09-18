@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Server for Scribble Beasts game",
   "type": "module",
-  "main": "dist/index.js",
-  "exports": "./dist/index.js",
+  "main": "dist/server/src/index.js",
+  "exports": "./dist/server/src/index.js",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "node dist/server/src/index.js",
     "dev": "tsx src/index.ts",
     "build": "tsc",
     "watch": "tsc -w"
