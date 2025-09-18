@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 import Room from "../components/Room";
-import { Actions, ActionType, ParseAction, type AnyAction } from "./actions";
+import { Actions, ActionType, ParseAction, type AnyAction } from "@shared/actions";
 import { Player, Host } from "../components/Player";
 
 const Rooms: Room[] = [];
@@ -18,20 +18,24 @@ export function handleNewConnection(ws: WebSocket) {
             case ActionType.CREATE_ROOM: {
                 const { roomName, hostName } = action.payload;
                 let hostInputMessage: string | undefined;
+                let roomInputMessage: string | undefined;
 
                 if (!hostName?.trim()) { // "" or undefined
                     hostInputMessage = "Name cannot be empty.";
                 }
-                if (!roomName?.trim() && hostInputMessage) {
-                    ws.send(
-                        JSON.stringify(
-                            new Actions.RoomError(
-                                hostInputMessage,
-                                "Room name cannot be empty."
+                if (!roomName?.trim()) {
+                    roomInputMessage = "Room name cannot be empty.";
+                    if (hostInputMessage) {
+                        ws.send(
+                            JSON.stringify(
+                                new Actions.RoomError(
+                                    hostInputMessage,
+                                    roomInputMessage
+                                )
                             )
-                        )
-                    );
-                    return;
+                        );
+                        return;
+                    }
                 }
 
                 if (findRoom(roomName)) {
@@ -57,30 +61,31 @@ export function handleNewConnection(ws: WebSocket) {
                 if (!playerName?.trim()) { // "" or undefined
                     nameInputMessage = "Name cannot be empty.";
                 }
-                if (!roomName?.trim() && nameInputMessage) {
-                    ws.send(
-                        JSON.stringify(
-                            new Actions.RoomError(
-                                nameInputMessage,
-                                "Room name cannot be empty."
+                if (!roomName?.trim()) {
+                    roomInputMessage = "Room name cannot be empty.";
+                    if (nameInputMessage) {
+                        ws.send(
+                            JSON.stringify(
+                                new Actions.RoomError(
+                                    nameInputMessage,
+                                    roomInputMessage
+                                )
                             )
-                        )
-                    );
+                        );
+                    }
                     return;
                 }
 
                 const room = findRoom(roomName);
                 if (!room) {
-                    nameInputMessage = "Room does not exist.";
-                    return;
+                    roomInputMessage = "Room does not exist.";
                 }
 
-                if (playerExistsInRoom(room, playerName)) {
-                    roomInputMessage = "Name already taken in this room.";
-                    return;
+                if (room && playerExistsInRoom(room, playerName)) {
+                    nameInputMessage = "Name already taken in this room.";
                 }
 
-                if (nameInputMessage || roomInputMessage) {
+                if (!room || nameInputMessage || roomInputMessage) {
                     ws.send(
                         JSON.stringify(
                             new Actions.RoomError(nameInputMessage, roomInputMessage)
@@ -91,7 +96,7 @@ export function handleNewConnection(ws: WebSocket) {
 
                 room.addPlayer(new Player(playerName, ws));
                 ws.send(JSON.stringify(new Actions.JoinRoom(roomName, playerName)));
-                console.log(`Player ${playerName} joined room ${roomInputMessage}`);
+                console.log(`Player ${playerName} joined room ${roomName}`);
             } break;
         }
     });

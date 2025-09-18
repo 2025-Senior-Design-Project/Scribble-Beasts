@@ -6,7 +6,7 @@
     "setup": "npm i && npm-run-all setup:*",
     "setup:client": "cd client && npm install",
     "setup:server": "cd server && npm install",
-    "dev": "echo '\n🚀 Client running at http://localhost:'${NGINX_PORT:-80}'\n' && docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
+    "dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans && npm run build && docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build",
     "down": "docker compose down",
     "down:clean": "docker compose down --rmi all -v",

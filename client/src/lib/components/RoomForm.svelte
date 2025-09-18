@@ -14,6 +14,11 @@
   let playerName: string = $state("");
   let playerNameError: string = $state("");
 
+  function clearErrors() {
+    roomNameError = "";
+    playerNameError = "";
+  }
+
   ClientWebsocket.addEventListener("message", (event: MessageEvent<string>) => {
     const action = ParseAction<
       RoomErrorAction | CreateRoomAction | JoinRoomAction
@@ -22,23 +27,21 @@
     switch (action?.type) {
       case ActionType.ROOM_ERROR:
         const { roomInputMessage, nameInputMessage } = action.payload;
+        clearErrors();
         roomNameError = roomInputMessage ?? "";
         playerNameError = nameInputMessage ?? "";
         break;
       case ActionType.CREATE_ROOM:
         alert("Room created successfully!"); //TODO: move to lobby
-        // Clear errors on successful room creation/join
-        roomNameError = "";
-        playerNameError = "";
+        clearErrors();
         break;
       case ActionType.JOIN_ROOM:
         alert("Joined room successfully!"); //TODO: move to lobby
-        // Clear errors on successful room creation/join
-        roomNameError = "";
-        playerNameError = "";
+        clearErrors();
         break;
       default:
         console.log("Received unexpected action on RoomForm:", event.data);
+        clearErrors();
         return;
     }
   });
