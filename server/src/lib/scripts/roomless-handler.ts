@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 import Room from "../components/Room";
-import { Actions, ActionType, type AnyAction } from "@shared/actions/index";
+import { Actions, ActionType, ParseAction, type AnyAction } from "./actions";
 import { Player, Host } from "../components/Player";
 
 const Rooms: Room[] = [];
@@ -11,35 +11,18 @@ export function handleNewConnection(ws: WebSocket) {
     ws.on('error', console.error);
 
     ws.on('message', function message(data) {
-        let action: AnyAction;
-
-        try {
-            // check that data has the structure of an Action
-            const parsedAction = JSON.parse(data.toString()) as AnyAction;
-            if (!parsedAction || // null, undefined, etc.
-                typeof parsedAction !== "object" || // not an object
-                typeof parsedAction.type !== "string" || // missing or invalid value for type
-                !("payload" in parsedAction) // missing payload (can be any type)
-            ) {
-                console.error("Non-action from client. Received: ", parsedAction);
-                return;
-            }
-
-            action = parsedAction;
-        } catch (e) {
-            console.error("Non-JSON from client. Received: ", data.toString());
-            return;
-        }
+        const action = ParseAction<AnyAction>(data.toString());
+        if (!action) return;
 
         switch (action.type) {
             case ActionType.CREATE_ROOM: {
                 const { roomName, hostName } = action.payload;
                 let hostInputMessage: string | undefined;
 
-                if (hostName?.trim()) { // "" or undefined
+                if (!hostName?.trim()) { // "" or undefined
                     hostInputMessage = "Name cannot be empty.";
                 }
-                if (roomName?.trim() && hostInputMessage) {
+                if (!roomName?.trim() && hostInputMessage) {
                     ws.send(
                         JSON.stringify(
                             new Actions.RoomError(
@@ -71,10 +54,10 @@ export function handleNewConnection(ws: WebSocket) {
                 let nameInputMessage: string | undefined;
                 let roomInputMessage: string | undefined;
 
-                if (playerName?.trim()) { // "" or undefined
+                if (!playerName?.trim()) { // "" or undefined
                     nameInputMessage = "Name cannot be empty.";
                 }
-                if (roomName?.trim() && nameInputMessage) {
+                if (!roomName?.trim() && nameInputMessage) {
                     ws.send(
                         JSON.stringify(
                             new Actions.RoomError(

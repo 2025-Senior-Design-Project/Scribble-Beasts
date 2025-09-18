@@ -1,9 +1,47 @@
 <script lang="ts">
-  import { Actions } from "@shared/actions";
+  import {
+    Actions,
+    ParseAction,
+    ActionType,
+    type RoomErrorAction,
+    type CreateRoomAction,
+    type JoinRoomAction,
+  } from "@shared/actions";
   import ClientWebsocket from "../ClientWebsocket";
 
   let roomName: string = $state("");
+  let roomNameError: string = $state("");
   let playerName: string = $state("");
+  let playerNameError: string = $state("");
+
+  ClientWebsocket.addEventListener("message", (event: MessageEvent<string>) => {
+    const action = ParseAction<
+      RoomErrorAction | CreateRoomAction | JoinRoomAction
+    >(event.data);
+    if (!action) return;
+    switch (action?.type) {
+      case ActionType.ROOM_ERROR:
+        const { roomInputMessage, nameInputMessage } = action.payload;
+        roomNameError = roomInputMessage ?? "";
+        playerNameError = nameInputMessage ?? "";
+        break;
+      case ActionType.CREATE_ROOM:
+        alert("Room created successfully!"); //TODO: move to lobby
+        // Clear errors on successful room creation/join
+        roomNameError = "";
+        playerNameError = "";
+        break;
+      case ActionType.JOIN_ROOM:
+        alert("Joined room successfully!"); //TODO: move to lobby
+        // Clear errors on successful room creation/join
+        roomNameError = "";
+        playerNameError = "";
+        break;
+      default:
+        console.log("Received unexpected action on RoomForm:", event.data);
+        return;
+    }
+  });
 
   const inputsFilled = $derived(
     roomName.trim() !== "" && playerName.trim() !== ""
@@ -31,6 +69,7 @@
       placeholder="Enter Room Name"
       required
     />
+    <div class="error-text">{roomNameError}</div>
     <label for="roomName">Name</label>
     <input
       type="text"
@@ -38,6 +77,7 @@
       placeholder="Enter Your Player Name"
       required
     />
+    <div class="error-text">{playerNameError}</div>
     <button
       id="joinRoom"
       type="submit"
@@ -81,5 +121,12 @@
   input,
   button {
     margin-bottom: 1em;
+  }
+  .error-text {
+    color: red;
+    font-size: 0.8em;
+    height: 1em;
+    margin-top: -0.75em;
+    margin-bottom: 0.75em;
   }
 </style>
