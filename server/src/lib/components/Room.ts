@@ -1,8 +1,8 @@
-import Player from "./Player.js";
+import { Player, Host } from "./Player";
 
 class Room {
     name: string;
-    host: Player;
+    host: Host;
     players: Player[];
 
     constructor(name: string, host: Player) {

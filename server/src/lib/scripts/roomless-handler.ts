@@ -1,7 +1,7 @@
 import WebSocket from "ws";
-import Room from "../components/Room.js";
-import { Actions, ActionType, AnyAction } from "@shared/actions/index.js";
-import Player from "../components/Player.js";
+import Room from "../components/Room";
+import { Actions, ActionType, type AnyAction } from "@shared/actions/index";
+import { Player, Host } from "../components/Player";
 
 const Rooms: Room[] = [];
 
@@ -16,11 +16,10 @@ export function handleNewConnection(ws: WebSocket) {
         try {
             // check that data has the structure of an Action
             const parsedAction = JSON.parse(data.toString()) as AnyAction;
-            if (
-                typeof parsedAction !== "object" ||
-                parsedAction === null ||
-                typeof parsedAction.type !== "string" ||
-                !("payload" in parsedAction)
+            if (!parsedAction || // null, undefined, etc.
+                typeof parsedAction !== "object" || // not an object
+                typeof parsedAction.type !== "string" || // missing or invalid value for type
+                !("payload" in parsedAction) // missing payload (can be any type)
             ) {
                 console.error("Non-action from client. Received: ", parsedAction);
                 return;
@@ -61,7 +60,7 @@ export function handleNewConnection(ws: WebSocket) {
                     return;
                 }
 
-                const newRoom = new Room(roomName, new Player(hostName, ws));
+                const newRoom = new Room(roomName, new Host(hostName, ws));
                 Rooms.push(newRoom);
                 ws.send(JSON.stringify(new Actions.CreateRoom(roomName, hostName)));
                 console.log(`Room ${roomName} created with host ${hostName}`);
@@ -108,7 +107,7 @@ export function handleNewConnection(ws: WebSocket) {
                 }
 
                 room.addPlayer(new Player(playerName, ws));
-                ws.send(JSON.stringify(new Actions.Join(roomName, playerName)));
+                ws.send(JSON.stringify(new Actions.JoinRoom(roomName, playerName)));
                 console.log(`Player ${playerName} joined room ${roomInputMessage}`);
             } break;
         }

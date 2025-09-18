@@ -1,6 +1,6 @@
 import express from 'express';
 import { WebSocket, WebSocketServer } from 'ws';
-import { handleNewConnection } from './lib/scripts/roomless-handler.js';
+import { handleNewConnection } from './lib/scripts/roomless-handler';
 
 const app = express();
 if (!process.env.SERVER_PORT) {

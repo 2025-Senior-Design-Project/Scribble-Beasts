@@ -9,7 +9,7 @@
     5. Use the ActionClassFactory to create a class for the new action and add it to the Actions object.
 */
 
-export const enum ActionType {
+const enum ActionType {
     CREATE_ROOM = 'CREATE_ROOM',
     JOIN_ROOM = 'JOIN_ROOM',
     ROOM_ERROR = 'ROOM_ERROR',
@@ -21,7 +21,7 @@ type CreateRoomPayload = {
     hostName: string;
 }
 const CreateRoomPayloadKeys = ["roomName", "hostName"];
-export interface CreateRoomAction {
+interface CreateRoomAction {
     type: ActionType.CREATE_ROOM;
     payload: CreateRoomPayload;
 }
@@ -31,7 +31,7 @@ type JoinRoomPayload = {
     playerName: string;
 }
 const JoinRoomPayloadKeys = ["roomName", "playerName"];
-export interface JoinRoomAction {
+interface JoinRoomAction {
     type: ActionType.JOIN_ROOM;
     payload: JoinRoomPayload
 }
@@ -41,12 +41,12 @@ type RoomErrorPayload = {
     roomInputMessage?: string;
 }
 const RoomErrorPayloadKeys = ["nameInputMessage", "roomInputMessage"];
-export interface RoomErrorAction {
+interface RoomErrorAction {
     type: ActionType.ROOM_ERROR;
     payload: RoomErrorPayload;
 }
 
-export type AnyAction = CreateRoomAction | JoinRoomAction | RoomErrorAction;
+type AnyAction = CreateRoomAction | JoinRoomAction | RoomErrorAction;
 
 // Factory function for creating new action classes
 interface Action<T> {
@@ -75,8 +75,10 @@ function ActionClassFactory<T extends object>(payloadKeys: string[], actionType:
 }
 
 // Actions object for easy import and readability
-export const Actions = {
+const Actions = {
     CreateRoom: ActionClassFactory<CreateRoomPayload>(CreateRoomPayloadKeys, ActionType.CREATE_ROOM),
     JoinRoom: ActionClassFactory<JoinRoomPayload>(JoinRoomPayloadKeys, ActionType.JOIN_ROOM),
     RoomError: ActionClassFactory<RoomErrorPayload>(RoomErrorPayloadKeys, ActionType.ROOM_ERROR),
-} as const;
+};
+
+export { ActionType, type AnyAction, Actions };

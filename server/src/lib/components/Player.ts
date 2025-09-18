@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 
-class Player {
+export class Player {
     name: string;
     ws: WebSocket;
 
@@ -16,4 +16,8 @@ class Player {
     }
 }
 
-export default Player;
+export class Host extends Player {
+    constructor(name: string, ws: WebSocket) {
+        super(name, ws);
+    }
+}
