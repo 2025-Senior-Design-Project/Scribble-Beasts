@@ -55,7 +55,7 @@ For the best development experience, install the following VS Code extensions:
 2. Install all dependencies (client and server):
 
    ```bash
-   npm setup
+   npm run setup
    ```
 
    This will install dependencies for both the client and server automatically using the workspace configuration.
