@@ -6,20 +6,20 @@
     type RoomErrorAction,
     type CreateRoomAction,
     type JoinRoomAction,
-  } from "@shared/actions";
-  import ClientWebsocket from "../ClientWebsocket";
+  } from '@shared/actions';
+  import ClientWebsocket from '../ClientWebsocket';
 
-  let roomName: string = $state("");
-  let roomNameError: string = $state("");
-  let playerName: string = $state("");
-  let playerNameError: string = $state("");
+  let roomName: string = $state('');
+  let roomNameError: string = $state('');
+  let playerName: string = $state('');
+  let playerNameError: string = $state('');
 
   function clearErrors() {
-    roomNameError = "";
-    playerNameError = "";
+    roomNameError = '';
+    playerNameError = '';
   }
 
-  ClientWebsocket.addEventListener("message", (event: MessageEvent<string>) => {
+  ClientWebsocket.addEventListener('message', (event: MessageEvent<string>) => {
     const action = ParseAction<
       RoomErrorAction | CreateRoomAction | JoinRoomAction
     >(event.data);
@@ -28,26 +28,26 @@
       case ActionType.ROOM_ERROR:
         const { roomInputMessage, nameInputMessage } = action.payload;
         clearErrors();
-        roomNameError = roomInputMessage ?? "";
-        playerNameError = nameInputMessage ?? "";
+        roomNameError = roomInputMessage ?? '';
+        playerNameError = nameInputMessage ?? '';
         break;
       case ActionType.CREATE_ROOM:
-        alert("Room created successfully!"); //TODO: move to lobby
+        alert('Room created successfully!'); //TODO: move to lobby
         clearErrors();
         break;
       case ActionType.JOIN_ROOM:
-        alert("Joined room successfully!"); //TODO: move to lobby
+        alert('Joined room successfully!'); //TODO: move to lobby
         clearErrors();
         break;
       default:
-        console.log("Received unexpected action on RoomForm:", event.data);
+        console.log('Received unexpected action on RoomForm:', event.data);
         clearErrors();
         return;
     }
   });
 
   const inputsFilled = $derived(
-    roomName.trim() !== "" && playerName.trim() !== ""
+    roomName.trim() !== '' && playerName.trim() !== ''
   );
 
   function joinRoom(event: Event): void {

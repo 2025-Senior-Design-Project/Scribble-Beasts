@@ -14,6 +14,7 @@ upstream server {
 server {
         listen ${NGINX_PORT};
         server_name localhost;
+        access_log off;
 
         # WebSocket support for Vite HMR
         location /@vite/client {

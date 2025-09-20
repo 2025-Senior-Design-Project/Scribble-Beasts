@@ -1,111 +1,127 @@
-import WebSocket from "ws";
-import Room from "../components/Room";
-import { Actions, ActionType, ParseAction, type AnyAction } from "@shared/actions";
-import { Player, Host } from "../components/Player";
-
-const Rooms: Room[] = [];
+import WebSocket from 'ws';
+import { Room, Rooms } from '../components/Room';
+import {
+  Actions,
+  ActionType,
+  type ActionPayloads,
+  ParseAction,
+  type AnyAction,
+} from './actions';
+import { Player, Host } from '../components/Player';
 
 export function handleNewConnection(ws: WebSocket) {
-    console.log('New WebSocket connection');
+  console.log('New WebSocket connection');
 
-    ws.on('error', console.error);
+  ws.on('error', console.error);
 
-    ws.on('message', function message(data) {
-        const action = ParseAction<AnyAction>(data.toString());
-        if (!action) return;
+  ws.on('message', function message(data) {
+    const action = ParseAction<AnyAction>(data.toString());
+    if (!action) return;
 
-        switch (action.type) {
-            case ActionType.CREATE_ROOM: {
-                const { roomName, hostName } = action.payload;
-                let hostInputMessage: string | undefined;
-                let roomInputMessage: string | undefined;
+    switch (action.type) {
+      case ActionType.CREATE_ROOM:
+        createRoom(action, ws);
+        break;
 
-                if (!hostName?.trim()) { // "" or undefined
-                    hostInputMessage = "Name cannot be empty.";
-                }
-                if (!roomName?.trim()) {
-                    roomInputMessage = "Room name cannot be empty.";
-                    if (hostInputMessage) {
-                        ws.send(
-                            JSON.stringify(
-                                new Actions.RoomError(
-                                    hostInputMessage,
-                                    roomInputMessage
-                                )
-                            )
-                        );
-                        return;
-                    }
-                }
+      case ActionType.JOIN_ROOM:
+        joinRoom(action, ws);
+        break;
 
-                if (findRoom(roomName)) {
-                    ws.send(
-                        JSON.stringify(
-                            new Actions.RoomError(hostInputMessage, "Room name already taken.")
-                        )
-                    );
-                    return;
-                }
+      default:
+        console.warn(
+          'Unexpected action type while user is not in room: ',
+          action.type
+        );
+        break;
+    }
+  });
+}
 
-                const newRoom = new Room(roomName, new Host(hostName, ws));
-                Rooms.push(newRoom);
-                ws.send(JSON.stringify(new Actions.CreateRoom(roomName, hostName)));
-                console.log(`Room ${roomName} created with host ${hostName}`);
-            } break;
+function createRoom(action: ActionPayloads.CreateRoomAction, ws: WebSocket) {
+  const { roomName, hostName } = action.payload;
+  let { roomInputMessage, nameInputMessage } = checkIfParamsAreEmpty(
+    roomName,
+    hostName
+  );
 
-            case ActionType.JOIN_ROOM: {
-                const { roomName, playerName } = action.payload;
-                let nameInputMessage: string | undefined;
-                let roomInputMessage: string | undefined;
+  if (roomInputMessage && nameInputMessage) {
+    ws.send(
+      JSON.stringify(new Actions.RoomError(nameInputMessage, roomInputMessage))
+    );
+    return;
+  }
 
-                if (!playerName?.trim()) { // "" or undefined
-                    nameInputMessage = "Name cannot be empty.";
-                }
-                if (!roomName?.trim()) {
-                    roomInputMessage = "Room name cannot be empty.";
-                    if (nameInputMessage) {
-                        ws.send(
-                            JSON.stringify(
-                                new Actions.RoomError(
-                                    nameInputMessage,
-                                    roomInputMessage
-                                )
-                            )
-                        );
-                    }
-                    return;
-                }
+  if (findRoom(roomName)) {
+    ws.send(
+      JSON.stringify(
+        new Actions.RoomError(nameInputMessage, 'Room name already taken.')
+      )
+    );
+    return;
+  }
 
-                const room = findRoom(roomName);
-                if (!room) {
-                    roomInputMessage = "Room does not exist.";
-                }
+  const newRoom = new Room(roomName, new Host(hostName, ws));
+  Rooms[roomName] = newRoom;
+  ws.send(JSON.stringify(new Actions.CreateRoom(roomName, hostName)));
+  console.log(`Room ${roomName} created with host ${hostName}`);
+}
 
-                if (room && playerExistsInRoom(room, playerName)) {
-                    nameInputMessage = "Name already taken in this room.";
-                }
+function joinRoom(action: JoinRoomAction, ws: WebSocket) {
+  const { roomName, playerName } = action.payload;
+  let { roomInputMessage, nameInputMessage } = checkIfParamsAreEmpty(
+    roomName,
+    playerName
+  );
 
-                if (!room || nameInputMessage || roomInputMessage) {
-                    ws.send(
-                        JSON.stringify(
-                            new Actions.RoomError(nameInputMessage, roomInputMessage)
-                        )
-                    );
-                    return;
-                }
+  if (roomInputMessage && nameInputMessage) {
+    ws.send(
+      JSON.stringify(new Actions.RoomError(nameInputMessage, roomInputMessage))
+    );
+    return;
+  }
 
-                room.addPlayer(new Player(playerName, ws));
-                ws.send(JSON.stringify(new Actions.JoinRoom(roomName, playerName)));
-                console.log(`Player ${playerName} joined room ${roomName}`);
-            } break;
-        }
-    });
+  const room = findRoom(roomName);
+  if (!room) {
+    roomInputMessage = 'Room does not exist.';
+  }
+
+  if (room && playerExistsInRoom(room, playerName)) {
+    nameInputMessage = 'Name already taken in this room.';
+  }
+
+  if (!room || nameInputMessage || roomInputMessage) {
+    ws.send(
+      JSON.stringify(new Actions.RoomError(nameInputMessage, roomInputMessage))
+    );
+    return;
+  }
+
+  room.addPlayer(new Player(playerName, ws));
+  ws.send(JSON.stringify(new Actions.JoinRoom(roomName, playerName)));
+  console.log(`Player ${playerName} joined room ${roomName}`);
+}
+
+function checkIfParamsAreEmpty(
+  roomName: string,
+  playerName: string
+): { roomInputMessage?: string; nameInputMessage?: string } {
+  let nameInputMessage: string | undefined;
+  let roomInputMessage: string | undefined;
+
+  if (!playerName?.trim()) {
+    nameInputMessage = 'Name cannot be empty.';
+  }
+  if (!roomName?.trim()) {
+    roomInputMessage = 'Room name cannot be empty.';
+  }
+
+  return { roomInputMessage, nameInputMessage };
 }
 
 function findRoom(roomName: string): Room | undefined {
-    return Rooms.find(room => room.name === roomName);
+  return Rooms[roomName];
 }
 
 function playerExistsInRoom(room: Room, playerName: string): boolean {
-    return room.players.some(player => player.name === playerName);
+  return room.players[playerName] !== undefined;
 }
