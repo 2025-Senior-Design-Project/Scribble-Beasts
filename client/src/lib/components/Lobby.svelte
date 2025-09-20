@@ -1,7 +1,7 @@
 <script lang="ts">
   const isHost: boolean = $state(false);
-  const hostName: string = $state("");
-  const roomCode: string = $state("");
+  const hostName: string = $state('');
+  const roomCode: string = $state('');
 
   // TODO add host change support if host disconnects
 </script>
