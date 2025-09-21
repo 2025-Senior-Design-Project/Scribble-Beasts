@@ -7,7 +7,6 @@
     "outDir": "./dist",
     "baseUrl": "..",
     "paths": {
-      "@actions": ["./shared/actions/index.ts"],
       "@shared/*": ["./shared/*"]
     },
     "strict": true,

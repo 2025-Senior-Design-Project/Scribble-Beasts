@@ -18,23 +18,34 @@ class CWebsocket {
     this.#ws.onmessage = (event: MessageEvent<string>) => {
       console.log(event.data);
     };
+
+    this.addEventListener('message', (event) => {
+      console.log('Received message:', event.data);
+    });
   }
 
   addEventListener(
-    type: string,
+    type: keyof WebSocketEventMap,
     listener: (this: WebSocket, ev: MessageEvent<string>) => any
   ): void {
-    this.#ws.addEventListener(type, listener);
+    this.#ws.addEventListener(type, listener as EventListener);
   }
 
-  sendMessage(msg: string): void {
+  removeEventListener(
+    type: keyof WebSocketEventMap,
+    listener: (this: WebSocket, ev: MessageEvent<string>) => any
+  ): void {
+    this.#ws.removeEventListener(type, listener as EventListener);
+  }
+
+  sendAction(action: object): void {
+    const msg = JSON.stringify(action);
     if (this.#ws.readyState === WebSocket.OPEN) {
       this.#ws.send(msg);
     } else {
       console.error('WebSocket is not open. Ready state:', this.#ws.readyState);
     }
   }
-
   $destroy() {
     this.#ws.close();
   }

@@ -1,17 +1,30 @@
 <script lang="ts">
-  const isHost: boolean = $state(false);
-  const hostName: string = $state('');
-  const roomCode: string = $state('');
-
+  import { Actions } from '@shared/actions';
+  import ClientWebsocket from '../ClientWebsocket';
+  import { hostName, isHost, players, roomName } from '../GameState';
+  import { navigateTo, View } from '../Navigator';
   // TODO add host change support if host disconnects
+
+  function startGame() {
+    const startGameAction = new Actions.StartGame();
+    ClientWebsocket.sendAction(startGameAction);
+    navigateTo(View.GAME);
+  }
 </script>
 
 <div>
-  <h3>Room {roomCode}</h3>
+  <h3>Room {$roomName}</h3>
   <h1>Lobby</h1>
-  {#if isHost}
+  {#if $isHost}
     <p>You are the host! Start the game whenever you are ready</p>
-  {:else if roomCode}
-    <p>Waiting on {hostName} to start the game</p>
+    <button on:click={startGame}> Start Game </button>
+  {:else}
+    <p>Waiting on {$hostName} to start the game</p>
   {/if}
+  <h2>Players:</h2>
+  <ul>
+    {#each $players as player}
+      <li>{player}</li>
+    {/each}
+  </ul>
 </div>

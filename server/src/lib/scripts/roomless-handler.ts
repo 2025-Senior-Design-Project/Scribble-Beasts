@@ -3,10 +3,11 @@ import { Room, Rooms } from '../components/Room';
 import {
   Actions,
   ActionType,
-  type ActionPayloads,
+  CreateRoomAction,
+  JoinRoomAction,
   ParseAction,
   type AnyAction,
-} from './actions';
+} from '@shared/actions';
 import { Player, Host } from '../components/Player';
 
 export function handleNewConnection(ws: WebSocket) {
@@ -37,7 +38,7 @@ export function handleNewConnection(ws: WebSocket) {
   });
 }
 
-function createRoom(action: ActionPayloads.CreateRoomAction, ws: WebSocket) {
+function createRoom(action: CreateRoomAction, ws: WebSocket) {
   const { roomName, hostName } = action.payload;
   let { roomInputMessage, nameInputMessage } = checkIfParamsAreEmpty(
     roomName,
@@ -97,7 +98,9 @@ function joinRoom(action: JoinRoomAction, ws: WebSocket) {
   }
 
   room.addPlayer(new Player(playerName, ws));
-  ws.send(JSON.stringify(new Actions.JoinRoom(roomName, playerName)));
+  ws.send(
+    JSON.stringify(new Actions.JoinRoom(roomName, playerName, room.host.name))
+  );
   console.log(`Player ${playerName} joined room ${roomName}`);
 }
 

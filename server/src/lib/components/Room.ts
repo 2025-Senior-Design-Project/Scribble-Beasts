@@ -1,3 +1,4 @@
+import { Actions } from '@shared/actions';
 import { Player, Host } from './Player';
 
 export const Rooms: Record<string, Room> = {};
@@ -22,7 +23,8 @@ export class Room {
       console.log(
         `Host ${host.name} disconnected from room ${this.name}. New host is ${newHost.name}`
       );
-      this.host.sendAction({ type: 'HOST_YOU_ARE' });
+      const hostChangeAction = new Actions.HostChange(newHost.name);
+      this.host.sendAction(hostChangeAction);
     });
   }
 
@@ -37,6 +39,9 @@ export class Room {
     player.addEventListener('close', () => {
       this.removePlayer(player.name);
     });
+    this.sendActionToAll(
+      new Actions.PlayerListChange(Object.keys(this.players))
+    );
   }
 
   removePlayer(playerName: string): void {

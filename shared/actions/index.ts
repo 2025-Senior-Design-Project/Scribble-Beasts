@@ -14,6 +14,7 @@ export const enum ActionType {
   JOIN_ROOM = 'JOIN_ROOM',
   ROOM_ERROR = 'ROOM_ERROR',
   HOST_CHANGE = 'HOST_CHANGE',
+  PLAYER_LIST_CHANGE = 'PLAYER_LIST_CHANGE',
   START_GAME = 'START_GAME',
 }
 
@@ -31,8 +32,9 @@ export interface CreateRoomAction {
 type JoinRoomPayload = {
   roomName: string;
   playerName: string;
+  hostName?: string; // Used only on server reply (because I'm lazy)
 };
-const JoinRoomPayloadKeys = ['roomName', 'playerName'];
+const JoinRoomPayloadKeys = ['roomName', 'playerName', 'hostName'];
 export interface JoinRoomAction {
   type: ActionType.JOIN_ROOM;
   payload: JoinRoomPayload;
@@ -49,23 +51,26 @@ export interface RoomErrorAction {
 }
 
 type HostChangePayload = {
-  nameInputMessage?: string;
-  roomInputMessage?: string;
+  newHostName: string;
 };
-const HostChangePayloadKeys = ['nameInputMessage', 'roomInputMessage'];
+const HostChangePayloadKeys = ['newHostName'];
 export interface HostChangeAction {
-  type: ActionType.ROOM_ERROR;
+  type: ActionType.HOST_CHANGE;
   payload: HostChangePayload;
 }
 
-type StartGamePayload = {
-  nameInputMessage?: string;
-  roomInputMessage?: string;
-};
-const StartGamePayloadKeys = ['nameInputMessage', 'roomInputMessage'];
+type StartGamePayload = {};
+const StartGamePayloadKeys: string[] = [];
 export interface StartGameAction {
-  type: ActionType.ROOM_ERROR;
+  type: ActionType.START_GAME;
   payload: StartGamePayload;
+}
+
+type PlayerListChangePayload = { playerList: string[] };
+const PlayerListChangePayloadKeys = ['playerList'];
+export interface PlayerListChangeAction {
+  type: ActionType.PLAYER_LIST_CHANGE;
+  payload: PlayerListChangePayload;
 }
 
 export type AnyAction =
@@ -73,7 +78,8 @@ export type AnyAction =
   | JoinRoomAction
   | RoomErrorAction
   | HostChangeAction
-  | StartGameAction;
+  | StartGameAction
+  | PlayerListChangeAction;
 
 // Actions object for easy import and readability
 export const Actions = {
@@ -91,11 +97,15 @@ export const Actions = {
   ),
   HostChange: ActionClassFactory<HostChangePayload>(
     HostChangePayloadKeys,
-    ActionType.ROOM_ERROR
+    ActionType.HOST_CHANGE
   ),
   StartGame: ActionClassFactory<StartGamePayload>(
     StartGamePayloadKeys,
-    ActionType.ROOM_ERROR
+    ActionType.START_GAME
+  ),
+  PlayerListChange: ActionClassFactory<PlayerListChangePayload>(
+    PlayerListChangePayloadKeys,
+    ActionType.PLAYER_LIST_CHANGE
   ),
 };
 
