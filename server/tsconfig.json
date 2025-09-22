@@ -5,9 +5,10 @@
     "moduleResolution": "bundler",
     "target": "es2017",
     "outDir": "./dist",
-    "baseUrl": ".",
+    "baseUrl": "..",
     "paths": {
-      "@shared/*": ["../shared/*"]
+      "@actions": ["./shared/actions/index.ts"],
+      "@shared/*": ["./shared/*"]
     },
     "strict": true,
     "esModuleInterop": true,
@@ -15,8 +16,9 @@
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "resolveJsonModule": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "rewriteRelativeImportExtensions": true
   },
-  "include": ["src/**/*", "../shared/**/*"],
+  "include": ["src/**/*", "../shared/**/*", "shared/**/*"],
   "exclude": ["node_modules", "dist"]
 }

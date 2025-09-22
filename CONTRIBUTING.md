@@ -110,3 +110,7 @@ npm run down
 npm run setup
 npm run prod
 ```
+
+# Quirks
+
+Node is cursed, so there's two tsconfig files in server folder. Make sure that any changes between the two of them are kept consistent. This is because docker has the shared folder added directly to the app dir instead of them being seperate like for client. In server, docker.tsconfig.json has the root dir as ., and tsconfig.json has the root dir as ..
