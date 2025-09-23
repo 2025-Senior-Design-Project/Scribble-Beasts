@@ -13,7 +13,7 @@
 
 ## Timing and Frequency
 
-Team meetings will be in-person at TUC every Tuesday at 11:30pm. If members cannot meet in person, they will meet online via Discord.
+Team meetings will be in-person at TUC every Thursday at 12:00pm. If members cannot meet in person, they will meet online via Discord.
 
 ## Project Focus
 
