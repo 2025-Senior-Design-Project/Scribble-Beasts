@@ -8,6 +8,8 @@ CS5001: Senior Design Project
 
 [Ana Cedillo](documents/biographies/ana-cedillo-bio.md) - Computer Science Major ( cedillak@mail.uc.edu )
 
+[Ethan Chaplin](documents/biographies/ethan-chaplin-bio.md) - Computer Science Major ( chapliep@mail.uc.edu )
+
 ## Topic Area
 
 Scribble beasts is a web game that has players collaboratively create beasts out of scribbles to save the world.
