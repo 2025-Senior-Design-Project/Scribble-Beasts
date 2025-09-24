@@ -1,28 +1,15 @@
-import { AnyAction } from '@shared/actions';
+import { ActionTarget } from '@shared/actions';
 import WebSocket from 'ws';
 
-export class Player {
+export class Player extends ActionTarget<WebSocket, any[]> {
   name: string;
-  ws: WebSocket;
+  #ws: WebSocket;
   isHost: boolean = false;
 
   constructor(name: string, ws: WebSocket) {
-    ws.removeAllListeners(); // Player class will handle WebSocket events now
+    super(ws);
+    this.#ws = ws;
     this.name = name;
-    this.ws = ws;
-  }
-
-  addEventListener(event: string, listener: (...args: any[]) => void) {
-    this.ws.on(event, listener);
-  }
-
-  sendAction(action: AnyAction) {
-    this.ws.send(JSON.stringify(action));
-  }
-
-  destroy() {
-    this.ws.close();
-    this.ws.removeAllListeners();
   }
 }
 

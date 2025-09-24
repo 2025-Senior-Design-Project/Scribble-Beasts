@@ -4,6 +4,9 @@
   import Lobby from './lib/components/Lobby.svelte';
   import Game from './lib/components/Game.svelte';
   import { View, currentView } from './lib/Navigator';
+  import { resetState } from './lib/GameState';
+
+  resetState();
 </script>
 
 <main>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Actions } from '@shared/actions';
+  import { Actions, ActionType } from '@shared/actions';
   import ClientWebsocket from '../ClientWebsocket';
   import { hostName, isHost, players, roomName } from '../GameState';
   import { navigateTo, View } from '../Navigator';
@@ -8,8 +8,10 @@
   function startGame() {
     const startGameAction = new Actions.StartGame();
     ClientWebsocket.sendAction(startGameAction);
+    ClientWebsocket.removeActionListener(ActionType.START_GAME);
     navigateTo(View.GAME);
   }
+  ClientWebsocket.addActionListener(ActionType.START_GAME, startGame);
 </script>
 
 <div>

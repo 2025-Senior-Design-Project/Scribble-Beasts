@@ -141,7 +141,80 @@ function ActionClassFactory<T extends object>(
   return ActionClass;
 }
 
-export function ParseAction<T extends AnyAction>(data: string): T | null {
+// Websocket and event are different for node and vite
+export class ActionTarget<WebSocket, Event> {
+  #ws: WebSocket;
+  #actionListeners: Record<
+    ActionType,
+    ((this: WebSocket, ev: Event) => void)[]
+  > = {};
+
+  constructor(ws: WebSocket) {
+    this.#ws = ws;
+  }
+
+  addEventListener(
+    type: string,
+    listener: (this: WebSocket, ev: Event) => void
+  ): void {
+    this.#ws.addEventListener(type, listener);
+  }
+
+  removeEventListener(
+    type: string,
+    listener: (this: WebSocket, ev: Event) => void
+  ): void {
+    this.#ws.removeEventListener(type, listener);
+  }
+
+  addActionListener<T extends AnyAction>(
+    actionType: ActionType,
+    listener: (action: T) => void
+  ) {
+    const actionListener = (ev: Event) => {
+      const action = ParseAction<T>(ev.data, actionType);
+      if (!action) return;
+      listener(action);
+    };
+    this.addEventListener('message', actionListener);
+    if (!this.#actionListeners[actionType]) {
+      this.#actionListeners[actionType] = [];
+    }
+    this.#actionListeners[actionType].push(actionListener);
+  }
+
+  /**
+   * Removes all listeners on a websocket for a specific actionType
+   * @param actionType Action you want to remove ALL listeners for
+   */
+  removeActionListener(actionType: ActionType) {
+    if (!this.#actionListeners[actionType]) return;
+    this.#actionListeners[actionType].forEach((listener) => {
+      this.removeEventListener('message', listener);
+    });
+  }
+
+  #websocketOpen = 1;
+  sendAction(action: object): void {
+    const msg = JSON.stringify(action);
+    if (this.#ws.readyState === this.#websocketOpen) {
+      console.log('sent:', msg);
+      this.#ws.send(msg);
+    } else {
+      console.error('WebSocket is not open. Ready state:', this.#ws.readyState);
+    }
+  }
+
+  destroy() {
+    this.#ws.close();
+    this.#ws.removeAllListeners();
+  }
+}
+
+export function ParseAction<T extends AnyAction>(
+  data: string,
+  desiredType?: ActionType
+): T | null {
   try {
     // check that data has the structure of an Action
     const parsedAction = JSON.parse(data) as T;
@@ -152,6 +225,9 @@ export function ParseAction<T extends AnyAction>(data: string): T | null {
       !('payload' in parsedAction) // missing payload (can be any type)
     ) {
       console.error('Received non-action: ', parsedAction);
+      return null;
+    }
+    if (desiredType && parsedAction.type != desiredType) {
       return null;
     }
     return parsedAction;

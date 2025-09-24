@@ -1,4 +1,4 @@
-import { Actions } from '@shared/actions';
+import { Actions, ActionType } from '@shared/actions';
 import { Player, Host } from './Player';
 
 export const Rooms: Record<string, Room> = {};
@@ -12,8 +12,12 @@ export class Room {
     this.name = name;
     this.host = host;
     this.addPlayer(host);
+    this.hostSetup();
+  }
+
+  hostSetup() {
     // If host disconnects, make the next player the host (if any exist)
-    host.addEventListener('close', () => {
+    this.host.addEventListener('close', () => {
       const playerNames = Object.keys(this.players);
       if (playerNames.length === 0) return; // No players left to become host
       const playerToBecomeHost = this.players[playerNames[0]];
@@ -21,10 +25,14 @@ export class Room {
       delete this.players[playerToBecomeHost.name]; // don't call the removePlayer function to avoid closing the ws
       this.host = newHost;
       console.log(
-        `Host ${host.name} disconnected from room ${this.name}. New host is ${newHost.name}`
+        `Host ${this.host.name} disconnected from room ${this.name}. New host is ${newHost.name}`
       );
-      const hostChangeAction = new Actions.HostChange(newHost.name);
+      this.hostSetup();
+      const hostChangeAction = new Actions.HostChange(this.host.name);
       this.host.sendAction(hostChangeAction);
+    });
+    this.host.addActionListener(ActionType.START_GAME, (action) => {
+      this.sendActionToAll(action);
     });
   }
 
@@ -39,9 +47,7 @@ export class Room {
     player.addEventListener('close', () => {
       this.removePlayer(player.name);
     });
-    this.sendActionToAll(
-      new Actions.PlayerListChange(Object.keys(this.players))
-    );
+    this.playerListChanged();
   }
 
   removePlayer(playerName: string): void {
@@ -49,6 +55,7 @@ export class Room {
     if (playerToRemove) {
       playerToRemove.destroy();
       delete this.players[playerName];
+      this.playerListChanged();
     }
     if (Object.keys(this.players).length === 0) {
       console.log(`All players left room ${this.name}, it will be destroyed.`);
@@ -58,6 +65,12 @@ export class Room {
 
   hasPlayer(playerName: string): boolean {
     return !!this.players[playerName];
+  }
+
+  playerListChanged() {
+    this.sendActionToAll(
+      new Actions.PlayerListChange(Object.keys(this.players))
+    );
   }
 
   sendActionToPlayer(action: any, player: Player): void {

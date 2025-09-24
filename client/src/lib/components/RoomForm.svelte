@@ -1,7 +1,6 @@
 <script lang="ts">
   import {
     Actions,
-    ParseAction,
     ActionType,
     type RoomErrorAction,
     type CreateRoomAction,
@@ -26,46 +25,46 @@
     playerNameError = '';
   }
 
-  const roomlessHandler = (event: MessageEvent<string>) => {
-    const action = ParseAction<
-      RoomErrorAction | CreateRoomAction | JoinRoomAction
-    >(event.data);
-    if (!action) return;
+  function cleanupRoomForm() {
     clearErrors();
-    switch (action?.type) {
-      case ActionType.ROOM_ERROR:
-        const { roomInputMessage, nameInputMessage } = action.payload;
-        roomNameError = roomInputMessage ?? '';
-        playerNameError = nameInputMessage ?? '';
-        break;
-      case ActionType.CREATE_ROOM: {
-        const { hostName, roomName } = action.payload;
-        ClientWebsocket.removeEventListener('message', roomlessHandler);
-        isHost.set(true);
-        hostNameState.set(hostName);
-        playerNameState.set(hostName);
-        roomNameState.set(roomName);
-        navigateTo(View.LOBBY);
-        break;
-      }
-      case ActionType.JOIN_ROOM: {
-        const { playerName, roomName, hostName } = action.payload;
-        ClientWebsocket.removeEventListener('message', roomlessHandler);
-        isHost.set(false);
-        hostNameState.set(hostName);
-        playerNameState.set(playerName);
-        roomNameState.set(roomName);
-        navigateTo(View.LOBBY);
-        break;
-      }
-      default:
-        console.log('Received unexpected action on RoomForm:', event.data);
-        clearErrors();
-        return;
-    }
-  };
+    ClientWebsocket.removeActionListener(ActionType.ROOM_ERROR);
+    ClientWebsocket.removeActionListener(ActionType.CREATE_ROOM);
+    ClientWebsocket.removeActionListener(ActionType.JOIN_ROOM);
+  }
 
-  ClientWebsocket.addEventListener('message', roomlessHandler);
+  ClientWebsocket.addActionListener<RoomErrorAction>(
+    ActionType.ROOM_ERROR,
+    (action) => {
+      clearErrors();
+      const { roomInputMessage, nameInputMessage } = action.payload;
+      roomNameError = roomInputMessage ?? '';
+      playerNameError = nameInputMessage ?? '';
+    }
+  );
+  ClientWebsocket.addActionListener<CreateRoomAction>(
+    ActionType.CREATE_ROOM,
+    (action) => {
+      cleanupRoomForm();
+      const { hostName, roomName } = action.payload;
+      isHost.set(true);
+      hostNameState.set(hostName);
+      playerNameState.set(hostName);
+      roomNameState.set(roomName);
+      navigateTo(View.LOBBY);
+    }
+  );
+  ClientWebsocket.addActionListener<JoinRoomAction>(
+    ActionType.JOIN_ROOM,
+    (action) => {
+      cleanupRoomForm();
+      const { playerName, roomName, hostName } = action.payload;
+      isHost.set(false);
+      hostNameState.set(hostName);
+      playerNameState.set(playerName);
+      roomNameState.set(roomName);
+      navigateTo(View.LOBBY);
+    }
+  );
 
   const inputsFilled = $derived(
     roomName.trim() !== '' && playerName.trim() !== ''
