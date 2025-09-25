@@ -6,7 +6,7 @@
     "setup": "npm i && npm-run-all setup:*",
     "setup:client": "cd client && npm install",
     "setup:server": "cd server && npm install",
-    "dev": "echo '\n🚀 Client running at http://localhost:'${NGINX_PORT:-80}'\n' && docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
+    "dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans && npm run build && docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build",
     "down": "docker compose down",
     "down:clean": "docker compose down --rmi all -v",
@@ -30,7 +30,8 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^2.8.7",
     "prettier-plugin-svelte": "^2.10.0",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "vite": "^7.1.5"
   },
   "workspaces": [
     "client",

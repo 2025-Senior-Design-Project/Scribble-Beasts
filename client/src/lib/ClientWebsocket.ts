@@ -17,8 +17,12 @@ class CWebsocket {
         };
 
         this.#ws.onmessage = (event: MessageEvent<string>) => {
-            alert(event.data);
+            console.log(event.data);
         };
+    }
+
+    addEventListener(type: string, listener: (this: WebSocket, ev: MessageEvent<string>) => any): void {
+        this.#ws.addEventListener(type, listener);
     }
 
     sendMessage(msg: string): void {

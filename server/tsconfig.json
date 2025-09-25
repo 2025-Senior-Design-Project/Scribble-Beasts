@@ -1,19 +1,24 @@
 {
   "compilerOptions": {
     "lib": ["es2024", "ESNext.Array", "ESNext.Collection", "ESNext.Promise"],
-    "target": "ESNext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "es2017",
     "outDir": "./dist",
-    "rootDir": "./src",
+    "baseUrl": "..",
+    "paths": {
+      "@actions": ["./shared/actions/index.ts"],
+      "@shared/*": ["./shared/*"]
+    },
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "resolveJsonModule": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "rewriteRelativeImportExtensions": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*", "../shared/**/*", "shared/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
