@@ -23,7 +23,6 @@ export class Room {
       const playerToBecomeHost = this.players[playerNames[0]];
       playerToBecomeHost.isHost = true;
       const newHost = playerToBecomeHost as Host;
-      delete this.players[playerToBecomeHost.name]; // don't call the removePlayer function to avoid closing the ws
       this.host = newHost;
       console.log(
         `Host ${this.host.name} disconnected from room ${this.name}. New host is ${newHost.name}`
