@@ -3,7 +3,7 @@ import {
   type HostChangeAction,
   type PlayerListChangeAction,
 } from '@shared/actions';
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import ClientWebsocket from './ClientWebsocket';
 
 export const isHost = writable(false);
@@ -21,7 +21,7 @@ const playerChange = (action: PlayerListChangeAction) => {
 const hostChange = (action: HostChangeAction) => {
   const { newHostName } = action.payload;
   hostName.set(newHostName);
-  isHost.set(hostName === playerName);
+  isHost.set(newHostName === get(playerName));
 };
 
 export function resetState() {

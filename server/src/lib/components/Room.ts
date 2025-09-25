@@ -21,7 +21,8 @@ export class Room {
       const playerNames = Object.keys(this.players);
       if (playerNames.length === 0) return; // No players left to become host
       const playerToBecomeHost = this.players[playerNames[0]];
-      const newHost = new Host(playerToBecomeHost.name, playerToBecomeHost.ws);
+      playerToBecomeHost.isHost = true;
+      const newHost = playerToBecomeHost as Host;
       delete this.players[playerToBecomeHost.name]; // don't call the removePlayer function to avoid closing the ws
       this.host = newHost;
       console.log(

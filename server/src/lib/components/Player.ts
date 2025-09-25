@@ -1,4 +1,4 @@
-import { ActionTarget } from '@shared/actions';
+import { ActionTarget, ActionType } from '@shared/actions';
 import WebSocket from 'ws';
 
 export class Player extends ActionTarget<WebSocket, any[]> {
@@ -10,13 +10,12 @@ export class Player extends ActionTarget<WebSocket, any[]> {
     super(ws);
     this.#ws = ws;
     this.name = name;
+
+    this.removeActionListener(ActionType.JOIN_ROOM);
+    this.removeActionListener(ActionType.CREATE_ROOM);
   }
 }
 
 export class Host extends Player {
   isHost: boolean = true;
-
-  constructor(name: string, ws: WebSocket) {
-    super(name, ws);
-  }
 }

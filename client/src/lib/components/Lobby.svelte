@@ -3,7 +3,6 @@
   import ClientWebsocket from '../ClientWebsocket';
   import { hostName, isHost, players, roomName } from '../GameState';
   import { navigateTo, View } from '../Navigator';
-  // TODO add host change support if host disconnects
 
   function startGame() {
     const startGameAction = new Actions.StartGame();
@@ -18,8 +17,13 @@
   <h3>Room {$roomName}</h3>
   <h1>Lobby</h1>
   {#if $isHost}
-    <p>You are the host! Start the game whenever you are ready</p>
-    <button on:click={startGame}> Start Game </button>
+    <p>You are the host!</p>
+    {#if $players.length <= 1}
+      <p>You need one more player to start.</p>
+    {:else}
+      <p>Start the game whenever you are ready</p>
+      <button on:click={startGame}> Start Game </button>
+    {/if}
   {:else}
     <p>Waiting on {$hostName} to start the game</p>
   {/if}
