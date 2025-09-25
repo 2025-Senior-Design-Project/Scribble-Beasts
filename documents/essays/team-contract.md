@@ -2,13 +2,13 @@
 
 ## Members
 
-[Jasmine Mogadam](documents/biographies/jasmine-mogadam-bio.md) - Computer Science Major ( mogadajh@mail.uc.edu )
+[Jasmine Mogadam](../biographies/jasmine-mogadam-bio.md) - Computer Science Major ( mogadajh@mail.uc.edu )
 `Project Manager, Playtest Organizer, DevOps Engineer, Developer`
 
-[Ana Cedillo](documents/biographies/ana-cedillo-bio.md) - Computer Science Major ( cedillak@mail.uc.edu )
+[Ana Cedillo](../biographies/ana-cedillo-bio.md) - Computer Science Major ( cedillak@mail.uc.edu )
 `Project Manager, Frontend Developer, Backend Developer`
 
-[Ethan Chaplin](documents/biographies/ethan-chaplin-bio.md) - Computer Science Major ( chapliep@mail.uc.edu )
+[Ethan Chaplin](../biographies/ethan-chaplin-bio.md) - Computer Science Major ( chapliep@mail.uc.edu )
 `Frontend Developer, Backend Developer`
 
 ## Timing and Frequency
