@@ -1,23 +1,21 @@
-import WebSocket from "ws";
+import { ActionTarget, ActionType } from '@shared/actions';
+import WebSocket from 'ws';
 
-export class Player {
-    name: string;
-    ws: WebSocket;
+export class Player extends ActionTarget<WebSocket, any[]> {
+  name: string;
+  #ws: WebSocket;
+  isHost: boolean = false;
 
-    constructor(name: string, ws: WebSocket) {
-        ws.removeAllListeners(); // Player class will handle WebSocket events now
-        this.name = name;
-        this.ws = ws;
-    }
+  constructor(name: string, ws: WebSocket) {
+    super(ws);
+    this.#ws = ws;
+    this.name = name;
 
-    destroy() {
-        this.ws.close();
-        this.ws.removeAllListeners();
-    }
+    this.removeActionListener(ActionType.JOIN_ROOM);
+    this.removeActionListener(ActionType.CREATE_ROOM);
+  }
 }
 
 export class Host extends Player {
-    constructor(name: string, ws: WebSocket) {
-        super(name, ws);
-    }
+  isHost: boolean = true;
 }

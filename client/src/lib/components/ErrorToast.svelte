@@ -1,28 +1,20 @@
 <script lang="ts">
-  import ClientWebsocket from "../ClientWebsocket";
-  let message: string = $state("");
-  let showMessage: boolean = false;
+  import ClientWebsocket from '../ClientWebsocket';
+  let message: string = $state('');
+  let showMessage: boolean = $state(false);
 
-  if (process.env.NODE_ENV === "development") {
-    ClientWebsocket.addEventListener("error", (event) => {
+  if (process.env.NODE_ENV === 'development') {
+    ClientWebsocket.addEventListener('error', (event) => {
       message +=
-        "Error! Send in a bug report!\n" + JSON.stringify(event) + "\n";
+        'Error! Send in a bug report!\n' + JSON.stringify(event) + '\n';
       showMessage = true;
-
-      // Hide after 5 seconds
-      setTimeout(() => {
-        showMessage = false;
-      }, 5000);
     });
 
-    ClientWebsocket.addEventListener("close", (event) => {
-      message += "Can't connect to server, try refreshing the page." + "\n";
+    ClientWebsocket.addEventListener('close', (event) => {
+      message +=
+        "Can't connect to server, try refreshing the page (server might be down)." +
+        '\n';
       showMessage = true;
-
-      // Hide after 5 seconds
-      setTimeout(() => {
-        showMessage = false;
-      }, 5000);
     });
   }
 </script>

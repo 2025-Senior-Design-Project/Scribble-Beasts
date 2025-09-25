@@ -1,64 +1,84 @@
 <script lang="ts">
   import {
     Actions,
-    ParseAction,
     ActionType,
     type RoomErrorAction,
     type CreateRoomAction,
     type JoinRoomAction,
-  } from "@shared/actions";
-  import ClientWebsocket from "../ClientWebsocket";
+  } from '@shared/actions';
+  import ClientWebsocket from '../ClientWebsocket';
+  import {
+    isHost,
+    roomName as roomNameState,
+    hostName as hostNameState,
+    playerName as playerNameState,
+  } from '../GameState';
+  import { navigateTo, View } from '../Navigator';
 
-  let roomName: string = $state("");
-  let roomNameError: string = $state("");
-  let playerName: string = $state("");
-  let playerNameError: string = $state("");
+  let roomName: string = $state('');
+  let roomNameError: string = $state('');
+  let playerName: string = $state('');
+  let playerNameError: string = $state('');
 
   function clearErrors() {
-    roomNameError = "";
-    playerNameError = "";
+    roomNameError = '';
+    playerNameError = '';
   }
 
-  ClientWebsocket.addEventListener("message", (event: MessageEvent<string>) => {
-    const action = ParseAction<
-      RoomErrorAction | CreateRoomAction | JoinRoomAction
-    >(event.data);
-    if (!action) return;
-    switch (action?.type) {
-      case ActionType.ROOM_ERROR:
-        const { roomInputMessage, nameInputMessage } = action.payload;
-        clearErrors();
-        roomNameError = roomInputMessage ?? "";
-        playerNameError = nameInputMessage ?? "";
-        break;
-      case ActionType.CREATE_ROOM:
-        alert("Room created successfully!"); //TODO: move to lobby
-        clearErrors();
-        break;
-      case ActionType.JOIN_ROOM:
-        alert("Joined room successfully!"); //TODO: move to lobby
-        clearErrors();
-        break;
-      default:
-        console.log("Received unexpected action on RoomForm:", event.data);
-        clearErrors();
-        return;
+  function cleanupRoomForm() {
+    clearErrors();
+    ClientWebsocket.removeActionListener(ActionType.ROOM_ERROR);
+    ClientWebsocket.removeActionListener(ActionType.CREATE_ROOM);
+    ClientWebsocket.removeActionListener(ActionType.JOIN_ROOM);
+  }
+
+  ClientWebsocket.addActionListener<RoomErrorAction>(
+    ActionType.ROOM_ERROR,
+    (action) => {
+      clearErrors();
+      const { roomInputMessage, nameInputMessage } = action.payload;
+      roomNameError = roomInputMessage ?? '';
+      playerNameError = nameInputMessage ?? '';
     }
-  });
+  );
+  ClientWebsocket.addActionListener<CreateRoomAction>(
+    ActionType.CREATE_ROOM,
+    (action) => {
+      cleanupRoomForm();
+      const { hostName, roomName } = action.payload;
+      isHost.set(true);
+      hostNameState.set(hostName);
+      playerNameState.set(hostName);
+      roomNameState.set(roomName);
+      navigateTo(View.LOBBY);
+    }
+  );
+  ClientWebsocket.addActionListener<JoinRoomAction>(
+    ActionType.JOIN_ROOM,
+    (action) => {
+      cleanupRoomForm();
+      const { playerName, roomName, hostName } = action.payload;
+      isHost.set(false);
+      hostNameState.set(hostName);
+      playerNameState.set(playerName);
+      roomNameState.set(roomName);
+      navigateTo(View.LOBBY);
+    }
+  );
 
   const inputsFilled = $derived(
-    roomName.trim() !== "" && playerName.trim() !== ""
+    roomName.trim() !== '' && playerName.trim() !== ''
   );
 
   function joinRoom(event: Event): void {
     event.preventDefault();
     const joinRoomAction = new Actions.JoinRoom(roomName, playerName);
-    ClientWebsocket.sendMessage(JSON.stringify(joinRoomAction));
+    ClientWebsocket.sendAction(joinRoomAction);
   }
   function createRoom(event: Event): void {
     event.preventDefault();
     const createRoomAction = new Actions.CreateRoom(roomName, playerName);
-    ClientWebsocket.sendMessage(JSON.stringify(createRoomAction));
+    ClientWebsocket.sendAction(createRoomAction);
   }
 </script>
 
