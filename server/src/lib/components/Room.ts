@@ -1,4 +1,4 @@
-import { Actions, ActionType } from '@shared/actions';
+import { Actions, ActionEnum } from '@shared/actions';
 import { Player, Host } from './Player';
 
 export const Rooms: Record<string, Room> = {};
@@ -31,7 +31,7 @@ export class Room {
       const hostChangeAction = new Actions.HostChange(this.host.name);
       this.host.sendAction(hostChangeAction);
     });
-    this.host.addActionListener(ActionType.START_GAME, (action) => {
+    this.host.addActionListener(ActionEnum.START_GAME, (action) => {
       this.sendActionToAll(action);
     });
   }
@@ -87,5 +87,6 @@ export class Room {
 
   startGame(): void {
     this.sendActionToAll({ type: 'GAME_START' });
+    // do round stuff pls :)
   }
 }

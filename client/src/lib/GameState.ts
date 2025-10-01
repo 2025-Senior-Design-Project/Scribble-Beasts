@@ -1,5 +1,5 @@
 import {
-  ActionType,
+  ActionEnum,
   type HostChangeAction,
   type PlayerListChangeAction,
 } from '@shared/actions';
@@ -25,14 +25,14 @@ const hostChange = (action: HostChangeAction) => {
 };
 
 export function resetState() {
-  ClientWebsocket.removeActionListener(ActionType.PLAYER_LIST_CHANGE);
-  ClientWebsocket.removeActionListener(ActionType.HOST_CHANGE);
+  ClientWebsocket.removeActionListener(ActionEnum.PLAYER_LIST_CHANGE);
+  ClientWebsocket.removeActionListener(ActionEnum.HOST_CHANGE);
   ClientWebsocket.addActionListener<PlayerListChangeAction>(
-    ActionType.PLAYER_LIST_CHANGE,
+    ActionEnum.PLAYER_LIST_CHANGE,
     playerChange
   );
   ClientWebsocket.addActionListener<HostChangeAction>(
-    ActionType.HOST_CHANGE,
+    ActionEnum.HOST_CHANGE,
     hostChange
   );
 }

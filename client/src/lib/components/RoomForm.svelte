@@ -1,7 +1,7 @@
 <script lang="ts">
   import {
     Actions,
-    ActionType,
+    ActionEnum,
     type RoomErrorAction,
     type CreateRoomAction,
     type JoinRoomAction,
@@ -27,13 +27,13 @@
 
   function cleanupRoomForm() {
     clearErrors();
-    ClientWebsocket.removeActionListener(ActionType.ROOM_ERROR);
-    ClientWebsocket.removeActionListener(ActionType.CREATE_ROOM);
-    ClientWebsocket.removeActionListener(ActionType.JOIN_ROOM);
+    ClientWebsocket.removeActionListener(ActionEnum.ROOM_ERROR);
+    ClientWebsocket.removeActionListener(ActionEnum.CREATE_ROOM);
+    ClientWebsocket.removeActionListener(ActionEnum.JOIN_ROOM);
   }
 
   ClientWebsocket.addActionListener<RoomErrorAction>(
-    ActionType.ROOM_ERROR,
+    ActionEnum.ROOM_ERROR,
     (action) => {
       clearErrors();
       const { roomInputMessage, nameInputMessage } = action.payload;
@@ -42,7 +42,7 @@
     }
   );
   ClientWebsocket.addActionListener<CreateRoomAction>(
-    ActionType.CREATE_ROOM,
+    ActionEnum.CREATE_ROOM,
     (action) => {
       cleanupRoomForm();
       const { hostName, roomName } = action.payload;
@@ -54,7 +54,7 @@
     }
   );
   ClientWebsocket.addActionListener<JoinRoomAction>(
-    ActionType.JOIN_ROOM,
+    ActionEnum.JOIN_ROOM,
     (action) => {
       cleanupRoomForm();
       const { playerName, roomName, hostName } = action.payload;
