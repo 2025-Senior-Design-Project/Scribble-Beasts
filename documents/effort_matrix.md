@@ -8,7 +8,7 @@
 | 4 | Develop room creation and room join systems                                              | 5  | 0  | 0  |
 | 5 | Develop lobby and game start systems                                                     | 5  | 0  | 0  |
 | 6 | Develop round mechanic via a placeholder round (button with a timeout timer)             | 5  | 0  | 0  |
-| 7 | Develop scribble round (touch and mouse events to draw on a html Canvas)                 | 0  | 5  | 5  |
+| 7 | Develop scribble round (touch and mouse events to draw on a html Canvas)                 | 0  | 0  | 5  |
 | 8 | Develop line and color rounds (more drawing types and sending images to and from server, swapping images between players) | 0  | 0  | 7  |
 | 9 | Develop naming round (add text to Canvas while it is typed)                              | 0  | 0  | 4  |
 | 10 | Design end of the world scenarios (text and art)                                        | 4  | 0  | 0  |
