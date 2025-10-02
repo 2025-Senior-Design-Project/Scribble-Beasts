@@ -13,9 +13,9 @@
 | 9 | Develop naming round (add text to Canvas while it is typed)                              | 0  | 0  | 4  |
 | 10 | Design end of the world scenarios (text and art)                                        | 4  | 0  | 0  |
 | 11 | Develop end of the world round (randomly draw a scenario, display to all players, use placeholder confirm button) | 0  | 0  | 5  |
-| 12 | Develop presentation round (players show beast one by one. presenters have button to finish early. listeners see presenter name and beast image) | 4  | 0  | 0  |
-| 13 | Develop voting round (displays grid of all beasts, tap on one to vote for it and a confirm button) | 0  | 0  | 4  |
-| 14 | Develop announce winner round with replay button                                        | 0  | 0  | 5  |
+| 12 | Develop presentation round (players show beast one by one. presenters have button to finish early. listeners see presenter name and beast image) | 0  | 8  | 0  |
+| 13 | Develop voting round (displays grid of all beasts, tap on one to vote for it and a confirm button) | 0  | 4  | 0  |
+| 14 | Develop announce winner round with replay button                                        | 0  | 5  | 0  |
 | 15 | Organize first round of playtesting (drawing rounds done)                               | 2  | 2  | 2  |
 | 16 | Organize second round of playtesting (naming and end of the world rounds done)          | 2  | 2  | 2  |
 | 17 | Organize third round of playtesting (all rounds done)                                   | 2  | 2  | 2  |
