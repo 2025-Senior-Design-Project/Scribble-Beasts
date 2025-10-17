@@ -21,11 +21,11 @@ export function handleNewConnection(ws: WebSocket) {
 
     switch (action.type) {
       case ActionEnum.CREATE_ROOM:
-        createRoom(action, ws);
+        createRoom(action as CreateRoomAction, ws);
         break;
 
       case ActionEnum.JOIN_ROOM:
-        joinRoom(action, ws);
+        joinRoom(action as JoinRoomAction, ws);
         break;
 
       default:

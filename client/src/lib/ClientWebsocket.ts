@@ -5,10 +5,11 @@ class CWebsocket extends ActionTarget<WebSocket, MessageEvent<string>> {
 
   constructor() {
     // Use relative URL to automatically match the current host
+    // this ensure only connections to nginx will work
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/api`;
     const ws = new WebSocket(wsUrl);
-    super(new WebSocket(wsUrl));
+    super(ws);
     this.#ws = ws;
 
     this.#ws.onerror = (event) => {

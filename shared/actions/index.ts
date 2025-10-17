@@ -9,16 +9,19 @@ HOW TO ADD A NEW ACTION:
 */
 
 export const enum ActionEnum {
+  /* Room Actions */
   CREATE_ROOM = 'CREATE_ROOM',
   JOIN_ROOM = 'JOIN_ROOM',
   ROOM_ERROR = 'ROOM_ERROR',
+  /* Lobby Actions */
   HOST_CHANGE = 'HOST_CHANGE',
   PLAYER_LIST_CHANGE = 'PLAYER_LIST_CHANGE',
   START_GAME = 'START_GAME',
+  /** Round Actions */
   END_ROUND = 'END_ROUND',
+  START_ROUND = 'START_ROUND',
   CONFIRM_ROUND = 'CONFIRM_ROUND',
   DRAWING_ROUND = 'DRAWING_ROUND',
-  /** End of the World Round */
   EOTW_ROUND = 'EOTW_ROUND',
   PRESENT_ROUND = 'PRESENT_ROUND',
   VOTE_ROUND = 'VOTE_ROUND',
@@ -34,13 +37,16 @@ class Action<Payload> {
   }
 }
 
-class CreateRoomAction extends Action<{ roomName: string; hostName: string }> {
+export class CreateRoomAction extends Action<{
+  roomName: string;
+  hostName: string;
+}> {
   constructor(roomName: string, hostName: string) {
     super(ActionEnum.CREATE_ROOM, { roomName, hostName });
   }
 }
 
-class JoinRoomAction extends Action<{
+export class JoinRoomAction extends Action<{
   roomName: string;
   playerName: string;
   hostName?: string; // Used only on server reply (because I'm lazy)
@@ -77,10 +83,15 @@ class PlayerListChangeAction extends Action<{ playerList: string[] }> {
   }
 }
 
-// EndRound Actions
+// Round Actions
 class EndRoundAction extends Action<{}> {
   constructor() {
     super(ActionEnum.END_ROUND, {});
+  }
+}
+class StartRoundAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.START_ROUND, {});
   }
 }
 class ConfirmRoundAction extends Action<{}> {
@@ -111,6 +122,7 @@ class VoteRoundAction extends Action<{
 
 export type AnyRoundAction =
   | EndRoundAction
+  | StartRoundAction
   | ConfirmRoundAction
   | DrawingRoundAction
   | EOTWRoundAction
@@ -135,6 +147,7 @@ export const Actions = {
   StartGame: StartGameAction,
   PlayerListChange: PlayerListChangeAction,
   EndRound: EndRoundAction,
+  StartRound: StartRoundAction,
   ConfirmRound: ConfirmRoundAction,
   DrawingRound: DrawingRoundAction,
   EOTWRound: EOTWRoundAction,

@@ -1,5 +1,5 @@
 // futz with these in playtests to find the best combo
-const PLACEHOLDER_TIMEOUT = 60;
+const PLACEHOLDER_TIMEOUT = 10;
 const SCRIBBLE_TIMEOUT = 30;
 const LINE_TIMEOUT = 120;
 const COLOR_TIMEOUT = 120;
@@ -8,6 +8,7 @@ const NAME_TIMEOUT = 60;
 const EOTW_TIMEOUT = 15;
 const PRESENT_TIMEOUT = 60;
 const VOTE_TIMEOUT = 60;
+const WINNER_TIMEOUT = 600;
 
 export const enum RoundEnum {
   PLACEHOLDER = 'PLACEHOLDER',
@@ -19,6 +20,7 @@ export const enum RoundEnum {
   END_OF_THE_WORLD = 'END_OF_THE_WORLD',
   PRESENT = 'PRESENT',
   VOTE = 'VOTE',
+  WINNER = 'WINNER',
 }
 
 export class Round {
@@ -134,8 +136,14 @@ class VoteRound extends Round {
       RoundEnum.VOTE,
       VOTE_TIMEOUT,
       'Vote',
-      'vote for your favorite beasts!'
+      'vote for your favorite beasts'
     );
+  }
+}
+
+class WinnerRound extends Round {
+  constructor() {
+    super(RoundEnum.WINNER, WINNER_TIMEOUT, 'Winner', 'congrats, gg');
   }
 }
 
@@ -150,4 +158,5 @@ export const Rounds: Round[] = [
   new EndOfTheWorldRound(),
   new PresentRound(),
   new VoteRound(),
+  new WinnerRound(),
 ];
