@@ -84,7 +84,7 @@ class PlayerListChangeAction extends Action<{ playerList: string[] }> {
 }
 
 // Round Actions
-class EndRoundAction extends Action<{}> {
+export class EndRoundAction extends Action<{}> {
   constructor() {
     super(ActionEnum.END_ROUND, {});
   }

@@ -5,6 +5,7 @@ import {
   Actions,
   AnyAction,
   AnyRoundAction,
+  EndRoundAction,
 } from '@shared/actions';
 
 export class Game {
@@ -36,8 +37,12 @@ export class Game {
     }
 
     let actionType: ActionEnum;
-    let roundResponseHandler = () =>
+    // take different actions based on round type and either ends the round or does some processing
+    // TODO: needs to be extracted into it's own Round class later
+    let roundResponseHandler = () => {
       console.log('no round handler set for ' + this.currentRound?.roundType);
+      return false;
+    };
 
     switch (this.currentRound.roundType) {
       case RoundEnum.SCRIBBLE:
@@ -53,7 +58,7 @@ export class Game {
       case RoundEnum.END_OF_THE_WORLD:
         // end of the world round
         actionType = ActionEnum.EOTW_ROUND;
-        roundResponseHandler = () => {}; // do nothing
+        roundResponseHandler = () => true; // always end round when someone responds
         break;
       case RoundEnum.PRESENT:
         // present round
@@ -67,7 +72,7 @@ export class Game {
       case RoundEnum.WINNER:
         // confirmation round
         actionType = ActionEnum.CONFIRM_ROUND;
-        roundResponseHandler = () => {}; // do nothing
+        roundResponseHandler = () => true; // always end round when someone responds
         break;
       default:
         console.log(
@@ -92,7 +97,7 @@ export class Game {
 
   async waitForRoundEnd(
     actionType: ActionEnum,
-    roundHandler: (args: any) => void,
+    roundHandler: (args: any) => boolean,
     timeout: number // in seconds
   ) {
     // wait for everyone to send back an action for this round
@@ -100,14 +105,21 @@ export class Game {
       this.players.map(
         (p) =>
           new Promise((res) => {
-            console.log(`Setting listener for player ${p.name}`);
             // player finished early or client timeout
             p.addActionListener<AnyRoundAction>(actionType, (action) => {
-              roundHandler(action.payload);
-              if (action.type === actionType) {
+              if (roundHandler(action.payload)) {
                 res(true);
               }
             });
+            // end round is for unimplemented rounds
+            p.addActionListener<EndRoundAction>(
+              ActionEnum.END_ROUND,
+              (action) => {
+                roundHandler(action.payload);
+                // end round is for unimplemented rounds
+                res(true);
+              }
+            );
           })
       )
     );
@@ -116,7 +128,7 @@ export class Game {
       setTimeout(res, timeout * 1000)
     );
     // wait till one of these finishes
-    await Promise.any([waitForEveryoneToFinish, waitForTimeout]);
+    await Promise.race([waitForEveryoneToFinish, waitForTimeout]);
 
     // cleanup listeners
     this.players.forEach((p) => p.removeActionListener(actionType));
