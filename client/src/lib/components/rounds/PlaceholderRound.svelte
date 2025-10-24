@@ -1,10 +1,8 @@
 <script lang="ts">
-  import ClientWebsocket from '../../ClientWebsocket';
   import Round from '../Round.svelte';
-  import { Actions } from '@shared/actions';
 
   async function handleRoundEnd() {
-    ClientWebsocket.sendAction(new Actions.ConfirmRound());
+    // base function will already send end round action for us
   }
 </script>
 

@@ -20,11 +20,12 @@ export const enum ActionEnum {
   /** Round Actions */
   END_ROUND = 'END_ROUND',
   START_ROUND = 'START_ROUND',
-  CONFIRM_ROUND = 'CONFIRM_ROUND',
-  DRAWING_ROUND = 'DRAWING_ROUND',
-  EOTW_ROUND = 'EOTW_ROUND',
-  PRESENT_ROUND = 'PRESENT_ROUND',
-  VOTE_ROUND = 'VOTE_ROUND',
+  SEND_DRAWING = 'SEND_DRAWING',
+  SEND_EOTW = 'EOTW_ROUND',
+  PRESENTER_CHANGE = 'PRESENTER_CHANGE',
+  PRESENTER_START = 'PRESENTER_START',
+  PRESENTER_END = 'PRESENTER_END',
+  SEND_VOTE = 'VOTE_ROUND',
 }
 
 class Action<Payload> {
@@ -89,44 +90,56 @@ export class EndRoundAction extends Action<{}> {
     super(ActionEnum.END_ROUND, {});
   }
 }
-class StartRoundAction extends Action<{}> {
+export class StartRoundAction extends Action<{}> {
   constructor() {
     super(ActionEnum.START_ROUND, {});
   }
 }
-class ConfirmRoundAction extends Action<{}> {
-  constructor() {
-    super(ActionEnum.CONFIRM_ROUND, {});
-  }
-}
-class DrawingRoundAction extends Action<{ image: Base64URLString }> {
+export class SendDrawingAction extends Action<{ image: Base64URLString }> {
   constructor(image: Base64URLString) {
-    super(ActionEnum.DRAWING_ROUND, { image });
+    super(ActionEnum.SEND_DRAWING, { image });
   }
 }
 // TODO: make etow a custom card object with art and desc info
-class EOTWRoundAction extends Action<{ etow: string }> {
-  constructor(etow: string) {
-    super(ActionEnum.EOTW_ROUND, { etow });
+// update the payload type accordingly
+export class SendEOTWAction extends Action<{ eotw: string }> {
+  constructor(eotw: string) {
+    super(ActionEnum.SEND_EOTW, { eotw });
   }
 }
-class VoteRoundAction extends Action<{
+export class SendPresenterChangeAction extends Action<{
+  newPresenter: string;
+}> {
+  constructor(newPresenter: string) {
+    super(ActionEnum.PRESENTER_CHANGE, { newPresenter });
+  }
+}
+export class SendPresenterStartAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.PRESENTER_START, {});
+  }
+}
+export class SendPresenterEndAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.PRESENTER_END, {});
+  }
+}
+export class SendVoteAction extends Action<{
   first: string; // player who had the best
   second?: string; // second best (might only be 2 players)
   third?: string; // third best (might only be 3 players)
 }> {
   constructor(first: string, second: string, third: string) {
-    super(ActionEnum.VOTE_ROUND, { first, second, third });
+    super(ActionEnum.SEND_VOTE, { first, second, third });
   }
 }
 
 export type AnyRoundAction =
   | EndRoundAction
   | StartRoundAction
-  | ConfirmRoundAction
-  | DrawingRoundAction
-  | EOTWRoundAction
-  | VoteRoundAction;
+  | SendDrawingAction
+  | SendEOTWAction
+  | SendVoteAction;
 
 // Type for any action
 export type AnyAction =
@@ -148,10 +161,9 @@ export const Actions = {
   PlayerListChange: PlayerListChangeAction,
   EndRound: EndRoundAction,
   StartRound: StartRoundAction,
-  ConfirmRound: ConfirmRoundAction,
-  DrawingRound: DrawingRoundAction,
-  EOTWRound: EOTWRoundAction,
-  VoteRound: VoteRoundAction,
+  SendDrawing: SendDrawingAction,
+  SendETOW: SendEOTWAction,
+  SendVote: SendVoteAction,
 };
 
 export class ActionTarget<WebSocket, Event> {

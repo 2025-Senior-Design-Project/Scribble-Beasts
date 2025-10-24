@@ -23,128 +23,86 @@ export const enum RoundEnum {
   WINNER = 'WINNER',
 }
 
-export class Round {
-  roundType: RoundEnum;
-  timeout: number; // in seconds
-  roundName: string; // should be an action
-  description: string; // describe what to do for this round
-  staggered: boolean; // everyone goes at once, or one by one
-  hideButton: boolean; // end early button is visible
-  constructor(
-    roundType: RoundEnum,
-    timeout: number,
-    roundName: string,
-    description: string,
-    staggered = false,
-    hideButton = false
-  ) {
-    this.roundType = roundType;
-    this.timeout = timeout;
-    this.roundName = roundName + '!';
-    this.description = description;
-    this.hideButton = hideButton;
-    this.staggered = staggered;
-  }
+export abstract class Round {
+  abstract roundType: RoundEnum;
+  abstract timeout: number; // in seconds
+  abstract roundName: string; // should be an action
+  abstract description: string; // describe what to do for this round
+  staggered = false; // everyone goes at once, or one by one
+  hideButton = false; // end early button is visible
 }
 
-class PlaceholderRound extends Round {
-  constructor() {
-    super(
-      RoundEnum.PLACEHOLDER,
-      PLACEHOLDER_TIMEOUT,
-      'Placeholder',
-      'this is a dummy placeholder round'
-    );
-  }
+export class PlaceholderRound extends Round {
+  roundType = RoundEnum.PLACEHOLDER;
+  timeout = PLACEHOLDER_TIMEOUT;
+  roundName = 'Placeholder';
+  description = 'this is a dummy placeholder round';
 }
 
-class ScribbleRound extends Round {
-  constructor() {
-    super(
-      RoundEnum.SCRIBBLE,
-      SCRIBBLE_TIMEOUT,
-      'Scribble',
-      'draw your best scribble in one line, the more loops and crosses the better'
-    );
-  }
+export class ScribbleRound extends Round {
+  roundType = RoundEnum.SCRIBBLE;
+  timeout = SCRIBBLE_TIMEOUT;
+  roundName = 'Scribble';
+  description =
+    'draw your best scribble in one line, the more loops and crosses the better';
 }
 
-class LineRound extends Round {
-  constructor() {
-    super(
-      RoundEnum.LINE,
-      LINE_TIMEOUT,
-      'Line',
-      'make a beast by drawing lines over just the scribble lines'
-    );
-  }
-}
-class ColorRound extends Round {
-  constructor() {
-    super(
-      RoundEnum.COLOR,
-      COLOR_TIMEOUT,
-      'Color',
-      'bring your beast to life using color'
-    );
-  }
+export class LineRound extends Round {
+  roundType = RoundEnum.LINE;
+  timeout = LINE_TIMEOUT;
+  roundName = 'Line';
+  description = 'make a beast by drawing lines over just the scribble lines';
 }
 
-class DetailRound extends Round {
-  constructor() {
-    super(
-      RoundEnum.DETAIL,
-      DETAIL_TIMEOUT,
-      'Detail',
-      'add pupils, scales, feathers, lashes, and other small details'
-    );
-  }
+export class ColorRound extends Round {
+  roundType = RoundEnum.COLOR;
+  timeout = COLOR_TIMEOUT;
+  roundName = 'Color';
+  description = 'bring your beast to life using color';
 }
 
-class NameRound extends Round {
-  constructor() {
-    super(RoundEnum.NAME, NAME_TIMEOUT, 'Name', 'give your beast a name');
-  }
+export class DetailRound extends Round {
+  roundType = RoundEnum.DETAIL;
+  timeout = DETAIL_TIMEOUT;
+  roundName = 'Detail';
+  description = 'add pupils, scales, feathers, lashes, and other small details';
 }
 
-class EndOfTheWorldRound extends Round {
-  constructor() {
-    super(
-      RoundEnum.END_OF_THE_WORLD,
-      EOTW_TIMEOUT,
-      "It's the End of the World",
-      "you'll need to argue how your scribble beast stops the world from ending for the following reason:"
-    );
-  }
+export class NameRound extends Round {
+  roundType = RoundEnum.NAME;
+  timeout = NAME_TIMEOUT;
+  roundName = 'Name';
+  description = 'give your beast a name';
 }
 
-class PresentRound extends Round {
-  constructor() {
-    super(
-      RoundEnum.PRESENT,
-      PRESENT_TIMEOUT,
-      'Present',
-      'present your beast to the group',
-      true // staggered presentations
-    );
-  }
+export class EndOfTheWorldRound extends Round {
+  roundType = RoundEnum.END_OF_THE_WORLD;
+  timeout = EOTW_TIMEOUT;
+  roundName = "It's the End of the World";
+  description =
+    "you'll need to argue how your scribble beast stops the world from ending for the following reason:";
 }
 
-class VoteRound extends Round {
-  constructor() {
-    super(
-      RoundEnum.VOTE,
-      VOTE_TIMEOUT,
-      'Vote',
-      'vote for your favorite beasts'
-    );
-  }
+export class PresentRound extends Round {
+  roundType = RoundEnum.PRESENT;
+  timeout = PRESENT_TIMEOUT;
+  roundName = 'Present';
+  description = 'present your beast to the group';
+  staggered = true;
 }
 
-class WinnerRound extends Round {
-  constructor() {
-    super(RoundEnum.WINNER, WINNER_TIMEOUT, 'Winner', 'congrats, gg');
-  }
+export class VoteRound extends Round {
+  roundType = RoundEnum.VOTE;
+  timeout = VOTE_TIMEOUT;
+  roundName = 'Vote';
+  description = 'vote for your favorite beasts';
+}
+
+export class WinnerRound extends Round {
+  roundType = RoundEnum.WINNER;
+  timeout = WINNER_TIMEOUT;
+  roundName = 'Winner';
+  description = 'congrats, gg';
 }
 
 /** All rounds in order of occurrence */
