@@ -6,6 +6,7 @@ export interface RoundProps {
   onEnd?: () => void;
 }
 
+//TODO: add actual components for each round type
 export const ROUND_TYPE_COMPONENT_DICT: Record<
   RoundEnum,
   typeof PlaceholderRound

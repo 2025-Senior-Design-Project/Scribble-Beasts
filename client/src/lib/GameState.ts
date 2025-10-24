@@ -12,6 +12,7 @@ export const playerName = writable('');
 export const roomName = writable('');
 export const currentRound = writable(0);
 export const players = writable<string[]>([]);
+//TODO: add current drawing image
 
 const playerChange = (action: PlayerListChangeAction) => {
   const { playerList } = action.payload;
@@ -35,4 +36,5 @@ export function resetState() {
     ActionEnum.HOST_CHANGE,
     hostChange
   );
+  // TODO: create new drawing listener
 }

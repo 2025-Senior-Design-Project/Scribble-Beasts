@@ -38,9 +38,9 @@ export class Game {
       return this.endGame();
     }
 
-    this.#sendActionToAllPlayers(new Actions.StartRound());
-
     this.currentRound.setup(this.players);
+
+    this.#sendActionToAllPlayers(new Actions.StartRound());
 
     await this.waitForRoundEnd(
       this.currentRound.expectedActions,
@@ -49,7 +49,8 @@ export class Game {
     );
 
     this.#sendActionToAllPlayers(new Actions.EndRound());
-    await new Promise((res) => setTimeout(res, 2000)); // wait 2 seconds before next round
+    // TODO: fix race condition where clients receive end round before start next round
+    await new Promise((res) => setTimeout(res, 300)); // wait .3 seconds before next round
 
     this.nextRound();
   }
