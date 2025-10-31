@@ -2,7 +2,7 @@ import WebSocket from 'ws';
 import { Room, Rooms } from '../components/Room';
 import {
   Actions,
-  ActionType,
+  ActionEnum,
   CreateRoomAction,
   JoinRoomAction,
   ParseAction,
@@ -20,12 +20,12 @@ export function handleNewConnection(ws: WebSocket) {
     if (!action) return;
 
     switch (action.type) {
-      case ActionType.CREATE_ROOM:
-        createRoom(action, ws);
+      case ActionEnum.CREATE_ROOM:
+        createRoom(action as CreateRoomAction, ws);
         break;
 
-      case ActionType.JOIN_ROOM:
-        joinRoom(action, ws);
+      case ActionEnum.JOIN_ROOM:
+        joinRoom(action as JoinRoomAction, ws);
         break;
 
       default:

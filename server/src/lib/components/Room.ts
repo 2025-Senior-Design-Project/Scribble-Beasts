@@ -1,5 +1,6 @@
-import { Actions, ActionType } from '@shared/actions';
+import { Actions, ActionEnum } from '@shared/actions';
 import { Player, Host } from './Player';
+import { Game } from './Game';
 
 export const Rooms: Record<string, Room> = {};
 
@@ -31,9 +32,10 @@ export class Room {
       const hostChangeAction = new Actions.HostChange(this.host.name);
       this.host.sendAction(hostChangeAction);
     });
-    this.host.addActionListener(ActionType.START_GAME, (action) => {
-      this.sendActionToAll(action);
-    });
+    this.host.addActionListener(
+      ActionEnum.START_GAME,
+      this.startGame.bind(this)
+    );
   }
 
   destroy() {
@@ -86,6 +88,12 @@ export class Room {
   }
 
   startGame(): void {
-    this.sendActionToAll({ type: 'GAME_START' });
+    this.sendActionToAll(new Actions.StartGame());
+    const game = new Game(
+      Object.values(this.players),
+      this.sendActionToAll,
+      () => {}
+    );
+    game.startGame();
   }
 }

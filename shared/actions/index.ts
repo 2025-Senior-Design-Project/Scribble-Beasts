@@ -1,151 +1,175 @@
-/*
-    ------------------------
-    HOW TO ADD A NEW ACTION:
-    ------------------------
-    1. Add a new entry to the ActionType enum.
-    2. Define a payload type for the action.
-    3. Create an interface for the action that includes the type and payload.
-    4. Add the new action interface to the AnyAction union type.
-    5. Use the ActionClassFactory to create a class for the new action and add it to the Actions object.
+/* 
+------------------------
+HOW TO ADD A NEW ACTION:
+------------------------
+1. Add a new entry to the ActionEnum enum.
+2. Create a class extending Action<{ your payload properties }>
+3. Add the new action class to the AnyAction union type.
+4. Update the Actions object with the new action class.
 */
 
-export const enum ActionType {
+export const enum ActionEnum {
+  /* Room Actions */
   CREATE_ROOM = 'CREATE_ROOM',
   JOIN_ROOM = 'JOIN_ROOM',
   ROOM_ERROR = 'ROOM_ERROR',
+  /* Lobby Actions */
   HOST_CHANGE = 'HOST_CHANGE',
   PLAYER_LIST_CHANGE = 'PLAYER_LIST_CHANGE',
   START_GAME = 'START_GAME',
+  /** Round Actions */
+  END_ROUND = 'END_ROUND',
+  START_ROUND = 'START_ROUND',
+  SEND_DRAWING = 'SEND_DRAWING',
+  SEND_EOTW = 'EOTW_ROUND',
+  PRESENTER_CHANGE = 'PRESENTER_CHANGE',
+  PRESENTER_START = 'PRESENTER_START',
+  PRESENTER_END = 'PRESENTER_END',
+  SEND_VOTE = 'VOTE_ROUND',
 }
 
-// Action payloads
-type CreateRoomPayload = {
+class Action<Payload> {
+  type: ActionEnum;
+  payload: Payload;
+
+  constructor(type: ActionEnum, payload: Payload) {
+    this.type = type;
+    this.payload = payload;
+  }
+}
+
+export class CreateRoomAction extends Action<{
   roomName: string;
   hostName: string;
-};
-const CreateRoomPayloadKeys = ['roomName', 'hostName'];
-export interface CreateRoomAction {
-  type: ActionType.CREATE_ROOM;
-  payload: CreateRoomPayload;
+}> {
+  constructor(roomName: string, hostName: string) {
+    super(ActionEnum.CREATE_ROOM, { roomName, hostName });
+  }
 }
 
-type JoinRoomPayload = {
+export class JoinRoomAction extends Action<{
   roomName: string;
   playerName: string;
   hostName?: string; // Used only on server reply (because I'm lazy)
-};
-const JoinRoomPayloadKeys = ['roomName', 'playerName', 'hostName'];
-export interface JoinRoomAction {
-  type: ActionType.JOIN_ROOM;
-  payload: JoinRoomPayload;
+}> {
+  constructor(roomName: string, playerName: string, hostName?: string) {
+    super(ActionEnum.JOIN_ROOM, { roomName, playerName, hostName });
+  }
 }
 
-type RoomErrorPayload = {
+class RoomErrorAction extends Action<{
   nameInputMessage?: string;
   roomInputMessage?: string;
-};
-const RoomErrorPayloadKeys = ['nameInputMessage', 'roomInputMessage'];
-export interface RoomErrorAction {
-  type: ActionType.ROOM_ERROR;
-  payload: RoomErrorPayload;
+}> {
+  constructor(nameInputMessage?: string, roomInputMessage?: string) {
+    super(ActionEnum.ROOM_ERROR, { nameInputMessage, roomInputMessage });
+  }
 }
 
-type HostChangePayload = {
-  newHostName: string;
-};
-const HostChangePayloadKeys = ['newHostName'];
-export interface HostChangeAction {
-  type: ActionType.HOST_CHANGE;
-  payload: HostChangePayload;
+class HostChangeAction extends Action<{ newHostName: string }> {
+  constructor(newHostName: string) {
+    super(ActionEnum.HOST_CHANGE, { newHostName });
+  }
 }
 
-type StartGamePayload = {};
-const StartGamePayloadKeys: string[] = [];
-export interface StartGameAction {
-  type: ActionType.START_GAME;
-  payload: StartGamePayload;
+class StartGameAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.START_GAME, {});
+  }
 }
 
-type PlayerListChangePayload = { playerList: string[] };
-const PlayerListChangePayloadKeys = ['playerList'];
-export interface PlayerListChangeAction {
-  type: ActionType.PLAYER_LIST_CHANGE;
-  payload: PlayerListChangePayload;
+class PlayerListChangeAction extends Action<{ playerList: string[] }> {
+  constructor(playerList: string[]) {
+    super(ActionEnum.PLAYER_LIST_CHANGE, { playerList });
+  }
 }
 
+// Round Actions
+export class EndRoundAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.END_ROUND, {});
+  }
+}
+export class StartRoundAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.START_ROUND, {});
+  }
+}
+export class SendDrawingAction extends Action<{ image: Base64URLString }> {
+  constructor(image: Base64URLString) {
+    super(ActionEnum.SEND_DRAWING, { image });
+  }
+}
+// TODO: make etow a custom card object with art and desc info
+// update the payload type accordingly
+export class SendEOTWAction extends Action<{ eotw: string }> {
+  constructor(eotw: string) {
+    super(ActionEnum.SEND_EOTW, { eotw });
+  }
+}
+export class SendPresenterChangeAction extends Action<{
+  newPresenter: string;
+}> {
+  constructor(newPresenter: string) {
+    super(ActionEnum.PRESENTER_CHANGE, { newPresenter });
+  }
+}
+export class SendPresenterStartAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.PRESENTER_START, {});
+  }
+}
+export class SendPresenterEndAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.PRESENTER_END, {});
+  }
+}
+export class SendVoteAction extends Action<{
+  first: string; // player who had the best
+  second?: string; // second best (might only be 2 players)
+  third?: string; // third best (might only be 3 players)
+}> {
+  constructor(first: string, second: string, third: string) {
+    super(ActionEnum.SEND_VOTE, { first, second, third });
+  }
+}
+
+export type AnyRoundAction =
+  | EndRoundAction
+  | StartRoundAction
+  | SendDrawingAction
+  | SendEOTWAction
+  | SendVoteAction;
+
+// Type for any action
 export type AnyAction =
   | CreateRoomAction
   | JoinRoomAction
   | RoomErrorAction
   | HostChangeAction
   | StartGameAction
-  | PlayerListChangeAction;
+  | PlayerListChangeAction
+  | AnyRoundAction;
 
 // Actions object for easy import and readability
 export const Actions = {
-  CreateRoom: ActionClassFactory<CreateRoomPayload>(
-    CreateRoomPayloadKeys,
-    ActionType.CREATE_ROOM
-  ),
-  JoinRoom: ActionClassFactory<JoinRoomPayload>(
-    JoinRoomPayloadKeys,
-    ActionType.JOIN_ROOM
-  ),
-  RoomError: ActionClassFactory<RoomErrorPayload>(
-    RoomErrorPayloadKeys,
-    ActionType.ROOM_ERROR
-  ),
-  HostChange: ActionClassFactory<HostChangePayload>(
-    HostChangePayloadKeys,
-    ActionType.HOST_CHANGE
-  ),
-  StartGame: ActionClassFactory<StartGamePayload>(
-    StartGamePayloadKeys,
-    ActionType.START_GAME
-  ),
-  PlayerListChange: ActionClassFactory<PlayerListChangePayload>(
-    PlayerListChangePayloadKeys,
-    ActionType.PLAYER_LIST_CHANGE
-  ),
+  CreateRoom: CreateRoomAction,
+  JoinRoom: JoinRoomAction,
+  RoomError: RoomErrorAction,
+  HostChange: HostChangeAction,
+  StartGame: StartGameAction,
+  PlayerListChange: PlayerListChangeAction,
+  EndRound: EndRoundAction,
+  StartRound: StartRoundAction,
+  SendDrawing: SendDrawingAction,
+  SendETOW: SendEOTWAction,
+  SendVote: SendVoteAction,
 };
 
-// Factory function for creating new action classes
-interface Action<T> {
-  type: ActionType;
-  payload: T;
-}
-function ActionClassFactory<T extends object>(
-  payloadKeys: string[],
-  actionType: ActionType
-) {
-  // Create a new class that implements Action<T>
-  const ActionClass = class implements Action<T> {
-    type: ActionType;
-    payload: T;
-
-    constructor(...args: any[]) {
-      // Convert arguments to an object with numbered keys
-      // allows new NewAction(arg0, arg1, ...) to map to { arg0: ..., arg1: ... }
-      this.payload = args.reduce(
-        (acc, arg, index) => ({
-          ...acc,
-          [payloadKeys[index]]: arg,
-        }),
-        {}
-      ) as unknown as T;
-      this.type = actionType;
-    }
-  };
-
-  // Return the class
-  return ActionClass;
-}
-
-// Websocket and event are different for node and vite
 export class ActionTarget<WebSocket, Event> {
   #ws: WebSocket;
   #actionListeners: Record<
-    ActionType,
+    ActionEnum,
     ((this: WebSocket, ev: Event) => void)[]
   > = {};
 
@@ -168,7 +192,7 @@ export class ActionTarget<WebSocket, Event> {
   }
 
   addActionListener<T extends AnyAction>(
-    actionType: ActionType,
+    actionType: ActionEnum,
     listener: (action: T) => void
   ) {
     const actionListener = (ev: Event) => {
@@ -183,11 +207,7 @@ export class ActionTarget<WebSocket, Event> {
     this.#actionListeners[actionType].push(actionListener);
   }
 
-  /**
-   * Removes all listeners on a websocket for a specific actionType
-   * @param actionType Action you want to remove ALL listeners for
-   */
-  removeActionListener(actionType: ActionType) {
+  removeActionListener(actionType: ActionEnum) {
     if (!this.#actionListeners[actionType]) return;
     this.#actionListeners[actionType].forEach((listener) => {
       this.removeEventListener('message', listener);
@@ -213,7 +233,7 @@ export class ActionTarget<WebSocket, Event> {
 
 export function ParseAction<T extends AnyAction>(
   data: string,
-  desiredType?: ActionType
+  desiredType?: ActionEnum
 ): T | null {
   try {
     // check that data has the structure of an Action

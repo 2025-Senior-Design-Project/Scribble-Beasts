@@ -1,0 +1,83 @@
+<script lang="ts">
+  import { roundStore, endCurrentRound } from '../stores/roundStore';
+  import { get } from 'svelte/store';
+  import ClientWebsocket from '../ClientWebsocket';
+  import { onMount } from 'svelte';
+  import { ActionEnum } from '@shared/actions';
+  import { type Snippet } from 'svelte';
+
+  let { children, onRoundEnd }: { 
+    children: Snippet;
+    onRoundEnd: () => Promise<void> | void;
+  } = $props();
+
+  async function handleEnd() {
+    // Let the round send its end action (same for timeout or button click)
+    await onRoundEnd();
+    endCurrentRound();
+  }
+
+  // Handle server-initiated round ends and timer tick
+  onMount(() => {
+    ClientWebsocket.addActionListener(ActionEnum.END_ROUND, handleEnd);
+
+    // Initialize timer when round becomes active
+    const unsubscribe = roundStore.subscribe((state) => {
+      if (state.ongoing && state.timeLeft === 0) {
+        // Round is active but timer not initialized
+        roundStore.update((s) => ({ ...s, timeLeft: s.current.timeout }));
+      }
+    });
+
+    const interval = setInterval(() => {
+      const s = get(roundStore);
+      if (!s.ongoing || s.timeLeft <= 0) return;
+
+      if (s.timeLeft === 1) {
+        // last tick -> end the round
+        endCurrentRound();
+        return;
+      }
+
+      roundStore.update((st) => ({ ...st, timeLeft: st.timeLeft - 1 }));
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+      ClientWebsocket.removeActionListener(ActionEnum.END_ROUND);
+    };
+  });
+
+</script>
+
+<div class="round-container">
+  {@render children()}
+
+  <div class="round-footer">
+    <div class="timer">{$roundStore?.timeLeft ?? 0}s</div>
+
+    {#if !$roundStore?.current.hideButton}
+      <button onclick={handleEnd}>Done</button>
+    {/if}
+  </div>
+</div>
+
+<style>
+  .round-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .round-footer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .timer {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+</style>

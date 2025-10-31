@@ -1,5 +1,5 @@
 import {
-  ActionType,
+  ActionEnum,
   type HostChangeAction,
   type PlayerListChangeAction,
 } from '@shared/actions';
@@ -12,6 +12,7 @@ export const playerName = writable('');
 export const roomName = writable('');
 export const currentRound = writable(0);
 export const players = writable<string[]>([]);
+//TODO: add current drawing image
 
 const playerChange = (action: PlayerListChangeAction) => {
   const { playerList } = action.payload;
@@ -25,14 +26,15 @@ const hostChange = (action: HostChangeAction) => {
 };
 
 export function resetState() {
-  ClientWebsocket.removeActionListener(ActionType.PLAYER_LIST_CHANGE);
-  ClientWebsocket.removeActionListener(ActionType.HOST_CHANGE);
+  ClientWebsocket.removeActionListener(ActionEnum.PLAYER_LIST_CHANGE);
+  ClientWebsocket.removeActionListener(ActionEnum.HOST_CHANGE);
   ClientWebsocket.addActionListener<PlayerListChangeAction>(
-    ActionType.PLAYER_LIST_CHANGE,
+    ActionEnum.PLAYER_LIST_CHANGE,
     playerChange
   );
   ClientWebsocket.addActionListener<HostChangeAction>(
-    ActionType.HOST_CHANGE,
+    ActionEnum.HOST_CHANGE,
     hostChange
   );
+  // TODO: create new drawing listener
 }
