@@ -58,10 +58,10 @@
 
   function prepareContext() {
     if (!canvas) return;
-    
+
     // Set canvas to fixed 520x520 for consistent sizing across devices
     canvas.width = 520;
-    canvas.height = 520;
+    canvas.height = lineType === 'name' ? 545 : 520;
 
     context = canvas.getContext('2d');
 
@@ -69,7 +69,7 @@
     if (layerMode === LayerMode.BehindLayer && overlayCanvas) {
       overlayCanvas.width = 520;
       overlayCanvas.height = 520;
-      
+
       // Load and draw the overlay image immediately
       if ($currentDrawingImage) {
         const overlayCtx = overlayCanvas.getContext('2d');
@@ -83,12 +83,13 @@
       // In FrontLayer mode, store the background image separately
       backgroundCanvas.width = 520;
       backgroundCanvas.height = 520;
-      
+
       if ($currentDrawingImage) {
         const bgCtx = backgroundCanvas.getContext('2d');
         const bgImage = new Image();
         bgImage.onload = () => {
           bgCtx?.drawImage(bgImage, 0, 0, 520, 520);
+          context?.drawImage(bgImage, 0, 0, 520, 520);
         };
         bgImage.src = $currentDrawingImage;
       }
@@ -106,13 +107,22 @@
     setLineProperties();
   }
 
-  function setLineProperties() {
+  async function setLineProperties() {
     if (!context) return;
 
     switch (lineType) {
       case 'name':
         randomFont = FONTS[Math.floor(Math.random() * FONTS.length)];
-        context.font = `${randomFont.size}px ${randomFont.name}`;
+        console.log('Selected font:', randomFont.name);
+        try {
+          await document.fonts.load(
+            `${randomFont.size}px '${randomFont.name}'`
+          );
+          context.font = `${randomFont.size}px '${randomFont.name}'`;
+        } catch (e) {
+          console.error('Font could not be loaded:', e);
+          context.font = `${randomFont.size}px sans-serif`;
+        }
         context.fillStyle = 'black';
         context.textAlign = 'center';
         context.textBaseline = 'bottom';
@@ -265,7 +275,7 @@
     }
 
     const xPosition = canvas.width / 2;
-    const yPosition = canvas.height - randomFont.size;
+    const yPosition = canvas.height - 5; // 5px from the bottom
     context.fillText(text, xPosition, yPosition);
   }
 
@@ -276,11 +286,15 @@
 
   async function handleRoundEnd() {
     if (!canvas || !context) return;
-    
+
     const canvasRef = canvas; // Capture canvas reference
-    
+
     // If FrontLayer mode, draw the background image on top before sending
-    if (layerMode === LayerMode.FrontLayer && backgroundCanvas && $currentDrawingImage) {
+    if (
+      layerMode === LayerMode.FrontLayer &&
+      backgroundCanvas &&
+      $currentDrawingImage
+    ) {
       // Return a promise that resolves when the background is composited
       return new Promise<void>((resolve) => {
         const bgImage = new Image();
@@ -364,12 +378,12 @@
 <Round onRoundEnd={handleRoundEnd}>
   <div class="drawing-container">
     <div class="canvas-wrapper">
-      <canvas bind:this={canvas} class="drawing-canvas"></canvas>
+      <canvas bind:this={canvas} class="drawing-canvas" />
       {#if layerMode === LayerMode.BehindLayer}
-        <canvas bind:this={overlayCanvas} class="overlay-canvas"></canvas>
+        <canvas bind:this={overlayCanvas} class="overlay-canvas" />
       {/if}
       {#if layerMode === LayerMode.FrontLayer}
-        <canvas bind:this={backgroundCanvas} class="hidden-canvas"></canvas>
+        <canvas bind:this={backgroundCanvas} class="hidden-canvas" />
       {/if}
     </div>
 
@@ -386,7 +400,10 @@
                 checked={selectedColor === colorOption.value}
                 onchange={() => handleColorChange(colorOption.value)}
               />
-              <label for={colorOption.color} style="background-color: {colorOption.value}"></label>
+              <label
+                for={colorOption.color}
+                style="background-color: {colorOption.value}"
+              />
             {/each}
           </div>
         {:else if lineType === 'name'}
