@@ -1,2 +1,70 @@
 @plugin "flowbite/plugin";
 @source "../node_modules/flowbite";
+
+@font-face {
+  font-family: 'AckiPreschool';
+  src: url('./font/acki-preschool/AckiPreschool.ttf') format('truetype'),
+    url('./font/acki-preschool/AckiPreschool.otf') format('opentype');
+}
+@font-face {
+  font-family: 'BrownBagLunch';
+  src: url('./font/brownbaglunch/BrownBagLunch.ttf') format('truetype'),
+    url('./font/brownbaglunch/BrownBagLunch.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Children';
+  src: url('./font/children/Children.ttf') format('truetype'),
+    url('./font/children/Children.otf') format('opentype');
+}
+@font-face {
+  font-family: 'DadHand';
+  src: url('./font/dadhand/dadha___.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Daniel';
+  src: url('./font/daniel/danielfont/DanielFont.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'OhMaria';
+  src: url('./font/ohmaria/OhMaria.ttf') format('truetype'),
+    url('./font/ohmaria/OhMaria.otf') format('opentype');
+}
+@font-face {
+  font-family: 'PopcornMountain';
+  src: url('./font/popcorn-mountain/Popcorn_Mountain--Standard.otf')
+      format('opentype'),
+    url('./font/popcorn-mountain/Popcorn_Mountain--Standard.ttf')
+      format('truetype');
+}
+@font-face {
+  font-family: 'SchoolTeacher';
+  src: url('./font/school-teacher/SchoolTeacher-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'SierraNevadaRoad';
+  src: url('./font/sierra-nevada-road/SierraNevadaRoad.otf') format('opentype'),
+    url('./font/sierra-nevada-road/SierraNevadaRoad.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'TheDogAteMyHomework';
+  src: url('./font/the-dog-ate-my-homework/TheDogAteMyHomework.otf')
+      format('opentype'),
+    url('./font/the-dog-ate-my-homework/TheDogAteMyHomework.ttf')
+      format('truetype');
+}
+@font-face {
+  font-family: 'ThinPencilHandwriting';
+  src: url('./font/thin-pencil-handwriting/Thin Pencil Handwriting.otf')
+      format('opentype'),
+    url('./font/thin-pencil-handwriting/Thin Pencil Handwriting.ttf')
+      format('truetype');
+}
+@font-face {
+  font-family: 'WCManoNegraBta';
+  src: url('./font/wc-mano-negra-bta/WCManoNegraBta.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Yahfie';
+  src: url('./font/yahfie/Yahfie-Normal.ttf') format('truetype'),
+    url('./font/yahfie/Yahfie-Normal.otf') format('opentype');
+}

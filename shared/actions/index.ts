@@ -57,7 +57,7 @@ export class JoinRoomAction extends Action<{
   }
 }
 
-class RoomErrorAction extends Action<{
+export class RoomErrorAction extends Action<{
   nameInputMessage?: string;
   roomInputMessage?: string;
 }> {
@@ -66,19 +66,19 @@ class RoomErrorAction extends Action<{
   }
 }
 
-class HostChangeAction extends Action<{ newHostName: string }> {
+export class HostChangeAction extends Action<{ newHostName: string }> {
   constructor(newHostName: string) {
     super(ActionEnum.HOST_CHANGE, { newHostName });
   }
 }
 
-class StartGameAction extends Action<{}> {
+export class StartGameAction extends Action<{}> {
   constructor() {
     super(ActionEnum.START_GAME, {});
   }
 }
 
-class PlayerListChangeAction extends Action<{ playerList: string[] }> {
+export class PlayerListChangeAction extends Action<{ playerList: string[] }> {
   constructor(playerList: string[]) {
     super(ActionEnum.PLAYER_LIST_CHANGE, { playerList });
   }

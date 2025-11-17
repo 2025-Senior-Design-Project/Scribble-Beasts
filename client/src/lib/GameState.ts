@@ -2,6 +2,7 @@ import {
   ActionEnum,
   type HostChangeAction,
   type PlayerListChangeAction,
+  type SendDrawingAction,
 } from '@shared/actions';
 import { get, writable } from 'svelte/store';
 import ClientWebsocket from './ClientWebsocket';
@@ -12,7 +13,7 @@ export const playerName = writable('');
 export const roomName = writable('');
 export const currentRound = writable(0);
 export const players = writable<string[]>([]);
-//TODO: add current drawing image
+export const currentDrawingImage = writable<string>(''); // Base64 encoded image to draw on
 
 const playerChange = (action: PlayerListChangeAction) => {
   const { playerList } = action.payload;
@@ -25,9 +26,15 @@ const hostChange = (action: HostChangeAction) => {
   isHost.set(newHostName === get(playerName));
 };
 
+const drawingImageChange = (action: SendDrawingAction) => {
+  const { image } = action.payload;
+  currentDrawingImage.set(image);
+};
+
 export function resetState() {
   ClientWebsocket.removeActionListener(ActionEnum.PLAYER_LIST_CHANGE);
   ClientWebsocket.removeActionListener(ActionEnum.HOST_CHANGE);
+  ClientWebsocket.removeActionListener(ActionEnum.SEND_DRAWING);
   ClientWebsocket.addActionListener<PlayerListChangeAction>(
     ActionEnum.PLAYER_LIST_CHANGE,
     playerChange
@@ -36,5 +43,8 @@ export function resetState() {
     ActionEnum.HOST_CHANGE,
     hostChange
   );
-  // TODO: create new drawing listener
+  ClientWebsocket.addActionListener<SendDrawingAction>(
+    ActionEnum.SEND_DRAWING,
+    drawingImageChange
+  );
 }
