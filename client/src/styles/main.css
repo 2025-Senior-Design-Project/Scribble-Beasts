@@ -68,3 +68,44 @@
   src: url('./font/yahfie/Yahfie-Normal.ttf') format('truetype'),
     url('./font/yahfie/Yahfie-Normal.otf') format('opentype');
 }
+
+:root {
+  --pen-black: #2c3e50;
+  --pen-blue: #3498db;
+  --pen-red: #e74c3c;
+  --paper-white: #ecf0f1;
+  --grid-blue: #a9cce3;
+}
+
+body {
+  background-color: var(--paper-white);
+  background-image: linear-gradient(var(--grid-blue) 1px, transparent 1px),
+    linear-gradient(to right, var(--grid-blue) 1px, var(--paper-white) 1px);
+  background-size: 20px 20px;
+  font-family: 'TheDogAteMyHomework', sans-serif;
+  color: var(--pen-black);
+}
+
+button {
+  background-color: var(--pen-blue);
+  color: var(--paper-white);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: 'TheDogAteMyHomework', sans-serif;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+input {
+  border: none;
+  border-bottom: 2px solid var(--pen-black);
+  padding: 10px;
+  border-radius: 0;
+  font-family: 'TheDogAteMyHomework', sans-serif;
+  background-color: transparent;
+  color: var(--pen-black);
+}
