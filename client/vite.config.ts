@@ -20,9 +20,8 @@ export default defineConfig({
     host: '0.0.0.0',
     allowedHosts: ['host.docker.internal', 'scribble-beasts.com'],
     hmr: {
-      protocol: 'ws',
-      host: 'localhost',
-      port: Number(process.env.CLIENT_PORT) || 3000,
+      protocol: 'wss',
+      host: 'scribble-beasts.com',
     },
   },
   resolve: {
