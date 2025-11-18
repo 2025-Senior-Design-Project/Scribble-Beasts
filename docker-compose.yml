@@ -10,6 +10,8 @@ services:
       - server
     env_file:
       - .env
+    networks:
+      - scribble-net
 
   client:
     build:
@@ -25,6 +27,8 @@ services:
       - ${CLIENT_PORT}:${CLIENT_PORT}
     env_file:
       - .env
+    networks:
+      - scribble-net
 
   server:
     build:
@@ -42,3 +46,9 @@ services:
       - ${SERVER_PORT}:${SERVER_PORT}
     env_file:
       - .env
+    networks:
+      - scribble-net
+
+networks:
+  scribble-net:
+    driver: bridge
