@@ -26,9 +26,11 @@ export abstract class ServerDrawingRound extends ServerRound {
     players[players.length - 1].lastUploadedImage = firstImage;
 
     // Send image action to players to set their drawing to lastUploadedImage
-    players.forEach((player) => {
-      player.sendAction(new SendDrawingAction(player.lastUploadedImage));
-    });
+    players
+      .filter((p) => !p.disconnected)
+      .forEach((player) => {
+        player.sendAction(new SendDrawingAction(player.lastUploadedImage));
+      });
   }
 
   roundResponseHandler(action: AnyRoundAction, player: Player): boolean {

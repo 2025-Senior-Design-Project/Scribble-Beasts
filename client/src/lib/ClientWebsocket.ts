@@ -1,4 +1,4 @@
-import { ActionTarget } from '@shared/actions';
+import { ActionEnum, ActionTarget, ReconnectAction } from '@shared/actions';
 
 class CWebsocket extends ActionTarget<WebSocket, MessageEvent<string>> {
   #ws: WebSocket;
@@ -20,13 +20,34 @@ class CWebsocket extends ActionTarget<WebSocket, MessageEvent<string>> {
       console.log('WebSocket connection established');
     };
 
-    this.#ws.onmessage = (event: MessageEvent<string>) => {
-      console.log(event.data);
+    this.#ws.onclose = () => {
+      console.log('WebSocket connection closed. Attempting to reconnect...');
+      setTimeout(() => {
+        this.reconnect();
+      }, 1000);
     };
 
-    this.addEventListener('message', (event) => {
-      console.log('received:', event.data);
+    this.addActionListener(ActionEnum.RECONNECT, (action: ReconnectAction) => {
+      this.setCookie('playerId', action.payload.playerId, 7);
     });
+  }
+
+  reconnect() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/api`;
+    const ws = new WebSocket(wsUrl);
+    this.setWebsocket(ws);
+    this.#ws = ws;
+  }
+
+  setCookie(name: string, value: string, days: number) {
+    let expires = '';
+    if (days) {
+      const date = new Date();
+      date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+      expires = '; expires=' + date.toUTCString();
+    }
+    document.cookie = name + '=' + (value || '') + expires + '; path=/';
   }
 }
 

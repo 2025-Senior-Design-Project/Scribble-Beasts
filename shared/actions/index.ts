@@ -12,6 +12,7 @@ export const enum ActionEnum {
   /* Room Actions */
   CREATE_ROOM = 'CREATE_ROOM',
   JOIN_ROOM = 'JOIN_ROOM',
+  RECONNECT = 'RECONNECT',
   ROOM_ERROR = 'ROOM_ERROR',
   /* Lobby Actions */
   HOST_CHANGE = 'HOST_CHANGE',
@@ -54,6 +55,12 @@ export class JoinRoomAction extends Action<{
 }> {
   constructor(roomName: string, playerName: string, hostName?: string) {
     super(ActionEnum.JOIN_ROOM, { roomName, playerName, hostName });
+  }
+}
+
+export class ReconnectAction extends Action<{ playerId: string }> {
+  constructor(playerId: string) {
+    super(ActionEnum.RECONNECT, { playerId });
   }
 }
 
@@ -145,6 +152,7 @@ export type AnyRoundAction =
 export type AnyAction =
   | CreateRoomAction
   | JoinRoomAction
+  | ReconnectAction
   | RoomErrorAction
   | HostChangeAction
   | StartGameAction
@@ -155,6 +163,7 @@ export type AnyAction =
 export const Actions = {
   CreateRoom: CreateRoomAction,
   JoinRoom: JoinRoomAction,
+  Reconnect: ReconnectAction,
   RoomError: RoomErrorAction,
   HostChange: HostChangeAction,
   StartGame: StartGameAction,
@@ -166,37 +175,55 @@ export const Actions = {
   SendVote: SendVoteAction,
 };
 
-export class ActionTarget<WebSocket, Event> {
-  #ws: WebSocket;
-  #actionListeners: Record<
-    ActionEnum,
-    ((this: WebSocket, ev: Event) => void)[]
-  > = {};
+interface IWebSocket {
+  addEventListener(
+    type: string,
+    listener: (this: IWebSocket, ev: any) => void
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: (this: IWebSocket, ev: any) => void
+  ): void;
+  send(data: string): void;
+  close(): void;
+  removeAllListeners?(): void;
+  readyState: number;
+}
 
-  constructor(ws: WebSocket) {
+interface MessageEvent {
+  data: any;
+}
+
+export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
+  #ws: T;
+  #actionListeners: Record<ActionEnum, ((this: T, ev: E) => void)[]>;
+
+  constructor(ws: T) {
+    this.#ws = ws;
+    this.#actionListeners = {} as Record<
+      ActionEnum,
+      ((this: T, ev: E) => void)[]
+    >;
+  }
+
+  setWebsocket(ws: T) {
     this.#ws = ws;
   }
 
-  addEventListener(
-    type: string,
-    listener: (this: WebSocket, ev: Event) => void
-  ): void {
+  addEventListener(type: string, listener: (this: T, ev: E) => void): void {
     this.#ws.addEventListener(type, listener);
   }
 
-  removeEventListener(
-    type: string,
-    listener: (this: WebSocket, ev: Event) => void
-  ): void {
+  removeEventListener(type: string, listener: (this: T, ev: E) => void): void {
     this.#ws.removeEventListener(type, listener);
   }
 
-  addActionListener<T extends AnyAction>(
+  addActionListener<A extends AnyAction>(
     actionType: ActionEnum,
-    listener: (action: T) => void
+    listener: (action: A) => void
   ) {
-    const actionListener = (ev: Event) => {
-      const action = ParseAction<T>(ev.data, actionType);
+    const actionListener = (ev: E) => {
+      const action = ParseAction<A>(ev.data, actionType);
       if (!action) return;
       listener(action);
     };

@@ -9,8 +9,22 @@ import {
   type AnyAction,
 } from '@shared/actions';
 import { Player, Host } from '../components/Player';
+import { IncomingMessage } from 'http';
 
-export function handleNewConnection(ws: WebSocket) {
+export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
+  const cookies = parseCookies(req.headers.cookie);
+  const playerId = cookies.playerId;
+
+  if (playerId) {
+    const player = findGlobalPlayer(playerId);
+    if (player) {
+      player.reconnect(ws);
+      console.log(`Player ${player.name} reconnected.`);
+      // Send a reconnected action to the client
+      return;
+    }
+  }
+
   console.log('New WebSocket connection');
 
   ws.on('error', console.error);
@@ -61,9 +75,11 @@ function createRoom(action: CreateRoomAction, ws: WebSocket) {
     return;
   }
 
-  const newRoom = new Room(roomName, new Host(hostName, ws));
+  const host = new Host(hostName, ws);
+  const newRoom = new Room(roomName, host);
   Rooms[roomName] = newRoom;
   ws.send(JSON.stringify(new Actions.CreateRoom(roomName, hostName)));
+  ws.send(JSON.stringify(new Actions.Reconnect(host.id)));
   console.log(`Room ${roomName} created with host ${hostName}`);
 }
 
@@ -97,10 +113,12 @@ function joinRoom(action: JoinRoomAction, ws: WebSocket) {
     return;
   }
 
-  room.addPlayer(new Player(playerName, ws));
+  const player = new Player(playerName, ws);
+  room.addPlayer(player);
   ws.send(
     JSON.stringify(new Actions.JoinRoom(roomName, playerName, room.host.name))
   );
+  ws.send(JSON.stringify(new Actions.Reconnect(player.id)));
   console.log(`Player ${playerName} joined room ${roomName}`);
 }
 
@@ -126,5 +144,30 @@ function findRoom(roomName: string): Room | undefined {
 }
 
 function playerExistsInRoom(room: Room, playerName: string): boolean {
-  return room.players[playerName] !== undefined;
+  return !!Object.values(room.players).find((p) => p.name === playerName);
+}
+
+function parseCookies(cookieHeader?: string): Record<string, string> {
+  const list: Record<string, string> = {};
+  if (!cookieHeader) return list;
+
+  cookieHeader.split(';').forEach(function (cookie) {
+    const parts = cookie.split('=');
+    const key = parts.shift()?.trim();
+    if (key) {
+      list[key] = decodeURI(parts.join('='));
+    }
+  });
+
+  return list;
+}
+
+function findGlobalPlayer(playerId: string): Player | undefined {
+  for (const room of Object.values(Rooms)) {
+    const player = room.findPlayerById(playerId);
+    if (player) {
+      return player;
+    }
+  }
+  return undefined;
 }

@@ -4,6 +4,8 @@ import { Game } from './Game';
 
 export const Rooms: Record<string, Room> = {};
 
+const DISCONNECT_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
 export class Room {
   name: string;
   host: Host;
@@ -19,9 +21,9 @@ export class Room {
   hostSetup() {
     // If host disconnects, make the next player the host (if any exist)
     this.host.addEventListener('close', () => {
-      const playerNames = Object.keys(this.players);
-      if (playerNames.length === 0) return; // No players left to become host
-      const playerToBecomeHost = this.players[playerNames[0]];
+      const connectedPlayers = this.getConnectedPlayers();
+      if (connectedPlayers.length === 0) return; // No players left to become host
+      const playerToBecomeHost = connectedPlayers[0];
       playerToBecomeHost.isHost = true;
       const newHost = playerToBecomeHost as Host;
       this.host = newHost;
@@ -47,9 +49,23 @@ export class Room {
   addPlayer(player: Player): void {
     this.players[player.name] = player;
     player.addEventListener('close', () => {
-      this.removePlayer(player.name);
+      this.disconnectPlayer(player.name);
     });
     this.playerListChanged();
+  }
+
+  disconnectPlayer(playerName: string): void {
+    const player = this.players[playerName];
+    if (player) {
+      player.disconnected = true;
+      this.playerListChanged();
+      console.log(`Player ${playerName} disconnected from room ${this.name}.`);
+      setTimeout(() => {
+        if (player.disconnected) {
+          this.removePlayer(playerName);
+        }
+      }, DISCONNECT_TIMEOUT);
+    }
   }
 
   removePlayer(playerName: string): void {
@@ -71,7 +87,9 @@ export class Room {
 
   playerListChanged() {
     this.sendActionToAll(
-      new Actions.PlayerListChange(Object.keys(this.players))
+      new Actions.PlayerListChange(
+        this.getConnectedPlayers().map((p) => p.name)
+      )
     );
   }
 
@@ -82,7 +100,7 @@ export class Room {
   }
 
   sendActionToAll(action: any): void {
-    Object.values(this.players).forEach((player) => {
+    this.getConnectedPlayers().forEach((player) => {
       player.sendAction(action);
     });
   }
@@ -91,9 +109,17 @@ export class Room {
     this.sendActionToAll(new Actions.StartGame());
     const game = new Game(
       Object.values(this.players),
-      this.sendActionToAll,
+      this.sendActionToAll.bind(this),
       () => {}
     );
     game.startGame();
+  }
+
+  getConnectedPlayers(): Player[] {
+    return Object.values(this.players).filter((p) => !p.disconnected);
+  }
+
+  findPlayerById(playerId: string): Player | undefined {
+    return Object.values(this.players).find((p) => p.id === playerId);
   }
 }
