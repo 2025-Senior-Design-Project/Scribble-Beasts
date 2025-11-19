@@ -1,6 +1,7 @@
 import { Actions, ActionEnum } from '@shared/actions';
 import { Player, Host } from './Player';
 import { Game } from './Game';
+import { handleRoomless } from '../scripts/roomless-handler';
 
 export const Rooms: Record<string, Room> = {};
 
@@ -10,6 +11,7 @@ export class Room {
   name: string;
   host: Host;
   players: Record<string, Player> = {};
+  game: Game | null = null;
 
   constructor(name: string, host: Player) {
     this.name = name;
@@ -51,6 +53,9 @@ export class Room {
     player.addEventListener('close', () => {
       this.disconnectPlayer(player.name);
     });
+    player.addActionListener(ActionEnum.LEAVE_ROOM, () => {
+      this.removePlayer(player.name, false);
+    });
     this.playerListChanged();
   }
 
@@ -68,10 +73,14 @@ export class Room {
     }
   }
 
-  removePlayer(playerName: string): void {
+  removePlayer(playerName: string, permanently: boolean = true): void {
     const playerToRemove = this.players[playerName];
     if (playerToRemove) {
-      playerToRemove.destroy();
+      if (permanently) {
+        playerToRemove.destroy();
+      } else {
+        handleRoomless(playerToRemove.getWebSocket());
+      }
       delete this.players[playerName];
       this.playerListChanged();
     }
@@ -107,12 +116,12 @@ export class Room {
 
   startGame(): void {
     this.sendActionToAll(new Actions.StartGame());
-    const game = new Game(
+    this.game = new Game(
       Object.values(this.players),
       this.sendActionToAll.bind(this),
       () => {}
     );
-    game.startGame();
+    this.game.startGame();
   }
 
   getConnectedPlayers(): Player[] {

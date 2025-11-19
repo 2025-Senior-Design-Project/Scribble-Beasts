@@ -26,12 +26,12 @@ export function endCurrentRound(action?: AnyRoundAction) {
   ClientWebsocket.sendAction(action ?? new Actions.EndRound());
 }
 
-export function startNextRound() {
+export function startNextRound(timeout: number) {
   roundStore.update((state) => ({
     ...state,
     ongoing: true,
     number: state.number + 1,
     current: Rounds[state.number + 1] || state.current,
-    timeLeft: Rounds[state.number + 1].timeout,
+    timeLeft: timeout,
   }));
 }

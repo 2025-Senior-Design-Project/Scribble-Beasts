@@ -12,6 +12,7 @@ export const enum ActionEnum {
   /* Room Actions */
   CREATE_ROOM = 'CREATE_ROOM',
   JOIN_ROOM = 'JOIN_ROOM',
+  LEAVE_ROOM = 'LEAVE_ROOM',
   RECONNECT = 'RECONNECT',
   ROOM_ERROR = 'ROOM_ERROR',
   /* Lobby Actions */
@@ -64,6 +65,12 @@ export class ReconnectAction extends Action<{ playerId: string }> {
   }
 }
 
+export class LeaveRoomAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.LEAVE_ROOM, {});
+  }
+}
+
 export class RoomErrorAction extends Action<{
   nameInputMessage?: string;
   roomInputMessage?: string;
@@ -79,9 +86,9 @@ export class HostChangeAction extends Action<{ newHostName: string }> {
   }
 }
 
-export class StartGameAction extends Action<{}> {
-  constructor() {
-    super(ActionEnum.START_GAME, {});
+export class StartGameAction extends Action<{ currentRound?: number }> {
+  constructor(currentRound?: number) {
+    super(ActionEnum.START_GAME, { currentRound });
   }
 }
 
@@ -97,9 +104,9 @@ export class EndRoundAction extends Action<{}> {
     super(ActionEnum.END_ROUND, {});
   }
 }
-export class StartRoundAction extends Action<{}> {
-  constructor() {
-    super(ActionEnum.START_ROUND, {});
+export class StartRoundAction extends Action<{ timeout: number }> {
+  constructor(timeout: number) {
+    super(ActionEnum.START_ROUND, { timeout });
   }
 }
 export class SendDrawingAction extends Action<{ image: Base64URLString }> {
@@ -152,6 +159,7 @@ export type AnyRoundAction =
 export type AnyAction =
   | CreateRoomAction
   | JoinRoomAction
+  | LeaveRoomAction
   | ReconnectAction
   | RoomErrorAction
   | HostChangeAction
@@ -163,6 +171,7 @@ export type AnyAction =
 export const Actions = {
   CreateRoom: CreateRoomAction,
   JoinRoom: JoinRoomAction,
+  LeaveRoom: LeaveRoomAction,
   Reconnect: ReconnectAction,
   RoomError: RoomErrorAction,
   HostChange: HostChangeAction,
@@ -208,6 +217,12 @@ export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
 
   setWebsocket(ws: T) {
     this.#ws = ws;
+    // Re-attach all existing listeners to the new websocket
+    Object.values(this.#actionListeners).forEach((listeners) => {
+      listeners.forEach((listener) => {
+        this.addEventListener('message', listener);
+      });
+    });
   }
 
   addEventListener(type: string, listener: (this: T, ev: E) => void): void {
@@ -239,13 +254,23 @@ export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
     this.#actionListeners[actionType].forEach((listener) => {
       this.removeEventListener('message', listener);
     });
+    delete this.#actionListeners[actionType];
   }
 
   #websocketOpen = 1;
   sendAction(action: object): void {
     const msg = JSON.stringify(action);
     if (this.#ws.readyState === this.#websocketOpen) {
-      console.log('sent:', msg);
+      // Truncate image data for logging
+      const logAction = JSON.parse(msg);
+      if (
+        logAction.type === ActionEnum.SEND_DRAWING &&
+        logAction.payload.image
+      ) {
+        logAction.payload.image =
+          logAction.payload.image.substring(0, 50) + '...';
+      }
+      console.log('sent:', JSON.stringify(logAction));
       this.#ws.send(msg);
     } else {
       console.error('WebSocket is not open. Ready state:', this.#ws.readyState);

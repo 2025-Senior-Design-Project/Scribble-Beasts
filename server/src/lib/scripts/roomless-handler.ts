@@ -11,22 +11,7 @@ import {
 import { Player, Host } from '../components/Player';
 import { IncomingMessage } from 'http';
 
-export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
-  const cookies = parseCookies(req.headers.cookie);
-  const playerId = cookies.playerId;
-
-  if (playerId) {
-    const player = findGlobalPlayer(playerId);
-    if (player) {
-      player.reconnect(ws);
-      console.log(`Player ${player.name} reconnected.`);
-      // Send a reconnected action to the client
-      return;
-    }
-  }
-
-  console.log('New WebSocket connection');
-
+export function handleRoomless(ws: WebSocket) {
   ws.on('error', console.error);
 
   ws.on('message', function message(data) {
@@ -50,6 +35,25 @@ export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
         break;
     }
   });
+}
+
+export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
+  const cookies = parseCookies(req.headers.cookie);
+  const playerId = cookies.playerId;
+
+  if (playerId) {
+    const result = findGlobalPlayer(playerId);
+    if (result) {
+      const { player, room } = result;
+      player.reconnect(ws, room);
+      console.log(`Player ${player.name} reconnected.`);
+      // Send a reconnected action to the client
+      return;
+    }
+  }
+
+  console.log('New WebSocket connection');
+  handleRoomless(ws);
 }
 
 function createRoom(action: CreateRoomAction, ws: WebSocket) {
@@ -162,11 +166,13 @@ function parseCookies(cookieHeader?: string): Record<string, string> {
   return list;
 }
 
-function findGlobalPlayer(playerId: string): Player | undefined {
+function findGlobalPlayer(
+  playerId: string
+): { player: Player; room: Room } | undefined {
   for (const room of Object.values(Rooms)) {
     const player = room.findPlayerById(playerId);
     if (player) {
-      return player;
+      return { player, room };
     }
   }
   return undefined;

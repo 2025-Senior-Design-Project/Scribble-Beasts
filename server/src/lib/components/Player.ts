@@ -1,6 +1,7 @@
-import { ActionTarget, ActionEnum } from '@shared/actions';
+import { ActionTarget, ActionEnum, Actions } from '@shared/actions';
 import WebSocket, { MessageEvent } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
+import { Room } from './Room';
 
 // base64 encoded url for a blank pixel
 export const BLANK_PIXEL =
@@ -25,16 +26,27 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
     this.#ws.removeAllListeners('message');
   }
 
-  reconnect(ws: WebSocket) {
+  getWebSocket(): WebSocket {
+    return this.#ws;
+  }
+
+  reconnect(ws: WebSocket, room: Room) {
     this.disconnected = false;
     this.setWebsocket(ws);
-    ws.removeAllListeners('message');
-    // ActionTarget's constructor is what sets up the listeners,
-    // but we can't call it again.
-    // Re-implementing the listener setup here is not ideal,
-    // but it's the simplest solution without a major refactor.
-    this.addActionListener(ActionEnum.CREATE_ROOM, () => {});
-    this.addActionListener(ActionEnum.JOIN_ROOM, () => {});
+
+    if (room.game) {
+      this.sendAction(new Actions.StartGame(room.game.currentRoundNumber));
+      this.sendAction(
+        new Actions.SendDrawing(room.game.playerDrawings[this.id])
+      );
+    } else {
+      this.sendAction(
+        new Actions.JoinRoom(room.name, this.name, room.host.name)
+      );
+    }
+
+    room.playerListChanged();
+    this.sendAction(new Actions.HostChange(room.host.name));
   }
 }
 

@@ -1,11 +1,15 @@
 import {
   ActionEnum,
   type HostChangeAction,
+  type JoinRoomAction,
   type PlayerListChangeAction,
   type SendDrawingAction,
+  type StartGameAction,
 } from '@shared/actions';
 import { get, writable } from 'svelte/store';
 import ClientWebsocket from './ClientWebsocket';
+import { View, navigateTo } from './Navigator';
+import { startNextRound } from './stores/roundStore';
 
 export const isHost = writable(false);
 export const hostName = writable<string | undefined>(undefined);
@@ -31,10 +35,36 @@ const drawingImageChange = (action: SendDrawingAction) => {
   currentDrawingImage.set(image);
 };
 
+const joinRoom = (action: JoinRoomAction) => {
+  const {
+    roomName: roomNameValue,
+    playerName: playerNameValue,
+    hostName: hostNameValue,
+  } = action.payload;
+  roomName.set(roomNameValue);
+  playerName.set(playerNameValue);
+  hostName.set(hostNameValue);
+  navigateTo(View.LOBBY);
+};
+
+const startGame = (action: StartGameAction) => {
+  const { currentRound } = action.payload;
+  if (currentRound) {
+    for (let i = 0; i < currentRound; i++) {
+      // This is a hack to get the round store to the correct round
+      // TODO: make this better
+      startNextRound(0);
+    }
+  }
+  navigateTo(View.GAME);
+};
+
 export function resetState() {
   ClientWebsocket.removeActionListener(ActionEnum.PLAYER_LIST_CHANGE);
   ClientWebsocket.removeActionListener(ActionEnum.HOST_CHANGE);
   ClientWebsocket.removeActionListener(ActionEnum.SEND_DRAWING);
+  ClientWebsocket.removeActionListener(ActionEnum.JOIN_ROOM);
+  ClientWebsocket.removeActionListener(ActionEnum.START_GAME);
   ClientWebsocket.addActionListener<PlayerListChangeAction>(
     ActionEnum.PLAYER_LIST_CHANGE,
     playerChange
@@ -46,5 +76,13 @@ export function resetState() {
   ClientWebsocket.addActionListener<SendDrawingAction>(
     ActionEnum.SEND_DRAWING,
     drawingImageChange
+  );
+  ClientWebsocket.addActionListener<JoinRoomAction>(
+    ActionEnum.JOIN_ROOM,
+    joinRoom
+  );
+  ClientWebsocket.addActionListener<StartGameAction>(
+    ActionEnum.START_GAME,
+    startGame
   );
 }

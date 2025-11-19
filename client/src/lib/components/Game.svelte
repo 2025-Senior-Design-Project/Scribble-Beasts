@@ -9,13 +9,15 @@
   import ClientWebsocket from '../ClientWebsocket';
   import { ROUND_TYPE_COMPONENT_DICT } from '../constants/RoundTypeComponentDict';
 
+  import type { StartRoundAction } from '@shared/actions';
+
   onMount(() => {
     const handleServerEndRound = () => {
       endCurrentRound();
     };
 
-    const handleServerStartRound = () => {
-      startNextRound();
+    const handleServerStartRound = (action: StartRoundAction) => {
+      startNextRound(action.payload.timeout);
     };
 
     ClientWebsocket.addActionListener(

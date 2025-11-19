@@ -17,6 +17,7 @@
     layerMode?: LayerMode;
   } = $props();
 
+  let submitted = $state(false);
   let canvas = $state<HTMLCanvasElement>();
   let overlayCanvas = $state<HTMLCanvasElement>();
   let backgroundCanvas = $state<HTMLCanvasElement>();
@@ -285,7 +286,8 @@
   }
 
   async function handleRoundEnd() {
-    if (!canvas || !context) return;
+    if (submitted || !canvas || !context) return;
+    submitted = true;
 
     const canvasRef = canvas; // Capture canvas reference
 
@@ -351,8 +353,29 @@
     }
   }
 
+  $effect(() => {
+    if (context && $currentDrawingImage) {
+      const image = new Image();
+      image.onload = () => {
+        if (context) {
+          context.drawImage(image, 0, 0, 520, 520);
+        }
+      };
+      image.src = $currentDrawingImage;
+    }
+  });
+
   onMount(() => {
     prepareContext();
+
+    window.addEventListener('beforeunload', handleRoundEnd);
+
+    const timerId = setTimeout(async () => {
+      await handleRoundEnd();
+      if ($roundStore.ongoing) {
+        endCurrentRound();
+      }
+    }, $roundStore.timeLeft * 1000 - 250);
 
     if (!canvas) return;
 
@@ -364,6 +387,8 @@
     canvas.addEventListener('touchend', handleTouchEnd);
 
     return () => {
+      window.removeEventListener('beforeunload', handleRoundEnd);
+      clearTimeout(timerId);
       if (!canvas) return;
       canvas.removeEventListener('mousedown', handleMouseDown);
       canvas.removeEventListener('mouseup', handleMouseUp);
