@@ -85,3 +85,4 @@ Make-up meetings on Friday 10am on Discord
 Based off hackathon project of the same name https://github.com/Jasmine-Mogadam/scribble-beasts-hackathon
 
 Playtests will be occuring on our offical Discord server! Please keep an eye out :D
+You can join here: https://discord.gg/BQ4JUh8fCE
