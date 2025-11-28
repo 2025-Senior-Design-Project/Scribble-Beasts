@@ -403,12 +403,16 @@
 <Round onRoundEnd={handleRoundEnd}>
   <div class="drawing-container">
     <div class="canvas-wrapper">
-      <canvas bind:this={canvas} class="drawing-canvas" />
+      <canvas bind:this={canvas} class="drawing-canvas"><!-- --></canvas>
       {#if layerMode === LayerMode.BehindLayer}
-        <canvas bind:this={overlayCanvas} class="overlay-canvas" />
+        <canvas bind:this={overlayCanvas} class="overlay-canvas"
+          ><!-- --></canvas
+        >
       {/if}
       {#if layerMode === LayerMode.FrontLayer}
-        <canvas bind:this={backgroundCanvas} class="hidden-canvas" />
+        <canvas bind:this={backgroundCanvas} class="hidden-canvas"
+          ><!-- --></canvas
+        >
       {/if}
     </div>
 
@@ -427,8 +431,8 @@
               />
               <label
                 for={colorOption.color}
-                style="background-color: {colorOption.value}"
-              />
+                style="background-color: {colorOption.value}"><!-- --></label
+              >
             {/each}
           </div>
         {:else if lineType === 'name'}

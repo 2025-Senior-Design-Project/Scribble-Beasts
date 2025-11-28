@@ -2,5 +2,5 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
-    command: tunnel --no-autoupdate run --url http://localhost:${NGINX_PORT} --token ${TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate --loglevel warn run --url http://localhost:${NGINX_PORT} --token ${TUNNEL_TOKEN}
     network_mode: 'service:nginx'
