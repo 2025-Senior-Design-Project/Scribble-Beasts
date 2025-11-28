@@ -235,7 +235,7 @@ export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
   addActionListener<A extends AnyAction>(
     actionType: ActionEnum,
     listener: (action: A) => void
-  ) {
+  ): () => void {
     const actionListener = (ev: E) => {
       const action = ParseAction<A>(ev.data, actionType);
       if (!action) return;
@@ -246,6 +246,15 @@ export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
       this.#actionListeners[actionType] = [];
     }
     this.#actionListeners[actionType].push(actionListener);
+
+    return () => {
+      this.removeEventListener('message', actionListener);
+      if (this.#actionListeners[actionType]) {
+        this.#actionListeners[actionType] = this.#actionListeners[
+          actionType
+        ].filter((l) => l !== actionListener);
+      }
+    };
   }
 
   removeActionListener(actionType: ActionEnum) {

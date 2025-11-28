@@ -10,7 +10,7 @@
   let {
     lineType = 'line',
     showWidget = false,
-    layerMode = LayerMode.SameLayer,
+    layerMode = LayerMode.BehindLayer,
   }: {
     lineType?: 'scribble' | 'line' | 'color' | 'detail' | 'name';
     showWidget?: boolean;
@@ -93,15 +93,6 @@
           context?.drawImage(bgImage, 0, 0, 520, 520);
         };
         bgImage.src = $drawingImage;
-      }
-    } else if (layerMode === LayerMode.SameLayer) {
-      // For SameLayer, draw the previous image as the base
-      if ($drawingImage) {
-        const image = new Image();
-        image.onload = () => {
-          context?.drawImage(image, 0, 0, 520, 520);
-        };
-        image.src = $drawingImage;
       }
     }
 
@@ -346,7 +337,7 @@
         overlayImage.src = $drawingImage;
       });
     } else {
-      // For SameLayer mode, just send the canvas as-is
+      // Fallback: just send the canvas as-is
       const imageData = canvasRef.toDataURL();
       drawingImage.set(imageData);
       ClientWebsocket.sendAction(new SendDrawingAction(imageData));
@@ -354,21 +345,41 @@
   }
 
   $effect(() => {
-    if (context && $drawingImage) {
-      const image = new Image();
-      image.onload = () => {
-        if (context) {
-          context.drawImage(image, 0, 0, 520, 520);
+    if (!$drawingImage) return;
+
+    const image = new Image();
+    image.onload = () => {
+      if (layerMode === LayerMode.BehindLayer && overlayCanvas) {
+        const overlayCtx = overlayCanvas.getContext('2d');
+        if (overlayCtx) {
+          overlayCtx.clearRect(0, 0, 520, 520);
+          overlayCtx.drawImage(image, 0, 0, 520, 520);
         }
-      };
-      image.src = $drawingImage;
-    }
+      } else if (layerMode === LayerMode.FrontLayer && backgroundCanvas) {
+        const bgCtx = backgroundCanvas.getContext('2d');
+        if (bgCtx) {
+          bgCtx.clearRect(0, 0, 520, 520);
+          bgCtx.drawImage(image, 0, 0, 520, 520);
+          if (context) {
+            context.drawImage(image, 0, 0, 520, 520);
+          }
+        }
+      }
+    };
+    image.src = $drawingImage;
   });
 
   onMount(() => {
     prepareContext();
 
     window.addEventListener('beforeunload', handleRoundEnd);
+
+    const removeServerEndRoundListener = ClientWebsocket.addActionListener(
+      ActionEnum.END_ROUND,
+      async () => {
+        await handleRoundEnd();
+      }
+    );
 
     const timerId = setTimeout(async () => {
       await handleRoundEnd();
@@ -387,6 +398,7 @@
     canvas.addEventListener('touchend', handleTouchEnd);
 
     return () => {
+      removeServerEndRoundListener();
       window.removeEventListener('beforeunload', handleRoundEnd);
       clearTimeout(timerId);
       if (!canvas) return;

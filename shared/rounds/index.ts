@@ -1,12 +1,12 @@
 // futz with these in playtests to find the best combo
-const PLACEHOLDER_TIMEOUT = 1;
-const SCRIBBLE_TIMEOUT = 1;
-const LINE_TIMEOUT = 1;
-const COLOR_TIMEOUT = 1;
-const DETAIL_TIMEOUT = 1;
-const NAME_TIMEOUT = 2;
-const EOTW_TIMEOUT = 1500;
-const PRESENT_TIMEOUT = 60;
+const PLACEHOLDER_TIMEOUT = 10;
+const SCRIBBLE_TIMEOUT = 30;
+const LINE_TIMEOUT = 120;
+const COLOR_TIMEOUT = 120;
+const DETAIL_TIMEOUT = 60;
+const NAME_TIMEOUT = 60;
+const EOTW_TIMEOUT = 20;
+const PRESENT_TIMEOUT = 6000;
 const VOTE_TIMEOUT = 60;
 const WINNER_TIMEOUT = 600;
 
@@ -44,7 +44,7 @@ export class ScribbleRound extends Round {
   timeout = SCRIBBLE_TIMEOUT;
   roundName = 'Scribble';
   description =
-    'draw your best scribble in one line, the more loops and crosses the better';
+    'draw your best scribble in one line, the more loops and crosses the better. Make sure you scribble A TON, others will need to make beasts out of them later.';
 }
 
 export class LineRound extends Round {

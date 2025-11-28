@@ -96,10 +96,25 @@ export class Game {
 
     // wait for timeout
     const waitForTimeout = new Promise((res) =>
-      setTimeout(res, timeout * 1000)
+      setTimeout(() => res('timeout'), timeout * 1000)
     );
     // wait till one of these finishes
-    await Promise.race([Promise.all(playerPromises), waitForTimeout]);
+    const winner = await Promise.race([
+      Promise.all(playerPromises),
+      waitForTimeout,
+    ]);
+
+    // If timeout won, we give players a grace period to respond to our EndRound signal
+    if (winner === 'timeout') {
+      this.#sendActionToAllPlayers(new Actions.EndRound());
+
+      const gracePeriod = new Promise((res) =>
+        setTimeout(() => res('grace_timeout'), 2000)
+      );
+
+      // Wait for all players to finish or grace period to end
+      await Promise.race([Promise.all(playerPromises), gracePeriod]);
+    }
 
     // cleanup listeners
     expectedActions.forEach((actionType) =>
