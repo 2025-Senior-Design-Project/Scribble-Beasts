@@ -90,7 +90,6 @@
         const bgImage = new Image();
         bgImage.onload = () => {
           bgCtx?.drawImage(bgImage, 0, 0, 520, 520);
-          context?.drawImage(bgImage, 0, 0, 520, 520);
         };
         bgImage.src = $drawingImage;
       }
@@ -252,19 +251,7 @@
     const input = event.target as HTMLInputElement;
     const text = input.value;
 
-    // For FrontLayer mode, restore the background before writing new text
-    if (layerMode === LayerMode.FrontLayer && backgroundCanvas) {
-      const bgCtx = backgroundCanvas.getContext('2d');
-      if (bgCtx) {
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        // Redraw background onto the main canvas before text
-        const imageData = bgCtx.getImageData(0, 0, 520, 520);
-        context.putImageData(imageData, 0, 0);
-      }
-    } else {
-      // For other modes, just clear normally
-      context.clearRect(0, 0, canvas.width, canvas.height);
-    }
+    context.clearRect(0, 0, canvas.width, canvas.height);
 
     const xPosition = canvas.width / 2;
     const yPosition = canvas.height - 5; // 5px from the bottom
@@ -282,7 +269,7 @@
 
     const canvasRef = canvas; // Capture canvas reference
 
-    // If FrontLayer mode, draw the background image on top before sending
+    // If FrontLayer mode, composite the background image behind before sending
     if (
       layerMode === LayerMode.FrontLayer &&
       backgroundCanvas &&
@@ -296,8 +283,12 @@
             resolve();
             return;
           }
-          // Draw the background image on top of the text/drawing
+          // Draw the background image behind the text/drawing
+          context.globalCompositeOperation = 'destination-over';
           context.drawImage(bgImage, 0, 0, 520, 520);
+          // Reset composite operation
+          context.globalCompositeOperation = 'source-over';
+
           const imageData = canvasRef.toDataURL();
           drawingImage.set(imageData);
           ClientWebsocket.sendAction(new SendDrawingAction(imageData));
@@ -360,9 +351,6 @@
         if (bgCtx) {
           bgCtx.clearRect(0, 0, 520, 520);
           bgCtx.drawImage(image, 0, 0, 520, 520);
-          if (context) {
-            context.drawImage(image, 0, 0, 520, 520);
-          }
         }
       }
     };
@@ -415,14 +403,15 @@
 <Round onRoundEnd={handleRoundEnd}>
   <div class="drawing-container">
     <div class="canvas-wrapper">
-      <canvas bind:this={canvas} class="drawing-canvas"><!-- --></canvas>
-      {#if layerMode === LayerMode.BehindLayer}
-        <canvas bind:this={overlayCanvas} class="overlay-canvas"
+      <div class="white-bg"><!-- --></div>
+      {#if layerMode === LayerMode.FrontLayer}
+        <canvas bind:this={backgroundCanvas} class="background-canvas"
           ><!-- --></canvas
         >
       {/if}
-      {#if layerMode === LayerMode.FrontLayer}
-        <canvas bind:this={backgroundCanvas} class="hidden-canvas"
+      <canvas bind:this={canvas} class="drawing-canvas"><!-- --></canvas>
+      {#if layerMode === LayerMode.BehindLayer}
+        <canvas bind:this={overlayCanvas} class="overlay-canvas"
           ><!-- --></canvas
         >
       {/if}
@@ -485,12 +474,12 @@
     border: 2px solid #333;
     border-radius: 8px;
     cursor: crosshair;
-    background-color: white;
     touch-action: none;
     /* Fixed internal size of 520x520, but scale visually to fit screen */
     width: 100%;
     height: 100%;
     image-rendering: pixelated;
+    z-index: 10;
   }
 
   .overlay-canvas {
@@ -504,10 +493,32 @@
     width: 100%;
     height: 100%;
     image-rendering: pixelated;
+    z-index: 20;
   }
 
-  .hidden-canvas {
-    display: none;
+  .background-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 2px solid #333;
+    border-radius: 8px;
+    pointer-events: none;
+    /* Fixed internal size of 520x520, but scale visually to fit screen */
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    z-index: 5;
+  }
+
+  .white-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    border-radius: 8px;
+    border: 2px solid #333;
   }
 
   .widget-container {

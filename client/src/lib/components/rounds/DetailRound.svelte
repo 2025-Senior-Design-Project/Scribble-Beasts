@@ -3,4 +3,4 @@
   import { LayerMode } from '../../types/LayerMode';
 </script>
 
-<DrawingRound lineType="detail" layerMode={LayerMode.BehindLayer} />
+<DrawingRound lineType="detail" layerMode={LayerMode.FrontLayer} />
