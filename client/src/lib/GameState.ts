@@ -1,5 +1,6 @@
 import {
   ActionEnum,
+  SendEOTWAction as SendEotwAction,
   type HostChangeAction,
   type JoinRoomAction,
   type PlayerListChangeAction,
@@ -10,6 +11,7 @@ import { get, writable } from 'svelte/store';
 import ClientWebsocket from './ClientWebsocket';
 import { View, navigateTo } from './Navigator';
 import { startNextRound } from './stores/roundStore';
+import { getEotwCardFromId, type EotwCard } from '@shared/eotw';
 
 export const isHost = writable(false);
 export const hostName = writable<string | undefined>(undefined);
@@ -17,23 +19,8 @@ export const playerName = writable('');
 export const roomName = writable('');
 export const currentRound = writable(0);
 export const players = writable<string[]>([]);
-export const currentDrawingImage = writable<string>(''); // Base64 encoded image to draw on
-
-const playerChange = (action: PlayerListChangeAction) => {
-  const { playerList } = action.payload;
-  players.set(playerList);
-};
-
-const hostChange = (action: HostChangeAction) => {
-  const { newHostName } = action.payload;
-  hostName.set(newHostName);
-  isHost.set(newHostName === get(playerName));
-};
-
-const drawingImageChange = (action: SendDrawingAction) => {
-  const { image } = action.payload;
-  currentDrawingImage.set(image);
-};
+export const drawingImage = writable<string>(''); // Base64 encoded image to draw on
+export const eotwCard = writable<EotwCard>();
 
 const joinRoom = (action: JoinRoomAction) => {
   const {
@@ -45,6 +32,17 @@ const joinRoom = (action: JoinRoomAction) => {
   playerName.set(playerNameValue);
   hostName.set(hostNameValue);
   navigateTo(View.LOBBY);
+};
+
+const playerChange = (action: PlayerListChangeAction) => {
+  const { playerList } = action.payload;
+  players.set(playerList);
+};
+
+const hostChange = (action: HostChangeAction) => {
+  const { newHostName } = action.payload;
+  hostName.set(newHostName);
+  isHost.set(newHostName === get(playerName));
 };
 
 const startGame = (action: StartGameAction) => {
@@ -59,12 +57,27 @@ const startGame = (action: StartGameAction) => {
   navigateTo(View.GAME);
 };
 
+const drawingImageChange = (action: SendDrawingAction) => {
+  const { image } = action.payload;
+  drawingImage.set(image);
+};
+
+const eotwChange = (action: SendEotwAction) => {
+  const { eotwId } = action.payload;
+  eotwCard.set(getEotwCardFromId(eotwId));
+};
+
 export function resetState() {
+  ClientWebsocket.removeActionListener(ActionEnum.JOIN_ROOM);
   ClientWebsocket.removeActionListener(ActionEnum.PLAYER_LIST_CHANGE);
   ClientWebsocket.removeActionListener(ActionEnum.HOST_CHANGE);
-  ClientWebsocket.removeActionListener(ActionEnum.SEND_DRAWING);
-  ClientWebsocket.removeActionListener(ActionEnum.JOIN_ROOM);
   ClientWebsocket.removeActionListener(ActionEnum.START_GAME);
+  ClientWebsocket.removeActionListener(ActionEnum.SEND_DRAWING);
+  ClientWebsocket.removeActionListener(ActionEnum.SEND_EOTW);
+  ClientWebsocket.addActionListener<JoinRoomAction>(
+    ActionEnum.JOIN_ROOM,
+    joinRoom
+  );
   ClientWebsocket.addActionListener<PlayerListChangeAction>(
     ActionEnum.PLAYER_LIST_CHANGE,
     playerChange
@@ -73,16 +86,16 @@ export function resetState() {
     ActionEnum.HOST_CHANGE,
     hostChange
   );
+  ClientWebsocket.addActionListener<StartGameAction>(
+    ActionEnum.START_GAME,
+    startGame
+  );
   ClientWebsocket.addActionListener<SendDrawingAction>(
     ActionEnum.SEND_DRAWING,
     drawingImageChange
   );
-  ClientWebsocket.addActionListener<JoinRoomAction>(
-    ActionEnum.JOIN_ROOM,
-    joinRoom
-  );
-  ClientWebsocket.addActionListener<StartGameAction>(
-    ActionEnum.START_GAME,
-    startGame
+  ClientWebsocket.addActionListener<SendEotwAction>(
+    ActionEnum.SEND_EOTW,
+    eotwChange
   );
 }

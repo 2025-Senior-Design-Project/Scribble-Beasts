@@ -114,11 +114,9 @@ export class SendDrawingAction extends Action<{ image: Base64URLString }> {
     super(ActionEnum.SEND_DRAWING, { image });
   }
 }
-// TODO: make etow a custom card object with art and desc info
-// update the payload type accordingly
-export class SendEOTWAction extends Action<{ eotw: string }> {
-  constructor(eotw: string) {
-    super(ActionEnum.SEND_EOTW, { eotw });
+export class SendEOTWAction extends Action<{ eotwId: number }> {
+  constructor(eotwId: number) {
+    super(ActionEnum.SEND_EOTW, { eotwId });
   }
 }
 export class SendPresenterChangeAction extends Action<{
@@ -139,11 +137,12 @@ export class SendPresenterEndAction extends Action<{}> {
   }
 }
 export class SendVoteAction extends Action<{
-  first: string; // player who had the best
-  second?: string; // second best (might only be 2 players)
-  third?: string; // third best (might only be 3 players)
+  // all are string[] in the case of ties
+  first: string[]; // player who had the best
+  second?: string[]; // second best (might only be 2 players)
+  third?: string[]; // third best (might only be 3 players)
 }> {
-  constructor(first: string, second: string, third: string) {
+  constructor(first: string[], second: string[], third: string[]) {
     super(ActionEnum.SEND_VOTE, { first, second, third });
   }
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { currentDrawingImage } from '../../GameState';
+  import { drawingImage } from '../../GameState';
   import { SendDrawingAction, ActionEnum } from '@shared/actions';
   import ClientWebsocket from '../../ClientWebsocket';
   import { roundStore, endCurrentRound } from '../../stores/roundStore';
@@ -72,36 +72,36 @@
       overlayCanvas.height = 520;
 
       // Load and draw the overlay image immediately
-      if ($currentDrawingImage) {
+      if ($drawingImage) {
         const overlayCtx = overlayCanvas.getContext('2d');
         const overlayImage = new Image();
         overlayImage.onload = () => {
           overlayCtx?.drawImage(overlayImage, 0, 0, 520, 520);
         };
-        overlayImage.src = $currentDrawingImage;
+        overlayImage.src = $drawingImage;
       }
     } else if (layerMode === LayerMode.FrontLayer && backgroundCanvas) {
       // In FrontLayer mode, store the background image separately
       backgroundCanvas.width = 520;
       backgroundCanvas.height = 520;
 
-      if ($currentDrawingImage) {
+      if ($drawingImage) {
         const bgCtx = backgroundCanvas.getContext('2d');
         const bgImage = new Image();
         bgImage.onload = () => {
           bgCtx?.drawImage(bgImage, 0, 0, 520, 520);
           context?.drawImage(bgImage, 0, 0, 520, 520);
         };
-        bgImage.src = $currentDrawingImage;
+        bgImage.src = $drawingImage;
       }
     } else if (layerMode === LayerMode.SameLayer) {
       // For SameLayer, draw the previous image as the base
-      if ($currentDrawingImage) {
+      if ($drawingImage) {
         const image = new Image();
         image.onload = () => {
           context?.drawImage(image, 0, 0, 520, 520);
         };
-        image.src = $currentDrawingImage;
+        image.src = $drawingImage;
       }
     }
 
@@ -295,7 +295,7 @@
     if (
       layerMode === LayerMode.FrontLayer &&
       backgroundCanvas &&
-      $currentDrawingImage
+      $drawingImage
     ) {
       // Return a promise that resolves when the background is composited
       return new Promise<void>((resolve) => {
@@ -308,20 +308,20 @@
           // Draw the background image on top of the text/drawing
           context.drawImage(bgImage, 0, 0, 520, 520);
           const imageData = canvasRef.toDataURL();
-          currentDrawingImage.set(imageData);
+          drawingImage.set(imageData);
           ClientWebsocket.sendAction(new SendDrawingAction(imageData));
           resolve();
         };
         bgImage.onerror = () => {
           // If image fails to load, send what we have
           const imageData = canvasRef.toDataURL();
-          currentDrawingImage.set(imageData);
+          drawingImage.set(imageData);
           ClientWebsocket.sendAction(new SendDrawingAction(imageData));
           resolve();
         };
-        bgImage.src = $currentDrawingImage;
+        bgImage.src = $drawingImage;
       });
-    } else if (layerMode === LayerMode.BehindLayer && $currentDrawingImage) {
+    } else if (layerMode === LayerMode.BehindLayer && $drawingImage) {
       // For BehindLayer, draw the stored image on top before sending
       return new Promise<void>((resolve) => {
         const overlayImage = new Image();
@@ -332,36 +332,36 @@
           }
           context.drawImage(overlayImage, 0, 0, 520, 520);
           const imageData = canvasRef.toDataURL();
-          currentDrawingImage.set(imageData);
+          drawingImage.set(imageData);
           ClientWebsocket.sendAction(new SendDrawingAction(imageData));
           resolve();
         };
         overlayImage.onerror = () => {
           // If image fails to load, send what we have
           const imageData = canvasRef.toDataURL();
-          currentDrawingImage.set(imageData);
+          drawingImage.set(imageData);
           ClientWebsocket.sendAction(new SendDrawingAction(imageData));
           resolve();
         };
-        overlayImage.src = $currentDrawingImage;
+        overlayImage.src = $drawingImage;
       });
     } else {
       // For SameLayer mode, just send the canvas as-is
       const imageData = canvasRef.toDataURL();
-      currentDrawingImage.set(imageData);
+      drawingImage.set(imageData);
       ClientWebsocket.sendAction(new SendDrawingAction(imageData));
     }
   }
 
   $effect(() => {
-    if (context && $currentDrawingImage) {
+    if (context && $drawingImage) {
       const image = new Image();
       image.onload = () => {
         if (context) {
           context.drawImage(image, 0, 0, 520, 520);
         }
       };
-      image.src = $currentDrawingImage;
+      image.src = $drawingImage;
     }
   });
 

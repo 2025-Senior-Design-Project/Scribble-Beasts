@@ -6,6 +6,7 @@ import LineRound from '../components/rounds/LineRound.svelte';
 import ColorRound from '../components/rounds/ColorRound.svelte';
 import DetailRound from '../components/rounds/DetailRound.svelte';
 import NameRound from '../components/rounds/NameRound.svelte';
+import EotwRound from '../components/rounds/EotwRound.svelte';
 
 export interface RoundProps {
   onEnd?: () => void;
@@ -22,7 +23,7 @@ export const ROUND_TYPE_COMPONENT_DICT: Record<
   [RoundEnum.COLOR]: ColorRound,
   [RoundEnum.DETAIL]: DetailRound,
   [RoundEnum.NAME]: NameRound,
-  [RoundEnum.END_OF_THE_WORLD]: UnimplementedRound,
+  [RoundEnum.END_OF_THE_WORLD]: EotwRound,
   [RoundEnum.PRESENT]: UnimplementedRound,
   [RoundEnum.VOTE]: UnimplementedRound,
   [RoundEnum.WINNER]: UnimplementedRound,
