@@ -107,7 +107,7 @@ export class WinnerRound extends Round {
 
 /** All rounds in order of occurrence */
 export const Rounds: Round[] = [
-  new PlaceholderRound(),
+  // new PlaceholderRound(), // removed now that we have real rounds
   new ScribbleRound(),
   new LineRound(),
   new ColorRound(),

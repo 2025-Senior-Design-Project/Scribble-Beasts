@@ -12,6 +12,8 @@ export const enum ActionEnum {
   /* Room Actions */
   CREATE_ROOM = 'CREATE_ROOM',
   JOIN_ROOM = 'JOIN_ROOM',
+  LEAVE_ROOM = 'LEAVE_ROOM',
+  RECONNECT = 'RECONNECT',
   ROOM_ERROR = 'ROOM_ERROR',
   /* Lobby Actions */
   HOST_CHANGE = 'HOST_CHANGE',
@@ -57,7 +59,19 @@ export class JoinRoomAction extends Action<{
   }
 }
 
-class RoomErrorAction extends Action<{
+export class ReconnectAction extends Action<{ playerId: string }> {
+  constructor(playerId: string) {
+    super(ActionEnum.RECONNECT, { playerId });
+  }
+}
+
+export class LeaveRoomAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.LEAVE_ROOM, {});
+  }
+}
+
+export class RoomErrorAction extends Action<{
   nameInputMessage?: string;
   roomInputMessage?: string;
 }> {
@@ -66,19 +80,19 @@ class RoomErrorAction extends Action<{
   }
 }
 
-class HostChangeAction extends Action<{ newHostName: string }> {
+export class HostChangeAction extends Action<{ newHostName: string }> {
   constructor(newHostName: string) {
     super(ActionEnum.HOST_CHANGE, { newHostName });
   }
 }
 
-class StartGameAction extends Action<{}> {
-  constructor() {
-    super(ActionEnum.START_GAME, {});
+export class StartGameAction extends Action<{ currentRound?: number }> {
+  constructor(currentRound?: number) {
+    super(ActionEnum.START_GAME, { currentRound });
   }
 }
 
-class PlayerListChangeAction extends Action<{ playerList: string[] }> {
+export class PlayerListChangeAction extends Action<{ playerList: string[] }> {
   constructor(playerList: string[]) {
     super(ActionEnum.PLAYER_LIST_CHANGE, { playerList });
   }
@@ -90,9 +104,9 @@ export class EndRoundAction extends Action<{}> {
     super(ActionEnum.END_ROUND, {});
   }
 }
-export class StartRoundAction extends Action<{}> {
-  constructor() {
-    super(ActionEnum.START_ROUND, {});
+export class StartRoundAction extends Action<{ timeout: number }> {
+  constructor(timeout: number) {
+    super(ActionEnum.START_ROUND, { timeout });
   }
 }
 export class SendDrawingAction extends Action<{ image: Base64URLString }> {
@@ -145,6 +159,8 @@ export type AnyRoundAction =
 export type AnyAction =
   | CreateRoomAction
   | JoinRoomAction
+  | LeaveRoomAction
+  | ReconnectAction
   | RoomErrorAction
   | HostChangeAction
   | StartGameAction
@@ -155,6 +171,8 @@ export type AnyAction =
 export const Actions = {
   CreateRoom: CreateRoomAction,
   JoinRoom: JoinRoomAction,
+  LeaveRoom: LeaveRoomAction,
+  Reconnect: ReconnectAction,
   RoomError: RoomErrorAction,
   HostChange: HostChangeAction,
   StartGame: StartGameAction,
@@ -166,37 +184,61 @@ export const Actions = {
   SendVote: SendVoteAction,
 };
 
-export class ActionTarget<WebSocket, Event> {
-  #ws: WebSocket;
-  #actionListeners: Record<
-    ActionEnum,
-    ((this: WebSocket, ev: Event) => void)[]
-  > = {};
-
-  constructor(ws: WebSocket) {
-    this.#ws = ws;
-  }
-
+interface IWebSocket {
   addEventListener(
     type: string,
-    listener: (this: WebSocket, ev: Event) => void
-  ): void {
+    listener: (this: IWebSocket, ev: any) => void
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: (this: IWebSocket, ev: any) => void
+  ): void;
+  send(data: string): void;
+  close(): void;
+  removeAllListeners?(): void;
+  readyState: number;
+}
+
+interface MessageEvent {
+  data: any;
+}
+
+export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
+  #ws: T;
+  #actionListeners: Record<ActionEnum, ((this: T, ev: E) => void)[]>;
+
+  constructor(ws: T) {
+    this.#ws = ws;
+    this.#actionListeners = {} as Record<
+      ActionEnum,
+      ((this: T, ev: E) => void)[]
+    >;
+  }
+
+  setWebsocket(ws: T) {
+    this.#ws = ws;
+    // Re-attach all existing listeners to the new websocket
+    Object.values(this.#actionListeners).forEach((listeners) => {
+      listeners.forEach((listener) => {
+        this.addEventListener('message', listener);
+      });
+    });
+  }
+
+  addEventListener(type: string, listener: (this: T, ev: E) => void): void {
     this.#ws.addEventListener(type, listener);
   }
 
-  removeEventListener(
-    type: string,
-    listener: (this: WebSocket, ev: Event) => void
-  ): void {
+  removeEventListener(type: string, listener: (this: T, ev: E) => void): void {
     this.#ws.removeEventListener(type, listener);
   }
 
-  addActionListener<T extends AnyAction>(
+  addActionListener<A extends AnyAction>(
     actionType: ActionEnum,
-    listener: (action: T) => void
+    listener: (action: A) => void
   ) {
-    const actionListener = (ev: Event) => {
-      const action = ParseAction<T>(ev.data, actionType);
+    const actionListener = (ev: E) => {
+      const action = ParseAction<A>(ev.data, actionType);
       if (!action) return;
       listener(action);
     };
@@ -212,13 +254,23 @@ export class ActionTarget<WebSocket, Event> {
     this.#actionListeners[actionType].forEach((listener) => {
       this.removeEventListener('message', listener);
     });
+    delete this.#actionListeners[actionType];
   }
 
   #websocketOpen = 1;
   sendAction(action: object): void {
     const msg = JSON.stringify(action);
     if (this.#ws.readyState === this.#websocketOpen) {
-      console.log('sent:', msg);
+      // Truncate image data for logging
+      const logAction = JSON.parse(msg);
+      if (
+        logAction.type === ActionEnum.SEND_DRAWING &&
+        logAction.payload.image
+      ) {
+        logAction.payload.image =
+          logAction.payload.image.substring(0, 50) + '...';
+      }
+      console.log('sent:', JSON.stringify(logAction));
       this.#ws.send(msg);
     } else {
       console.error('WebSocket is not open. Ready state:', this.#ws.readyState);
