@@ -82,74 +82,97 @@
   }
 </script>
 
-<div>
+<div class="container">
   <form>
-    <label for="roomName">Room</label>
-    <input
-      type="text"
-      id="roomName"
-      bind:value={roomName}
-      placeholder="Enter Room Name"
-      required
-    />
-    <div class="error-text">{roomNameError}</div>
-    <label for="roomName">Name</label>
-    <input
-      type="text"
-      bind:value={playerName}
-      placeholder="Enter Your Player Name"
-      required
-    />
-    <div class="error-text">{playerNameError}</div>
-    <button
-      id="joinRoom"
-      type="submit"
-      onclick={joinRoom}
-      disabled={!inputsFilled}
-      class="mt-2 bg-blue-500 text-white p-2 rounded w-full"
-    >
-      Join Room
-    </button>
-    <button
-      id="createRoom"
-      type="submit"
-      onclick={createRoom}
-      disabled={!inputsFilled}
-      class="mt-2 bg-blue-500 text-white p-2 rounded w-full"
-    >
-      Create Room
-    </button>
+    <div class="form-group">
+      <label for="roomName">Room</label>
+      <input
+        type="text"
+        id="roomName"
+        bind:value={roomName}
+        placeholder="Enter Room Name"
+        required
+      />
+      <div class="error-text">{roomNameError}</div>
+    </div>
+    <div class="form-group">
+      <label for="playerName">Name</label>
+      <input
+        type="text"
+        id="playerName"
+        bind:value={playerName}
+        placeholder="Enter Your Player Name"
+        required
+      />
+      <div class="error-text">{playerNameError}</div>
+    </div>
+    <div class="button-group">
+      <button
+        id="joinRoom"
+        type="submit"
+        onclick={joinRoom}
+        disabled={!inputsFilled}
+      >
+        Join Room
+      </button>
+      <button
+        id="createRoom"
+        type="submit"
+        onclick={createRoom}
+        disabled={!inputsFilled}
+      >
+        Create Room
+      </button>
+    </div>
   </form>
 </div>
 
 <style>
-  form {
+  .container {
     display: flex;
-    flex-direction: column;
-    width: 15em;
-    margin: auto;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  form {
+    background-color: var(--paper-white);
+    padding: 2.5rem;
+    border-radius: 0.25rem;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    transform: rotate(-2deg);
+    width: 100%;
+    max-width: 25rem;
+  }
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    color: var(--pen-blue);
   }
   input {
-    padding: 0.7em;
-    border: 1px solid #ccc;
-    border-radius: 0.5em;
+    width: 100%;
+    padding: 0.8rem;
+    background-color: transparent;
+  }
+  .button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
   }
   button {
-    padding: 0.5em;
-    cursor: pointer;
+    flex: 1;
   }
   button:disabled {
     cursor: not-allowed;
-  }
-  input,
-  button {
-    margin-bottom: 1em;
+    opacity: 0.6;
   }
   .error-text {
-    color: red;
-    font-size: 0.8em;
-    height: 1em;
-    margin-top: -0.75em;
-    margin-bottom: 0.75em;
+    color: var(--pen-red);
+    font-size: 0.9em;
+    height: 1.2em;
+    margin-top: 0.25rem;
   }
 </style>

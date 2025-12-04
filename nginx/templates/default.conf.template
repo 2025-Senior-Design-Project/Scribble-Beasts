@@ -13,7 +13,7 @@ upstream server {
 
 server {
         listen ${NGINX_PORT};
-        server_name localhost;
+        server_name localhost scribble-beasts.com;
         access_log off;
 
         # WebSocket support for Vite HMR

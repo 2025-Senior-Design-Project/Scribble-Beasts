@@ -25,15 +25,19 @@ export abstract class ServerDrawingRound extends ServerRound {
     }
     players[players.length - 1].lastUploadedImage = firstImage;
 
-    //TODO: send image action to players to set their drawing to lastUploadedImage
+    // Send image action to players to set their drawing to lastUploadedImage
+    players
+      .filter((p) => !p.disconnected)
+      .forEach((player) => {
+        player.sendAction(new SendDrawingAction(player.lastUploadedImage));
+      });
   }
 
   roundResponseHandler(action: AnyRoundAction, player: Player): boolean {
-    // TODO: re-enable this when drawing upload is implemented
-    /*if (action.type == ActionEnum.SEND_DRAWING) {
+    if (action.type == ActionEnum.SEND_DRAWING) {
       player.lastUploadedImage = (action as SendDrawingAction).payload.image;
       return true;
-    }*/
+    }
     return false;
   }
 }
