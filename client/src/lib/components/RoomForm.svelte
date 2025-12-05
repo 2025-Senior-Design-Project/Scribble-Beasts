@@ -82,7 +82,7 @@
   }
 </script>
 
-<div class="container">
+<div>
   <form>
     <div class="form-group">
       <label for="roomName">Room</label>
@@ -128,20 +128,13 @@
 </div>
 
 <style>
-  .container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+  div {
+    display: contents;
   }
   form {
-    background-color: var(--paper-white);
-    padding: 2.5rem;
-    border-radius: 0.25rem;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-    transform: rotate(-2deg);
+    /* Styles are now handled by parent wrapper or shared */
     width: 100%;
-    max-width: 25rem;
+    /* max-width: 25rem; This will be controlled by parent */
   }
   .form-group {
     margin-bottom: 1.5rem;
