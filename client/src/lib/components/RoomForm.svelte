@@ -128,9 +128,15 @@
 </div>
 
 <style>
+  div {
+    display: contents;
+  }
   .room-form {
     transform: rotate(-2deg);
     max-width: 25rem;
+    /* Styles are now handled by parent wrapper or shared */
+    width: 100%;
+    /* max-width: 25rem; This will be controlled by parent */
   }
   .form-group {
     margin-bottom: 1.5rem;

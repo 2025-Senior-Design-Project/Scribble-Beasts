@@ -2,7 +2,7 @@
   import ClientWebsocket from './lib/ClientWebsocket';
   import { Actions } from '@shared/actions';
   import ErrorToast from './lib/components/ErrorToast.svelte';
-  import RoomForm from './lib/components/RoomForm.svelte';
+  import LandingPage from './lib/components/LandingPage.svelte';
   import Lobby from './lib/components/Lobby.svelte';
   import Game from './lib/components/Game.svelte';
   import { View, currentView, navigateTo } from './lib/Navigator';
@@ -22,7 +22,7 @@
     <button class="leave-room" on:click={leaveRoom}>Leave Room</button>
   {/if}
   {#if $currentView === View.ROOM_FORM}
-    <RoomForm />
+    <LandingPage />
   {:else if $currentView === View.LOBBY}
     <Lobby />
   {:else if $currentView === View.GAME}
