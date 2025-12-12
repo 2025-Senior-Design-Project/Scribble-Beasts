@@ -39,12 +39,12 @@
     </button>
   </nav>
 
-  <div class="paper-sheet">
-    {#if currentTab === 'play'}
-      <div class="room-form-wrapper">
-        <RoomForm />
-      </div>
-    {:else if currentTab === 'playtesting'}
+  {#if currentTab === 'play'}
+    <div class="room-form-wrapper">
+      <RoomForm />
+    </div>
+  {:else if currentTab === 'playtesting'}
+    <div class="paper-sheet">
       <div class="content playtesting">
         <h2>Next Playtest: TBD</h2>
         <p>
@@ -77,7 +77,9 @@
           </p>
         </div>
       </div>
-    {:else if currentTab === 'about'}
+    </div>
+  {:else if currentTab === 'about'}
+    <div class="paper-sheet">
       <div class="content about">
         Team Members
         <div class="team-grid">
@@ -123,7 +125,9 @@
           </div>
         </div>
       </div>
-    {:else if currentTab === 'rules'}
+    </div>
+  {:else if currentTab === 'rules'}
+    <div class="paper-sheet">
       <div class="content rules">
         <h2>Game Rules</h2>
         <p>Here is how the game works, round by round:</p>
@@ -143,8 +147,8 @@
           >
         </div>
       </div>
-    {/if}
-  </div>
+    </div>
+  {/if}
 </div>
 
 <style>
