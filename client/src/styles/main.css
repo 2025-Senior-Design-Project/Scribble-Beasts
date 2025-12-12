@@ -75,6 +75,17 @@
   --pen-red: #e74c3c;
   --paper-white: #ecf0f1;
   --grid-blue: #a9cce3;
+
+  /* Font Scaling */
+  --font-scale: 1.1;
+
+  /* Font Sizes */
+  --text-sm: calc(0.875rem * var(--font-scale));
+  --text-base: calc(1rem * var(--font-scale));
+  --text-lg: calc(1.125rem * var(--font-scale));
+  --text-xl: calc(1.25rem * var(--font-scale));
+  --text-2xl: calc(1.5rem * var(--font-scale));
+  --text-3xl: calc(1.875rem * var(--font-scale));
 }
 
 body {
@@ -84,6 +95,7 @@ body {
   background-size: 20px 20px;
   font-family: 'Children', sans-serif;
   color: var(--pen-black);
+  font-size: var(--text-base);
 }
 
 button {
@@ -94,6 +106,7 @@ button {
   border-radius: 5px;
   cursor: pointer;
   font-family: 'Children', sans-serif;
+  font-size: var(--text-base);
 }
 
 button:hover {
@@ -102,10 +115,61 @@ button:hover {
 
 input {
   border: none;
-  border-bottom: 2px solid var(--pen-black);
-  padding: 10px;
+  /* Use gradient for underline to allow descenders to overlap/go below */
+  background-image: linear-gradient(
+    to right,
+    rgba(44, 62, 80, 0.5),
+    rgba(44, 62, 80, 0.5)
+  );
+  background-size: 100% 2px;
+  background-repeat: no-repeat;
+  background-position: left bottom 10px; /* Position line higher so descenders cross it */
+  /* NOTE: Padding adjusted specifically for 'TheDogAteMyHomework' font baseline */
+  padding: 0.5rem 1rem 0rem 1rem;
   border-radius: 0;
   font-family: 'TheDogAteMyHomework', sans-serif;
   background-color: transparent;
   color: var(--pen-black);
+  font-size: var(--text-xl); /* Increased for readability and input style */
+  line-height: 2.5; /* Large line-height to prevent clipping of tall glyphs */
+}
+
+input::placeholder {
+  font-size: 85%;
+  opacity: 0.7;
+  /* Ensure placeholder doesn't clip with custom font metrics */
+  line-height: inherit;
+  vertical-align: middle;
+}
+
+/* Utility Classes */
+.flex-center-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.paper-card {
+  background-color: var(--paper-white);
+  padding: 2.5rem;
+  border-radius: 0.25rem;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  text-align: center;
+}
+
+.text-pen-red {
+  color: var(--pen-red);
+}
+
+.text-pen-blue {
+  color: var(--pen-blue);
+}
+
+.text-error {
+  color: var(--pen-red);
+  font-size: var(--text-sm);
+  height: 1.2em;
+  margin-top: 0.25rem;
 }

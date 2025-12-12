@@ -32,7 +32,8 @@
 
 <style>
   .leave-room {
-    position: absolute;
+    position: fixed;
+    z-index: 999;
     bottom: 1rem;
     right: 1rem;
     background-color: #ff0000;

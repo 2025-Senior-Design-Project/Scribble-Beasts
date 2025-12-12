@@ -552,10 +552,13 @@
   }
 
   .name-input {
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
+    /* NOTE: Padding adjusted specifically for 'TheDogAteMyHomework' font baseline */
+    padding: 0.5rem 1rem 0rem 1rem;
+    font-size: var(--text-base);
     border: 2px solid #333;
     border-radius: 4px;
     width: 200px;
+    line-height: 2.5;
+    background-image: none; /* remove global underline gradient */
   }
 </style>

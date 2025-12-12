@@ -37,13 +37,13 @@
   });
 </script>
 
-<div class="container">
-  <div class="game-card">
+<div class="flex-center-page">
+  <div class="paper-card game-card">
     {#if $roundStore}
-      <h1>{$roundStore.current.roundName}</h1>
+      <h1 class="text-pen-red">{$roundStore.current.roundName}</h1>
 
       {#if $roundStore.ongoing}
-        <h3>{$roundStore.current.description}</h3>
+        <h3 class="text-pen-blue">{$roundStore.current.description}</h3>
 
         <div class="round-content">
           <svelte:component
@@ -60,28 +60,14 @@
 </div>
 
 <style>
-  .container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-  }
   .game-card {
-    background-color: var(--paper-white);
-    padding: 2.5rem;
-    border-radius: 0.25rem;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
     transform: rotate(-1deg);
-    width: 100%;
     max-width: 50rem;
-    text-align: center;
   }
   h1 {
-    color: var(--pen-red);
     margin-bottom: 0.5rem;
   }
   h3 {
-    color: var(--pen-blue);
     margin-bottom: 1.5rem;
   }
   .round-content {

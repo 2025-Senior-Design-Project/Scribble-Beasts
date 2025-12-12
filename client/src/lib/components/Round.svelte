@@ -77,7 +77,7 @@
   }
 
   .timer {
-    font-size: 1.2rem;
+    font-size: var(--text-xl);
     font-weight: bold;
   }
 </style>

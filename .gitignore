@@ -143,3 +143,6 @@ vite.config.ts.timestamp-*
 # server tsconfig weirdness
 server/local.tsconfig.json
 shared/actions/index.d.ts
+
+# macOS system files
+.DS_Store
