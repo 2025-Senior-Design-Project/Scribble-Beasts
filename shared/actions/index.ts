@@ -87,9 +87,12 @@ export class HostChangeAction extends Action<{ newHostName: string }> {
   }
 }
 
-export class StartGameAction extends Action<{ currentRound?: number }> {
-  constructor(currentRound?: number) {
-    super(ActionEnum.START_GAME, { currentRound });
+export class StartGameAction extends Action<{
+  currentRound?: number;
+  timer?: number;
+}> {
+  constructor(currentRound?: number, timer?: number) {
+    super(ActionEnum.START_GAME, { currentRound, timer });
   }
 }
 

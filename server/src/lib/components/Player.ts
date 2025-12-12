@@ -35,7 +35,12 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
     this.setWebsocket(ws);
 
     if (room.game) {
-      this.sendAction(new Actions.StartGame(room.game.currentRoundNumber));
+      this.sendAction(
+        new Actions.StartGame(
+          room.game.currentRoundNumber,
+          room.game.getRemainingTime()
+        )
+      );
       this.sendAction(
         new Actions.SendDrawing(room.game.playerDrawings[this.id])
       );

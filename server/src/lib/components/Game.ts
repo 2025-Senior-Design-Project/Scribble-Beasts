@@ -17,6 +17,7 @@ export class Game {
   roundsLeft: ServerRound[];
   currentRound: ServerRound | undefined;
   currentRoundNumber: number = 0;
+  roundStartTime: number = 0;
   players: Player[];
   playerDrawings: Record<string, string> = {};
   constructor(
@@ -37,6 +38,7 @@ export class Game {
   async nextRound() {
     this.currentRound = this.roundsLeft.shift();
     this.currentRoundNumber++;
+    this.roundStartTime = Date.now();
 
     if (this.currentRound === undefined) {
       return this.endGame();
@@ -135,5 +137,12 @@ export class Game {
 
   endGame() {
     this.#backToLobby();
+  }
+
+  getRemainingTime(): number {
+    if (!this.currentRound) return 0;
+    const timeout = (this.currentRound as unknown as Round).timeout;
+    const elapsed = (Date.now() - this.roundStartTime) / 1000;
+    return Math.max(0, Math.floor(timeout - elapsed));
   }
 }

@@ -59,12 +59,12 @@ const hostChange = (action: HostChangeAction) => {
 };
 
 const startGame = (action: StartGameAction) => {
-  const { currentRound } = action.payload;
+  const { currentRound, timer } = action.payload;
   if (currentRound) {
     for (let i = 0; i < currentRound; i++) {
       // This is a hack to get the round store to the correct round
       // TODO: make this better
-      startNextRound(0);
+      startNextRound(i === currentRound - 1 && timer ? timer : 0);
     }
   }
   navigateTo(View.GAME);

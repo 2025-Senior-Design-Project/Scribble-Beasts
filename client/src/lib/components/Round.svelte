@@ -21,9 +21,20 @@
 
   // Handle server-initiated round ends and timer tick
   onMount(() => {
-    const enableButtonTimer = setTimeout(() => {
+    const currentState = get(roundStore);
+    const elapsed = currentState.current.timeout - currentState.timeLeft;
+    // 5 second anti-spam delay
+    const remainingDelay = 5000 - elapsed * 1000;
+
+    let enableButtonTimer: ReturnType<typeof setTimeout> | undefined;
+
+    if (remainingDelay <= 0) {
       canClickDone = true;
-    }, 5000);
+    } else {
+      enableButtonTimer = setTimeout(() => {
+        canClickDone = true;
+      }, remainingDelay);
+    }
 
     ClientWebsocket.addActionListener(ActionEnum.END_ROUND, handleEnd);
 
