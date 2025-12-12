@@ -1,7 +1,8 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { Actions, type AnyRoundAction } from '@shared/actions';
 import ClientWebsocket from '../ClientWebsocket';
 import { Round, Rounds } from '@shared/rounds';
+import { everyoneDoneExceptYou } from '../GameState';
 
 export interface RoundState {
   number: number;
@@ -18,10 +19,12 @@ export const roundStore = writable<RoundState>({
 });
 
 export function endCurrentRound(action?: AnyRoundAction) {
-  roundStore.update((state) => ({
-    ...state,
-    ongoing: false,
-  }));
+  if (!get(everyoneDoneExceptYou)) {
+    roundStore.update((state) => ({
+      ...state,
+      ongoing: false,
+    }));
+  }
 
   ClientWebsocket.sendAction(action ?? new Actions.EndRound());
 }

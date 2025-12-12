@@ -11,6 +11,8 @@
     onRoundEnd: () => Promise<void> | void;
   } = $props();
 
+  let canClickDone = $state(false);
+
   async function handleEnd() {
     // Let the round send its end action (same for timeout or button click)
     await onRoundEnd();
@@ -19,6 +21,10 @@
 
   // Handle server-initiated round ends and timer tick
   onMount(() => {
+    const enableButtonTimer = setTimeout(() => {
+      canClickDone = true;
+    }, 5000);
+
     ClientWebsocket.addActionListener(ActionEnum.END_ROUND, handleEnd);
 
     // Initialize timer when round becomes active
@@ -46,6 +52,7 @@
       clearInterval(interval);
       unsubscribe();
       ClientWebsocket.removeActionListener(ActionEnum.END_ROUND);
+      clearTimeout(enableButtonTimer);
     };
   });
 
@@ -58,12 +65,20 @@
     <div class="timer">{$roundStore?.timeLeft ?? 0}s</div>
 
     {#if !$roundStore?.current.hideButton}
-      <button onclick={handleEnd}>Done</button>
+      <button
+        onclick={handleEnd}
+        disabled={!canClickDone}
+        class:hidden-until-active={!canClickDone}>Done</button
+      >
     {/if}
   </div>
 </div>
 
 <style>
+  .hidden-until-active {
+    opacity: 0.1;
+    cursor: not-allowed;
+  }
   .round-container {
     display: flex;
     flex-direction: column;

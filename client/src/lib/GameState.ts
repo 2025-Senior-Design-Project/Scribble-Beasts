@@ -6,8 +6,10 @@ import {
   type PlayerListChangeAction,
   type SendDrawingAction,
   type StartGameAction,
+  type PlayerDoneAction,
+  type StartRoundAction,
 } from '@shared/actions';
-import { get, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 import ClientWebsocket from './ClientWebsocket';
 import { View, navigateTo } from './Navigator';
 import { startNextRound } from './stores/roundStore';
@@ -19,6 +21,17 @@ export const playerName = writable('');
 export const roomName = writable('');
 export const currentRound = writable(0);
 export const players = writable<string[]>([]);
+export const playersDone = writable<string[]>([]);
+export const everyoneDoneExceptYou = derived(
+  [playersDone, players, playerName],
+  ([$playersDone, $players, $playerName]) => {
+    const otherPlayers = $players.filter((p) => p !== $playerName);
+    return (
+      otherPlayers.length > 0 &&
+      otherPlayers.every((p) => $playersDone.includes(p))
+    );
+  }
+);
 export const drawingImage = writable<string>(''); // Base64 encoded image to draw on
 export const eotwCard = writable<EotwCard>();
 
@@ -67,6 +80,15 @@ const eotwChange = (action: SendEotwAction) => {
   eotwCard.set(getEotwCardFromId(eotwId));
 };
 
+const playerDone = (action: PlayerDoneAction) => {
+  const { playerName } = action.payload;
+  playersDone.update((done) => [...done, playerName]);
+};
+
+const resetPlayersDone = (_action: StartRoundAction) => {
+  playersDone.set([]);
+};
+
 export function resetState() {
   ClientWebsocket.removeActionListener(ActionEnum.JOIN_ROOM);
   ClientWebsocket.removeActionListener(ActionEnum.PLAYER_LIST_CHANGE);
@@ -74,6 +96,9 @@ export function resetState() {
   ClientWebsocket.removeActionListener(ActionEnum.START_GAME);
   ClientWebsocket.removeActionListener(ActionEnum.SEND_DRAWING);
   ClientWebsocket.removeActionListener(ActionEnum.SEND_EOTW);
+  ClientWebsocket.removeActionListener(ActionEnum.PLAYER_DONE);
+  ClientWebsocket.removeActionListener(ActionEnum.START_ROUND);
+
   ClientWebsocket.addActionListener<JoinRoomAction>(
     ActionEnum.JOIN_ROOM,
     joinRoom
@@ -97,5 +122,13 @@ export function resetState() {
   ClientWebsocket.addActionListener<SendEotwAction>(
     ActionEnum.SEND_EOTW,
     eotwChange
+  );
+  ClientWebsocket.addActionListener<PlayerDoneAction>(
+    ActionEnum.PLAYER_DONE,
+    playerDone
+  );
+  ClientWebsocket.addActionListener<StartRoundAction>(
+    ActionEnum.START_ROUND,
+    resetPlayersDone
   );
 }

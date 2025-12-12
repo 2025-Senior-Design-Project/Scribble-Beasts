@@ -28,6 +28,7 @@ export const enum ActionEnum {
   PRESENTER_START = 'PRESENTER_START',
   PRESENTER_END = 'PRESENTER_END',
   SEND_VOTE = 'VOTE_ROUND',
+  PLAYER_DONE = 'PLAYER_DONE',
 }
 
 class Action<Payload> {
@@ -147,12 +148,19 @@ export class SendVoteAction extends Action<{
   }
 }
 
+export class PlayerDoneAction extends Action<{ playerName: string }> {
+  constructor(playerName: string) {
+    super(ActionEnum.PLAYER_DONE, { playerName });
+  }
+}
+
 export type AnyRoundAction =
   | EndRoundAction
   | StartRoundAction
   | SendDrawingAction
   | SendEOTWAction
-  | SendVoteAction;
+  | SendVoteAction
+  | PlayerDoneAction;
 
 // Type for any action
 export type AnyAction =
@@ -181,6 +189,7 @@ export const Actions = {
   SendDrawing: SendDrawingAction,
   SendETOW: SendEOTWAction,
   SendVote: SendVoteAction,
+  PlayerDone: PlayerDoneAction,
 };
 
 interface IWebSocket {

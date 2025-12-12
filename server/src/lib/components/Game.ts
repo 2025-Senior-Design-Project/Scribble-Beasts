@@ -78,6 +78,11 @@ export class Game {
                 ).payload.image;
               }
               if (roundHandler(action, p)) {
+                this.players.forEach((other) => {
+                  if (other.id !== p.id) {
+                    other.sendAction(new Actions.PlayerDone(p.name));
+                  }
+                });
                 res(true);
               }
             })
@@ -88,6 +93,11 @@ export class Game {
             (action) => {
               roundHandler(action, p);
               // end round is for unimplemented rounds
+              this.players.forEach((other) => {
+                if (other.id !== p.id) {
+                  other.sendAction(new Actions.PlayerDone(p.name));
+                }
+              });
               res(true);
             }
           );
