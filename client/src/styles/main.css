@@ -89,6 +89,7 @@
 }
 
 body {
+  margin: 0;
   background-color: var(--paper-white);
   background-image: linear-gradient(var(--grid-blue) 1px, transparent 1px),
     linear-gradient(to right, var(--grid-blue) 1px, var(--paper-white) 1px);

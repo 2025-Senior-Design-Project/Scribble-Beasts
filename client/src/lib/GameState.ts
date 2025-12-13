@@ -32,7 +32,7 @@ export const everyoneDoneExceptYou = derived(
     );
   }
 );
-export const drawingImage = writable<string>(''); // Base64 encoded image to draw on
+export const drawingImage = writable<string>(''); // Base64url encoded image to draw on
 export const eotwCard = writable<EotwCard>();
 
 const joinRoom = (action: JoinRoomAction) => {
@@ -60,6 +60,7 @@ const hostChange = (action: HostChangeAction) => {
 
 const startGame = (action: StartGameAction) => {
   const { currentRound, timer } = action.payload;
+  // sometimes the player may reconnect mid-game, so we need to fast-forward the round store
   if (currentRound) {
     for (let i = 0; i < currentRound; i++) {
       // This is a hack to get the round store to the correct round

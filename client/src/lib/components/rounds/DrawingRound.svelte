@@ -231,6 +231,8 @@
     shouldDraw = false;
   }
 
+  // Picks up the pen and puts it down sporadically with a random opacity each time
+  // This mimics the jagged look of graphite on paper
   function scribbleStutter(x: number, y: number) {
     if (!context) return;
 
