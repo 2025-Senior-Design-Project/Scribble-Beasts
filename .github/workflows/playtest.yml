@@ -13,8 +13,6 @@ env:
   COMPOSE_PROJECT_NAME: scribblebeasts
   # Define the registry and owner for tagging images
   REGISTRY: ghcr.io
-  # GitHub repository owner (lowercased in the workflow steps) is needed
-  # We will determine this dynamically
 
 jobs:
   # Job to lint the codebase
@@ -34,15 +32,11 @@ jobs:
         run: npm install
 
       - name: Run Linter
-        run: echo "todo enable linter"
-        # TODO: npm run lint
+        run: npm run lint
 
-  # Job to build the Docker images, run integration tests, and push to GHCR
+  # Job to build the Docker images and run integration tests
   integration-test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write # Required to push images to GHCR
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -72,21 +66,41 @@ jobs:
           echo "All critical services started successfully!"
 
       - name: Tear down services
-        # We tear down but keep the images so we can push them
+        if: always()
         run: docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.playtest.yml down
 
-      # Login to GitHub Container Registry (only on push to main)
+  # Job to push the Docker images to GHCR (only on push to main)
+  publish:
+    runs-on: ubuntu-latest
+    needs: integration-test
+    # TEMPORARY: Publish on all branches for testing. Uncomment the line below to restrict to main branch later.
+    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write # Required to push images to GHCR
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        # Needed for Docker Compose variable substitution during build
+        run: cp .env.example .env
+
+      # Re-build images to ensure we have them locally for pushing
+      # Docker caching might speed this up if layers match
+      - name: Build images
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.playtest.yml build
+
       - name: Log in to the Container registry
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Tag and Push images (only on push to main)
       - name: Tag and Push Docker images
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && true
         run: |
           # Convert owner to lowercase for Docker tags
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
@@ -102,13 +116,13 @@ jobs:
 
           echo "Pushing images with tag: $VERSION_TAG"
 
-          # Tag Client
+          # Tag and Push Client
           docker tag scribblebeasts-client:latest $CLIENT_IMAGE:latest
           docker tag scribblebeasts-client:latest $CLIENT_IMAGE:$VERSION_TAG
           docker push $CLIENT_IMAGE:latest
           docker push $CLIENT_IMAGE:$VERSION_TAG
 
-          # Tag Server
+          # Tag and Push Server
           docker tag scribblebeasts-server:latest $SERVER_IMAGE:latest
           docker tag scribblebeasts-server:latest $SERVER_IMAGE:$VERSION_TAG
           docker push $SERVER_IMAGE:latest
