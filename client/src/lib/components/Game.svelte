@@ -52,7 +52,6 @@
           />
         </div>
       {:else}
-        <!-- TODO: add check if ended from timeout or button for diff message -->
         <p>Great job! Wait for everyone else to finish :D</p>
       {/if}
     {/if}

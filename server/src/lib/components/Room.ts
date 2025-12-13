@@ -5,8 +5,6 @@ import { handleRoomless } from '../scripts/roomless-handler';
 
 export const Rooms: Record<string, Room> = {};
 
-const DISCONNECT_TIMEOUT = 5 * 60 * 1000; // 5 minutes
-
 export class Room {
   name: string;
   host: Host;
@@ -62,14 +60,16 @@ export class Room {
   disconnectPlayer(playerName: string): void {
     const player = this.players[playerName];
     if (player) {
-      player.disconnected = true;
-      this.playerListChanged();
       console.log(`Player ${playerName} disconnected from room ${this.name}.`);
-      setTimeout(() => {
-        if (player.disconnected) {
-          this.removePlayer(playerName);
-        }
-      }, DISCONNECT_TIMEOUT);
+
+      player.handleDisconnect(() => {
+        console.log(
+          `Player ${playerName} was removed from room ${this.name} because they were disconnected for too long.`
+        );
+        this.removePlayer(playerName);
+      });
+
+      this.playerListChanged();
     }
   }
 

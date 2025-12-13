@@ -7,12 +7,15 @@ import { Room } from './Room';
 export const BLANK_PIXEL =
   'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
 
+const DISCONNECT_TIMEOUT = 3 * 60 * 1000; // 3 minutes
+
 export class Player extends ActionTarget<WebSocket, MessageEvent> {
   id: string;
   name: string;
   #ws: WebSocket;
   isHost: boolean = false;
   disconnected: boolean = false;
+  disconnectTimeout: ReturnType<typeof setTimeout> | undefined;
   lastUploadedImage: string; // base64encoded url
 
   constructor(name: string, ws: WebSocket) {
@@ -30,7 +33,29 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
     return this.#ws;
   }
 
+  handleDisconnect(callback: () => void) {
+    this.disconnected = true;
+    if (this.disconnectTimeout) {
+      clearTimeout(this.disconnectTimeout);
+    }
+    this.disconnectTimeout = setTimeout(() => {
+      if (this.disconnected) {
+        callback();
+      }
+    }, DISCONNECT_TIMEOUT);
+  }
+
   reconnect(ws: WebSocket, room: Room) {
+    // clean up old websocket listeners to avoid race conditions
+    this.getWebSocket().removeAllListeners();
+    this.getWebSocket().close();
+
+    // clear disconnect timeout if it exists
+    if (this.disconnectTimeout) {
+      clearTimeout(this.disconnectTimeout);
+      this.disconnectTimeout = undefined;
+    }
+
     this.disconnected = false;
     this.setWebsocket(ws);
 
