@@ -1,5 +1,4 @@
 import {
-  ServerPlaceholderRound,
   ServerEndOfTheWorldRound,
   ServerWinnerRound,
 } from './ConfirmationRounds';
@@ -17,7 +16,6 @@ import { Game } from '../Game';
 
 export function initializeRounds(game: Game): ServerRound[] {
   return [
-    // new ServerPlaceholderRound(game), // removed now that we have real rounds
     new ServerScribbleRound(game),
     new ServerLineRound(game),
     new ServerColorRound(game),

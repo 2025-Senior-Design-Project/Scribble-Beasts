@@ -1,0 +1,114 @@
+name: Playtest CI
+
+# Triggers the workflow on push or pull request events for the main branch
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+env:
+  # Set a consistent project name so Docker Compose generates predictable image names
+  # Images will be named: scribblebeasts-client, scribblebeasts-server, etc.
+  COMPOSE_PROJECT_NAME: scribblebeasts
+  # Define the registry and owner for tagging images
+  REGISTRY: ghcr.io
+  # GitHub repository owner (lowercased in the workflow steps) is needed
+  # We will determine this dynamically
+
+jobs:
+  # Job to lint the codebase
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Linter
+        run: echo "todo: enable linter" #npm run lint
+
+  # Job to build the Docker images, run integration tests, and push to GHCR
+  integration-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Required to push images to GHCR
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: cp .env.example .env
+
+      # Build and start the services using Docker Compose
+      # We build the images here. They will be tagged as scribblebeasts-client, scribblebeasts-server
+      - name: Start services (Build & Test)
+        env:
+          TUNNEL_TOKEN: ${{ secrets.TUNNEL_TOKEN }}
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.playtest.yml up --build --detach
+
+      - name: Wait for services to initialize
+        run: sleep 20
+
+      # Verify critical services are up
+      - name: Check service status
+        run: |
+          echo "Checking status of services..."
+          docker compose ps
+          if [ $(docker compose ps -q client | wc -l) -eq 0 ]; then echo "Client service failed to start"; exit 1; fi
+          if [ $(docker compose ps -q server | wc -l) -eq 0 ]; then echo "Server service failed to start"; exit 1; fi
+          if [ $(docker compose ps -q nginx | wc -l) -eq 0 ]; then echo "Nginx service failed to start"; exit 1; fi
+          echo "All critical services started successfully!"
+
+      - name: Tear down services
+        # We tear down but keep the images so we can push them
+        run: docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.playtest.yml down
+
+      # Login to GitHub Container Registry (only on push to main)
+      - name: Log in to the Container registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tag and Push images (only on push to main)
+      - name: Tag and Push Docker images
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          # Convert owner to lowercase for Docker tags
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+
+          # Define image names
+          CLIENT_IMAGE="$REGISTRY/$OWNER/$REPO_NAME-client"
+          SERVER_IMAGE="$REGISTRY/$OWNER/$REPO_NAME-server"
+
+          # Get short SHA for version tagging
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          VERSION_TAG="v-${SHORT_SHA}"
+
+          echo "Pushing images with tag: $VERSION_TAG"
+
+          # Tag Client
+          docker tag scribblebeasts-client:latest $CLIENT_IMAGE:latest
+          docker tag scribblebeasts-client:latest $CLIENT_IMAGE:$VERSION_TAG
+          docker push $CLIENT_IMAGE:latest
+          docker push $CLIENT_IMAGE:$VERSION_TAG
+
+          # Tag Server
+          docker tag scribblebeasts-server:latest $SERVER_IMAGE:latest
+          docker tag scribblebeasts-server:latest $SERVER_IMAGE:$VERSION_TAG
+          docker push $SERVER_IMAGE:latest
+          docker push $SERVER_IMAGE:$VERSION_TAG
