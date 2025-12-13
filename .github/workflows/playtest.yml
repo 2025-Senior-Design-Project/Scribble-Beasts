@@ -34,7 +34,8 @@ jobs:
         run: npm install
 
       - name: Run Linter
-        run: echo "todo: enable linter" #npm run lint
+        run: echo "todo: enable linter" 
+        # TODO: npm run lint
 
   # Job to build the Docker images, run integration tests, and push to GHCR
   integration-test:
