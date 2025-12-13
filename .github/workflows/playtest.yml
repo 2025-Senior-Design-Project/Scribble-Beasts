@@ -86,7 +86,7 @@ jobs:
 
       # Tag and Push images (only on push to main)
       - name: Tag and Push Docker images
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && true
         run: |
           # Convert owner to lowercase for Docker tags
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
