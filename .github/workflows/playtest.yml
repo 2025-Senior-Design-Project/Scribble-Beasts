@@ -76,8 +76,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     needs: [integration-test, lint]
-    # TEMPORARY: Publish on all branches for testing. Uncomment the line below to restrict to main branch later.
-    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event.pull_request.merged == true
     permissions:
       contents: read
       packages: write # Required to push images to GHCR

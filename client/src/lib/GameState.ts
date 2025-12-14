@@ -12,7 +12,7 @@ import {
 import { derived, get, writable } from 'svelte/store';
 import ClientWebsocket from './ClientWebsocket';
 import { View, navigateTo } from './Navigator';
-import { startNextRound } from './stores/roundStore';
+import { startNextRound, jumpToRound } from './stores/roundStore';
 import { getEotwCardFromId, type EotwCard } from '@shared/eotw';
 
 export const isHost = writable(false);
@@ -62,11 +62,7 @@ const startGame = (action: StartGameAction) => {
   const { currentRound, timer } = action.payload;
   // sometimes the player may reconnect mid-game, so we need to fast-forward the round store
   if (currentRound) {
-    for (let i = 0; i < currentRound; i++) {
-      // This is a hack to get the round store to the correct round
-      // TODO: make this better
-      startNextRound(i === currentRound - 1 && timer ? timer : 0);
-    }
+    jumpToRound(currentRound - 1, timer || 0);
   }
   navigateTo(View.GAME);
 };

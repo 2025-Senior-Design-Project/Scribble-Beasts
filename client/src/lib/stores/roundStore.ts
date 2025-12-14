@@ -38,3 +38,33 @@ export function startNextRound(timeout: number) {
     timeLeft: timeout,
   }));
 }
+
+export function jumpToRound(roundNumber: number, timeout: number) {
+  roundStore.update((state) => {
+    let current = Rounds[roundNumber];
+    let actualRoundNumber = roundNumber;
+
+    if (!current) {
+      if (roundNumber < 0) {
+        // set to first round
+        current = Rounds[0];
+        actualRoundNumber = 0;
+      } else {
+        // set to last round
+        current = Rounds[Rounds.length - 1];
+        actualRoundNumber = Rounds.length - 1;
+      }
+      console.log(
+        `Round ${roundNumber} is out of bounds. Jumping to round ${actualRoundNumber}.`
+      );
+    }
+
+    return {
+      ...state,
+      ongoing: true,
+      number: actualRoundNumber,
+      current,
+      timeLeft: timeout,
+    };
+  });
+}
