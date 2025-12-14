@@ -17,6 +17,8 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        - REPO_URL
     volumes:
       - ./client:/app
       - ./shared:/shared
@@ -34,6 +36,8 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+      args:
+        - REPO_URL
     volumes:
       - ./server:/app
       - ./server/docker.tsconfig.json:/app/tsconfig.json

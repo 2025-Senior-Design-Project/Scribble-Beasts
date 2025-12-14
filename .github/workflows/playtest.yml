@@ -13,6 +13,8 @@ env:
   COMPOSE_PROJECT_NAME: scribblebeasts
   # Define the registry and owner for tagging images
   REGISTRY: ghcr.io
+  # Define the repository URL for linking packages
+  REPO_URL: https://github.com/${{ github.repository }}
 
 jobs:
   # Job to lint the codebase
