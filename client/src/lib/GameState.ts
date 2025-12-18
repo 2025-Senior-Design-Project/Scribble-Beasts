@@ -8,6 +8,7 @@ import {
   type StartGameAction,
   type PlayerDoneAction,
   type StartRoundAction,
+  SendPresenterChangeAction,
 } from '@shared/actions';
 import { derived, get, writable } from 'svelte/store';
 import ClientWebsocket from './ClientWebsocket';
@@ -17,6 +18,7 @@ import { getEotwCardFromId, type EotwCard } from '@shared/eotw';
 
 export const isHost = writable(false);
 export const hostName = writable<string | undefined>(undefined);
+export const presenterName = writable<string | undefined>(undefined);
 export const playerName = writable('');
 export const roomName = writable('');
 export const currentRound = writable(0);
@@ -72,6 +74,11 @@ const drawingImageChange = (action: SendDrawingAction) => {
   drawingImage.set(image);
 };
 
+const presenterChange = (action: SendPresenterChangeAction) => {
+  const { newPresenter } = action.payload;
+  presenterName.set(newPresenter);
+};
+
 const eotwChange = (action: SendEotwAction) => {
   const { eotwId } = action.payload;
   eotwCard.set(getEotwCardFromId(eotwId));
@@ -119,6 +126,10 @@ export function resetState() {
   ClientWebsocket.addActionListener<SendEotwAction>(
     ActionEnum.SEND_EOTW,
     eotwChange
+  );
+  ClientWebsocket.addActionListener<SendPresenterChangeAction>(
+    ActionEnum.PRESENTER_CHANGE,
+    presenterChange
   );
   ClientWebsocket.addActionListener<PlayerDoneAction>(
     ActionEnum.PLAYER_DONE,

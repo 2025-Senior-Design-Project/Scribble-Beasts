@@ -1,19 +1,9 @@
 <script lang="ts">
   import Round from '../Round.svelte';
-  import { drawingImage, presenterName, playerName } from '../../GameState';
-  import ClientWebsocket from '../../ClientWebsocket';
-  import { ActionEnum } from '@shared/actions';
+  import { drawingImage } from '../../GameState';
 
   async function handleRoundEnd() {
     // base function will already send end round action for us
-  }
-
-  function endPresentation() {
-    // send presenter end action
-    ClientWebsocket.sendAction({
-      type: ActionEnum.PRESENTER_END,
-      payload: {},
-    });
   }
 
   function downloadImage() {
@@ -31,7 +21,6 @@
 <Round onRoundEnd={handleRoundEnd}>
   <div class="presentation-container">
     {#if $drawingImage}
-      <p>Presenter: {$presenterName}</p>
       <img
         src={$drawingImage}
         alt="Final Scribble Beast"
@@ -40,11 +29,6 @@
       <button class="download-btn" on:click={downloadImage}>
         Download Image
       </button>
-      {#if $presenterName === $playerName}
-        <button class="download-btn" on:click={endPresentation}>
-          End Presentation
-        </button>
-      {/if}
     {:else}
       <p>No image to display D:</p>
     {/if}

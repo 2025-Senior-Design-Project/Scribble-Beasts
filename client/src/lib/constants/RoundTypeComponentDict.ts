@@ -8,6 +8,7 @@ import DetailRound from '../components/rounds/DetailRound.svelte';
 import NameRound from '../components/rounds/NameRound.svelte';
 import EotwRound from '../components/rounds/EotwRound.svelte';
 import PresentationRound from '../components/rounds/PresentationRound.svelte';
+import VoteRound from '../components/rounds/VoteRound.svelte';
 
 export interface RoundProps {
   onEnd?: () => void;
@@ -26,6 +27,6 @@ export const ROUND_TYPE_COMPONENT_DICT: Record<
   [RoundEnum.NAME]: NameRound,
   [RoundEnum.END_OF_THE_WORLD]: EotwRound,
   [RoundEnum.PRESENT]: PresentationRound,
-  [RoundEnum.VOTE]: UnimplementedRound,
+  [RoundEnum.VOTE]: VoteRound,
   [RoundEnum.WINNER]: UnimplementedRound,
 } as const;

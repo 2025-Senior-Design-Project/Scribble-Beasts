@@ -7,7 +7,7 @@ import { Player } from '../Player';
 export class ServerVoteRound extends Mixin(ServerRound, VoteRound) {
   expectedActions = [ActionEnum.SEND_VOTE];
 
-  setup(): void {
+  setup(players: Player[]): void {
     // TODO: initalize vote tracking structures
   }
 
