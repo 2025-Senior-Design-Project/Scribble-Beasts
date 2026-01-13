@@ -1,5 +1,4 @@
 import {
-  ServerPlaceholderRound,
   ServerEndOfTheWorldRound,
   ServerWinnerRound,
 } from './ConfirmationRounds';
@@ -17,7 +16,6 @@ import { Game } from '../Game';
 
 export function initializeRounds(game: Game): ServerRound[] {
   return [
-    new ServerPlaceholderRound(game), //TODO: remove placeholder round once drawing added
     new ServerScribbleRound(game),
     new ServerLineRound(game),
     new ServerColorRound(game),

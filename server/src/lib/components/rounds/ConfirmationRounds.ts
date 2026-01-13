@@ -1,4 +1,8 @@
-import { ActionEnum, AnyRoundAction } from '@shared/actions';
+import {
+  ActionEnum,
+  AnyRoundAction,
+  SendEOTWAction as SendEotwAction,
+} from '@shared/actions';
 import {
   EndOfTheWorldRound,
   PlaceholderRound,
@@ -7,11 +11,12 @@ import {
 import { ServerRound } from './ServerRound';
 import { Player } from '../Player';
 import { Mixin } from 'ts-mixer';
+import { getRandomEotwCard } from '@shared/eotw';
 
 export abstract class ServerConfirmationRound extends ServerRound {
   expectedActions = [ActionEnum.END_ROUND];
 
-  setup(): void {
+  setup(players: Player[]): void {
     // most confirmation rounds don't need setup
   }
 
@@ -30,8 +35,13 @@ export class ServerEndOfTheWorldRound extends Mixin(
   ServerConfirmationRound,
   EndOfTheWorldRound
 ) {
-  setup(): void {
-    // TODO: roll eotw card
+  setup(players: Player[]): void {
+    const card = getRandomEotwCard();
+    players
+      .filter((p) => !p.disconnected)
+      .forEach((player) => {
+        player.sendAction(new SendEotwAction(card.id));
+      });
   }
 }
 

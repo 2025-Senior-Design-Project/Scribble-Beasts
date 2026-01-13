@@ -7,6 +7,7 @@ import {
   AnyAction,
   AnyRoundAction,
   EndRoundAction,
+  SendDrawingAction,
 } from '@shared/actions';
 import { Round } from '@shared/rounds';
 
@@ -15,7 +16,10 @@ export class Game {
   #backToLobby: () => void;
   roundsLeft: ServerRound[];
   currentRound: ServerRound | undefined;
+  currentRoundNumber: number = 0;
+  roundStartTime: number = 0;
   players: Player[];
+  playerDrawings: Record<string, string> = {};
   constructor(
     players: Player[],
     sendActionToAllPlayers: (action: AnyAction) => void,
@@ -33,6 +37,8 @@ export class Game {
 
   async nextRound() {
     this.currentRound = this.roundsLeft.shift();
+    this.currentRoundNumber++;
+    this.roundStartTime = Date.now();
 
     if (this.currentRound === undefined) {
       return this.endGame();
@@ -40,7 +46,9 @@ export class Game {
 
     this.currentRound.setup(this.players);
 
-    this.#sendActionToAllPlayers(new Actions.StartRound());
+    this.#sendActionToAllPlayers(
+      new Actions.StartRound((this.currentRound as unknown as Round).timeout)
+    );
 
     await this.waitForRoundEnd(
       this.currentRound.expectedActions,
@@ -60,37 +68,65 @@ export class Game {
     roundHandler: (action: AnyRoundAction, player: Player) => boolean,
     timeout: number // in seconds
   ) {
-    // wait for everyone to send back an action for this round
-    const waitForEveryoneToFinish = Promise.all(
-      this.players.map(
-        (p) =>
-          new Promise((res) => {
-            // player finished early or client timeout
-            expectedActions.forEach((actionType) =>
-              p.addActionListener<AnyRoundAction>(actionType, (action) => {
-                if (roundHandler(action, p)) {
-                  res(true);
-                }
-              })
-            );
-            // end round is for unimplemented rounds
-            p.addActionListener<EndRoundAction>(
-              ActionEnum.END_ROUND,
-              (action) => {
-                roundHandler(action, p);
-                // end round is for unimplemented rounds
+    const playerPromises = this.players.map(
+      (p) =>
+        new Promise((res) => {
+          // player finished early or client timeout
+          expectedActions.forEach((actionType) =>
+            p.addActionListener<AnyRoundAction>(actionType, (action) => {
+              if (action.type === ActionEnum.SEND_DRAWING) {
+                this.playerDrawings[p.id] = (
+                  action as SendDrawingAction
+                ).payload.image;
+              }
+              if (roundHandler(action, p)) {
+                this.players.forEach((other) => {
+                  if (other.id !== p.id) {
+                    other.sendAction(new Actions.PlayerDone(p.name));
+                  }
+                });
                 res(true);
               }
-            );
-          })
-      )
+            })
+          );
+          // end round is for unimplemented rounds
+          p.addActionListener<EndRoundAction>(
+            ActionEnum.END_ROUND,
+            (action) => {
+              roundHandler(action, p);
+              // end round is for unimplemented rounds
+              this.players.forEach((other) => {
+                if (other.id !== p.id) {
+                  other.sendAction(new Actions.PlayerDone(p.name));
+                }
+              });
+              res(true);
+            }
+          );
+        })
     );
+
     // wait for timeout
     const waitForTimeout = new Promise((res) =>
-      setTimeout(res, timeout * 1000)
+      setTimeout(() => res('timeout'), timeout * 1000)
     );
     // wait till one of these finishes
-    await Promise.race([waitForEveryoneToFinish, waitForTimeout]);
+    const winner = await Promise.race([
+      Promise.all(playerPromises),
+      waitForTimeout,
+    ]);
+
+    // If timeout won, we give players a grace period to respond to our EndRound signal
+    if (winner === 'timeout') {
+      this.#sendActionToAllPlayers(new Actions.EndRound());
+
+      const gracePeriod = new Promise((res) =>
+        setTimeout(() => res('grace_timeout'), 2000)
+      );
+
+      // Wait for all players to finish or grace period to end
+      await Promise.race([Promise.all(playerPromises), gracePeriod]);
+    }
 
     // cleanup listeners
     expectedActions.forEach((actionType) =>
@@ -101,5 +137,12 @@ export class Game {
 
   endGame() {
     this.#backToLobby();
+  }
+
+  getRemainingTime(): number {
+    if (!this.currentRound) return 0;
+    const timeout = (this.currentRound as unknown as Round).timeout;
+    const elapsed = (Date.now() - this.roundStartTime) / 1000;
+    return Math.max(0, Math.floor(timeout - elapsed));
   }
 }

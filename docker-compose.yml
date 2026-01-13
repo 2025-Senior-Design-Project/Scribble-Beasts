@@ -10,11 +10,15 @@ services:
       - server
     env_file:
       - .env
+    networks:
+      - scribble-net
 
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        - REPO_URL
     volumes:
       - ./client:/app
       - ./shared:/shared
@@ -25,11 +29,15 @@ services:
       - ${CLIENT_PORT}:${CLIENT_PORT}
     env_file:
       - .env
+    networks:
+      - scribble-net
 
   server:
     build:
       context: ./server
       dockerfile: Dockerfile
+      args:
+        - REPO_URL
     volumes:
       - ./server:/app
       - ./server/docker.tsconfig.json:/app/tsconfig.json
@@ -42,3 +50,9 @@ services:
       - ${SERVER_PORT}:${SERVER_PORT}
     env_file:
       - .env
+    networks:
+      - scribble-net
+
+networks:
+  scribble-net:
+    driver: bridge

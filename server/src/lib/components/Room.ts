@@ -1,6 +1,7 @@
 import { Actions, ActionEnum } from '@shared/actions';
 import { Player, Host } from './Player';
 import { Game } from './Game';
+import { handleRoomless } from '../scripts/roomless-handler';
 
 export const Rooms: Record<string, Room> = {};
 
@@ -8,6 +9,7 @@ export class Room {
   name: string;
   host: Host;
   players: Record<string, Player> = {};
+  game: Game | null = null;
 
   constructor(name: string, host: Player) {
     this.name = name;
@@ -19,9 +21,9 @@ export class Room {
   hostSetup() {
     // If host disconnects, make the next player the host (if any exist)
     this.host.addEventListener('close', () => {
-      const playerNames = Object.keys(this.players);
-      if (playerNames.length === 0) return; // No players left to become host
-      const playerToBecomeHost = this.players[playerNames[0]];
+      const connectedPlayers = this.getConnectedPlayers();
+      if (connectedPlayers.length === 0) return; // No players left to become host
+      const playerToBecomeHost = connectedPlayers[0];
       playerToBecomeHost.isHost = true;
       const newHost = playerToBecomeHost as Host;
       this.host = newHost;
@@ -47,15 +49,38 @@ export class Room {
   addPlayer(player: Player): void {
     this.players[player.name] = player;
     player.addEventListener('close', () => {
-      this.removePlayer(player.name);
+      this.disconnectPlayer(player.name);
+    });
+    player.addActionListener(ActionEnum.LEAVE_ROOM, () => {
+      this.removePlayer(player.name, false);
     });
     this.playerListChanged();
   }
 
-  removePlayer(playerName: string): void {
+  disconnectPlayer(playerName: string): void {
+    const player = this.players[playerName];
+    if (player) {
+      console.log(`Player ${playerName} disconnected from room ${this.name}.`);
+
+      player.handleDisconnect(() => {
+        console.log(
+          `Player ${playerName} was removed from room ${this.name} because they were disconnected for too long.`
+        );
+        this.removePlayer(playerName);
+      });
+
+      this.playerListChanged();
+    }
+  }
+
+  removePlayer(playerName: string, permanently: boolean = true): void {
     const playerToRemove = this.players[playerName];
     if (playerToRemove) {
-      playerToRemove.destroy();
+      if (permanently) {
+        playerToRemove.destroy();
+      } else {
+        handleRoomless(playerToRemove.getWebSocket());
+      }
       delete this.players[playerName];
       this.playerListChanged();
     }
@@ -71,7 +96,9 @@ export class Room {
 
   playerListChanged() {
     this.sendActionToAll(
-      new Actions.PlayerListChange(Object.keys(this.players))
+      new Actions.PlayerListChange(
+        this.getConnectedPlayers().map((p) => p.name)
+      )
     );
   }
 
@@ -82,18 +109,26 @@ export class Room {
   }
 
   sendActionToAll(action: any): void {
-    Object.values(this.players).forEach((player) => {
+    this.getConnectedPlayers().forEach((player) => {
       player.sendAction(action);
     });
   }
 
   startGame(): void {
     this.sendActionToAll(new Actions.StartGame());
-    const game = new Game(
+    this.game = new Game(
       Object.values(this.players),
-      this.sendActionToAll,
+      this.sendActionToAll.bind(this),
       () => {}
     );
-    game.startGame();
+    this.game.startGame();
+  }
+
+  getConnectedPlayers(): Player[] {
+    return Object.values(this.players).filter((p) => !p.disconnected);
+  }
+
+  findPlayerById(playerId: string): Player | undefined {
+    return Object.values(this.players).find((p) => p.id === playerId);
   }
 }

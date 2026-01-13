@@ -1,0 +1,566 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { drawingImage } from '../../GameState';
+  import { SendDrawingAction, ActionEnum } from '@shared/actions';
+  import ClientWebsocket from '../../ClientWebsocket';
+  import { roundStore, endCurrentRound } from '../../stores/roundStore';
+  import { LayerMode } from '../../types/LayerMode';
+  import Round from '../Round.svelte';
+
+  let {
+    lineType = 'line',
+    showWidget = false,
+    layerMode = LayerMode.BehindLayer,
+  }: {
+    lineType?: 'scribble' | 'line' | 'color' | 'detail' | 'name';
+    showWidget?: boolean;
+    layerMode?: LayerMode;
+  } = $props();
+
+  let submitted = $state(false);
+  let canvas = $state<HTMLCanvasElement>();
+  let overlayCanvas = $state<HTMLCanvasElement>();
+  let backgroundCanvas = $state<HTMLCanvasElement>();
+  let context = $state<CanvasRenderingContext2D | null>(null);
+  let shouldDraw = $state(false);
+  let timer = $state(0);
+  let randTimerMod = $state(5);
+  let selectedColor = $state('#db2828');
+  let randomFont = $state<{ name: string; size: number } | null>(null);
+
+  const COLORS = [
+    { color: 'red', value: '#db2828' },
+    { color: 'orange', value: '#f2711c' },
+    { color: 'yellow', value: '#fbbd08' },
+    { color: 'olive', value: '#b5cc18' },
+    { color: 'green', value: '#21ba45' },
+    { color: 'teal', value: '#00b5ad' },
+    { color: 'blue', value: '#2185d0' },
+    { color: 'violet', value: '#6435c9' },
+    { color: 'purple', value: '#a333c8' },
+    { color: 'pink', value: '#e03997' },
+  ];
+
+  const FONTS = [
+    { name: 'AckiPreschool', size: 30 },
+    { name: 'BrownBagLunch', size: 30 },
+    { name: 'Children', size: 30 },
+    { name: 'DadHand', size: 30 },
+    { name: 'Daniel', size: 30 },
+    { name: 'OhMaria', size: 30 },
+    { name: 'PopcornMountain', size: 30 },
+    { name: 'SchoolTeacher', size: 30 },
+    { name: 'SierraNevadaRoad', size: 30 },
+    { name: 'TheDogAteMyHomework', size: 30 },
+    { name: 'ThinPencilHandwriting', size: 30 },
+    { name: 'WCManoNegraBta', size: 30 },
+    { name: 'Yahfie', size: 30 },
+  ];
+
+  function prepareContext() {
+    if (!canvas) return;
+
+    // Set canvas to fixed 520x520 for consistent sizing across devices
+    canvas.width = 520;
+    canvas.height = lineType === 'name' ? 545 : 520;
+
+    context = canvas.getContext('2d');
+
+    // Set up overlay canvas based on layer mode
+    if (layerMode === LayerMode.BehindLayer && overlayCanvas) {
+      overlayCanvas.width = 520;
+      overlayCanvas.height = 520;
+
+      // Load and draw the overlay image immediately
+      if ($drawingImage) {
+        const overlayCtx = overlayCanvas.getContext('2d');
+        const overlayImage = new Image();
+        overlayImage.onload = () => {
+          overlayCtx?.drawImage(overlayImage, 0, 0, 520, 520);
+        };
+        overlayImage.src = $drawingImage;
+      }
+    } else if (layerMode === LayerMode.FrontLayer && backgroundCanvas) {
+      // In FrontLayer mode, store the background image separately
+      backgroundCanvas.width = 520;
+      backgroundCanvas.height = 520;
+
+      if ($drawingImage) {
+        const bgCtx = backgroundCanvas.getContext('2d');
+        const bgImage = new Image();
+        bgImage.onload = () => {
+          bgCtx?.drawImage(bgImage, 0, 0, 520, 520);
+        };
+        bgImage.src = $drawingImage;
+      }
+    }
+
+    setLineProperties();
+  }
+
+  async function setLineProperties() {
+    if (!context) return;
+
+    switch (lineType) {
+      case 'name':
+        randomFont = FONTS[Math.floor(Math.random() * FONTS.length)];
+        console.log('Selected font:', randomFont.name);
+        try {
+          await document.fonts.load(
+            `${randomFont.size}px '${randomFont.name}'`
+          );
+          context.font = `${randomFont.size}px '${randomFont.name}'`;
+        } catch (e) {
+          console.error('Font could not be loaded:', e);
+          context.font = `${randomFont.size}px sans-serif`;
+        }
+        context.fillStyle = 'black';
+        context.textAlign = 'center';
+        context.textBaseline = 'bottom';
+        break;
+      case 'color':
+        context.strokeStyle = selectedColor;
+        context.lineWidth = 15;
+        context.lineJoin = 'round';
+        context.lineCap = 'round';
+        break;
+      case 'scribble':
+        context.strokeStyle = 'rgb(0 0 0 / .02)';
+        context.lineWidth = 3;
+        context.lineJoin = 'round';
+        context.lineCap = 'round';
+        break;
+      case 'detail':
+        context.strokeStyle = 'black';
+        context.lineWidth = 4;
+        context.lineJoin = 'round';
+        context.lineCap = 'round';
+        break;
+      case 'line':
+      default:
+        context.strokeStyle = 'black';
+        context.lineWidth = 4;
+        context.lineJoin = 'round';
+        context.lineCap = 'round';
+        break;
+    }
+  }
+
+  function getScaleFactor(): number {
+    if (!canvas) return 1;
+    const rect = canvas.getBoundingClientRect();
+    return 520 / rect.width;
+  }
+
+  function handleMouseDown(event: MouseEvent) {
+    if (lineType === 'name' || event.button !== 0) return;
+    if (!context || !canvas) return;
+
+    shouldDraw = true;
+    setLineProperties();
+
+    context.beginPath();
+    const rect = canvas.getBoundingClientRect();
+    const scale = getScaleFactor();
+    context.moveTo(
+      (event.clientX - rect.left) * scale,
+      (event.clientY - rect.top) * scale
+    );
+  }
+
+  function handleMouseUp(event: MouseEvent) {
+    if (event.button === 0) {
+      shouldDraw = false;
+    }
+  }
+
+  function handleMouseMove(event: MouseEvent) {
+    if (!shouldDraw || !context || !canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scale = getScaleFactor();
+    const x = (event.clientX - rect.left) * scale;
+    const y = (event.clientY - rect.top) * scale;
+
+    context.lineTo(x, y);
+    context.stroke();
+
+    if (lineType === 'scribble') {
+      scribbleStutter(x, y);
+    }
+  }
+
+  function handleTouchStart(event: TouchEvent) {
+    if (lineType === 'name') return;
+    if (!context || !canvas) return;
+
+    event.preventDefault();
+    shouldDraw = true;
+    setLineProperties();
+
+    const touch = event.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const scale = getScaleFactor();
+    context.beginPath();
+    context.moveTo(
+      (touch.clientX - rect.left) * scale,
+      (touch.clientY - rect.top) * scale
+    );
+  }
+
+  function handleTouchMove(event: TouchEvent) {
+    if (!shouldDraw || !context || !canvas) return;
+
+    event.preventDefault();
+    const touch = event.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const scale = getScaleFactor();
+    const x = (touch.clientX - rect.left) * scale;
+    const y = (touch.clientY - rect.top) * scale;
+
+    context.lineTo(x, y);
+    context.stroke();
+
+    if (lineType === 'scribble') {
+      scribbleStutter(x, y);
+    }
+  }
+
+  function handleTouchEnd(event: TouchEvent) {
+    event.preventDefault();
+    shouldDraw = false;
+  }
+
+  // Picks up the pen and puts it down sporadically with a random opacity each time
+  // This mimics the jagged look of graphite on paper
+  function scribbleStutter(x: number, y: number) {
+    if (!context) return;
+
+    timer++;
+
+    if (timer % randTimerMod === 0) {
+      randTimerMod = Math.floor(Math.random() * 4) + 1;
+      context.strokeStyle = `rgb(0 0 0 / ${Math.random() * 0.04 + 0.01})`;
+      context.beginPath();
+      context.moveTo(x, y);
+      setTimeout(() => (shouldDraw = true), 0);
+    }
+  }
+
+  function handleTextInput(event: Event) {
+    if (!context || !canvas || !randomFont) return;
+
+    const input = event.target as HTMLInputElement;
+    const text = input.value;
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    const xPosition = canvas.width / 2;
+    const yPosition = canvas.height - 5; // 5px from the bottom
+    context.fillText(text, xPosition, yPosition);
+  }
+
+  function handleColorChange(color: string) {
+    selectedColor = color;
+    setLineProperties();
+  }
+
+  async function handleRoundEnd() {
+    if (submitted || !canvas || !context) return;
+    submitted = true;
+
+    const canvasRef = canvas; // Capture canvas reference
+
+    // If FrontLayer mode, composite the background image behind before sending
+    if (
+      layerMode === LayerMode.FrontLayer &&
+      backgroundCanvas &&
+      $drawingImage
+    ) {
+      // Return a promise that resolves when the background is composited
+      return new Promise<void>((resolve) => {
+        const bgImage = new Image();
+        bgImage.onload = () => {
+          if (!context) {
+            resolve();
+            return;
+          }
+          // Draw the background image behind the text/drawing
+          context.globalCompositeOperation = 'destination-over';
+          context.drawImage(bgImage, 0, 0, 520, 520);
+          // Reset composite operation
+          context.globalCompositeOperation = 'source-over';
+
+          const imageData = canvasRef.toDataURL();
+          drawingImage.set(imageData);
+          ClientWebsocket.sendAction(new SendDrawingAction(imageData));
+          resolve();
+        };
+        bgImage.onerror = () => {
+          // If image fails to load, send what we have
+          const imageData = canvasRef.toDataURL();
+          drawingImage.set(imageData);
+          ClientWebsocket.sendAction(new SendDrawingAction(imageData));
+          resolve();
+        };
+        bgImage.src = $drawingImage;
+      });
+    } else if (layerMode === LayerMode.BehindLayer && $drawingImage) {
+      // For BehindLayer, draw the stored image on top before sending
+      return new Promise<void>((resolve) => {
+        const overlayImage = new Image();
+        overlayImage.onload = () => {
+          if (!context) {
+            resolve();
+            return;
+          }
+          context.drawImage(overlayImage, 0, 0, 520, 520);
+          const imageData = canvasRef.toDataURL();
+          drawingImage.set(imageData);
+          ClientWebsocket.sendAction(new SendDrawingAction(imageData));
+          resolve();
+        };
+        overlayImage.onerror = () => {
+          // If image fails to load, send what we have
+          const imageData = canvasRef.toDataURL();
+          drawingImage.set(imageData);
+          ClientWebsocket.sendAction(new SendDrawingAction(imageData));
+          resolve();
+        };
+        overlayImage.src = $drawingImage;
+      });
+    } else {
+      // Fallback: just send the canvas as-is
+      const imageData = canvasRef.toDataURL();
+      drawingImage.set(imageData);
+      ClientWebsocket.sendAction(new SendDrawingAction(imageData));
+    }
+  }
+
+  $effect(() => {
+    if (!$drawingImage) return;
+
+    const image = new Image();
+    image.onload = () => {
+      if (layerMode === LayerMode.BehindLayer && overlayCanvas) {
+        const overlayCtx = overlayCanvas.getContext('2d');
+        if (overlayCtx) {
+          overlayCtx.clearRect(0, 0, 520, 520);
+          overlayCtx.drawImage(image, 0, 0, 520, 520);
+        }
+      } else if (layerMode === LayerMode.FrontLayer && backgroundCanvas) {
+        const bgCtx = backgroundCanvas.getContext('2d');
+        if (bgCtx) {
+          bgCtx.clearRect(0, 0, 520, 520);
+          bgCtx.drawImage(image, 0, 0, 520, 520);
+        }
+      }
+    };
+    image.src = $drawingImage;
+  });
+
+  onMount(() => {
+    prepareContext();
+
+    window.addEventListener('beforeunload', handleRoundEnd);
+
+    const removeServerEndRoundListener = ClientWebsocket.addActionListener(
+      ActionEnum.END_ROUND,
+      async () => {
+        await handleRoundEnd();
+      }
+    );
+
+    const timerId = setTimeout(async () => {
+      await handleRoundEnd();
+      if ($roundStore.ongoing) {
+        endCurrentRound();
+      }
+    }, $roundStore.timeLeft * 1000 - 250);
+
+    if (!canvas) return;
+
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('touchstart', handleTouchStart);
+    canvas.addEventListener('touchmove', handleTouchMove);
+    canvas.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      removeServerEndRoundListener();
+      window.removeEventListener('beforeunload', handleRoundEnd);
+      clearTimeout(timerId);
+      if (!canvas) return;
+      canvas.removeEventListener('mousedown', handleMouseDown);
+      canvas.removeEventListener('mouseup', handleMouseUp);
+      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchend', handleTouchEnd);
+    };
+  });
+</script>
+
+<Round onRoundEnd={handleRoundEnd}>
+  <div class="drawing-container">
+    <div class="canvas-wrapper">
+      <div class="white-bg"><!-- --></div>
+      {#if layerMode === LayerMode.FrontLayer}
+        <canvas bind:this={backgroundCanvas} class="background-canvas"
+          ><!-- --></canvas
+        >
+      {/if}
+      <canvas bind:this={canvas} class="drawing-canvas"><!-- --></canvas>
+      {#if layerMode === LayerMode.BehindLayer}
+        <canvas bind:this={overlayCanvas} class="overlay-canvas"
+          ><!-- --></canvas
+        >
+      {/if}
+    </div>
+
+    {#if showWidget}
+      <div class="widget-container">
+        {#if lineType === 'color'}
+          <div class="color-picker">
+            {#each COLORS as colorOption}
+              <input
+                type="radio"
+                id={colorOption.color}
+                name="color"
+                value={colorOption.value}
+                checked={selectedColor === colorOption.value}
+                onchange={() => handleColorChange(colorOption.value)}
+              />
+              <label
+                for={colorOption.color}
+                style="background-color: {colorOption.value}"><!-- --></label
+              >
+            {/each}
+          </div>
+        {:else if lineType === 'name'}
+          <input
+            type="text"
+            id="scribble-beast-name"
+            placeholder="Enter beast name..."
+            oninput={handleTextInput}
+            class="name-input"
+          />
+        {/if}
+      </div>
+    {/if}
+  </div>
+</Round>
+
+<style>
+  .drawing-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .canvas-wrapper {
+    position: relative;
+    width: min(520px, 90vw);
+    height: min(520px, 90vw);
+  }
+
+  .drawing-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 2px solid #333;
+    border-radius: 8px;
+    cursor: crosshair;
+    touch-action: none;
+    /* Fixed internal size of 520x520, but scale visually to fit screen */
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    z-index: 10;
+  }
+
+  .overlay-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 2px solid #333;
+    border-radius: 8px;
+    pointer-events: none;
+    /* Fixed internal size of 520x520, but scale visually to fit screen */
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    z-index: 20;
+  }
+
+  .background-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 2px solid #333;
+    border-radius: 8px;
+    pointer-events: none;
+    /* Fixed internal size of 520x520, but scale visually to fit screen */
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    z-index: 5;
+  }
+
+  .white-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    border-radius: 8px;
+    border: 2px solid #333;
+  }
+
+  .widget-container {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .color-picker {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .color-picker input[type='radio'] {
+    display: none;
+  }
+
+  .color-picker label {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  .color-picker input[type='radio']:checked + label {
+    border-color: #000;
+  }
+
+  .name-input {
+    /* NOTE: Padding adjusted specifically for 'TheDogAteMyHomework' font baseline */
+    padding: 0.5rem 1rem 0rem 1rem;
+    font-size: var(--text-base);
+    border: 2px solid #333;
+    border-radius: 4px;
+    width: 200px;
+    line-height: 2.5;
+    background-image: none; /* remove global underline gradient */
+  }
+</style>

@@ -1,7 +1,8 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { Actions, type AnyRoundAction } from '@shared/actions';
 import ClientWebsocket from '../ClientWebsocket';
 import { Round, Rounds } from '@shared/rounds';
+import { everyoneDoneExceptYou } from '../GameState';
 
 export interface RoundState {
   number: number;
@@ -18,20 +19,52 @@ export const roundStore = writable<RoundState>({
 });
 
 export function endCurrentRound(action?: AnyRoundAction) {
-  roundStore.update((state) => ({
-    ...state,
-    ongoing: false,
-  }));
+  if (!get(everyoneDoneExceptYou)) {
+    roundStore.update((state) => ({
+      ...state,
+      ongoing: false,
+    }));
+  }
 
   ClientWebsocket.sendAction(action ?? new Actions.EndRound());
 }
 
-export function startNextRound() {
+export function startNextRound(timeout: number) {
   roundStore.update((state) => ({
     ...state,
     ongoing: true,
     number: state.number + 1,
     current: Rounds[state.number + 1] || state.current,
-    timeLeft: Rounds[state.number + 1].timeout,
+    timeLeft: timeout,
   }));
+}
+
+export function jumpToRound(roundNumber: number, timeout: number) {
+  roundStore.update((state) => {
+    let current = Rounds[roundNumber];
+    let actualRoundNumber = roundNumber;
+
+    if (!current) {
+      if (roundNumber < 0) {
+        // set to first round
+        current = Rounds[0];
+        actualRoundNumber = 0;
+      } else {
+        // set to last round
+        current = Rounds[Rounds.length - 1];
+        actualRoundNumber = Rounds.length - 1;
+      }
+      console.log(
+        `Round ${roundNumber} is out of bounds. Jumping to round ${actualRoundNumber}.`
+      );
+    }
+
+    return {
+      ...state,
+      ongoing: true,
+      number: actualRoundNumber,
+      current,
+      timeLeft: timeout,
+    };
+  });
 }

@@ -5,8 +5,8 @@ const LINE_TIMEOUT = 120;
 const COLOR_TIMEOUT = 120;
 const DETAIL_TIMEOUT = 60;
 const NAME_TIMEOUT = 60;
-const EOTW_TIMEOUT = 15;
-const PRESENT_TIMEOUT = 60;
+const EOTW_TIMEOUT = 20;
+const PRESENT_TIMEOUT = 6000;
 const VOTE_TIMEOUT = 60;
 const WINNER_TIMEOUT = 600;
 
@@ -44,7 +44,7 @@ export class ScribbleRound extends Round {
   timeout = SCRIBBLE_TIMEOUT;
   roundName = 'Scribble';
   description =
-    'draw your best scribble in one line, the more loops and crosses the better';
+    'draw your best scribble in one line, the more loops and crosses the better. Make sure you scribble A TON, others will need to make beasts out of them later.';
 }
 
 export class LineRound extends Round {
@@ -107,7 +107,7 @@ export class WinnerRound extends Round {
 
 /** All rounds in order of occurrence */
 export const Rounds: Round[] = [
-  new PlaceholderRound(),
+  // new PlaceholderRound(), // removed now that we have real rounds
   new ScribbleRound(),
   new LineRound(),
   new ColorRound(),

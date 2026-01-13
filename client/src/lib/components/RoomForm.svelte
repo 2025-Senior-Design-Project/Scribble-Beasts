@@ -82,74 +82,79 @@
   }
 </script>
 
-<div>
-  <form>
-    <label for="roomName">Room</label>
-    <input
-      type="text"
-      id="roomName"
-      bind:value={roomName}
-      placeholder="Enter Room Name"
-      required
-    />
-    <div class="error-text">{roomNameError}</div>
-    <label for="roomName">Name</label>
-    <input
-      type="text"
-      bind:value={playerName}
-      placeholder="Enter Your Player Name"
-      required
-    />
-    <div class="error-text">{playerNameError}</div>
-    <button
-      id="joinRoom"
-      type="submit"
-      onclick={joinRoom}
-      disabled={!inputsFilled}
-      class="mt-2 bg-blue-500 text-white p-2 rounded w-full"
-    >
-      Join Room
-    </button>
-    <button
-      id="createRoom"
-      type="submit"
-      onclick={createRoom}
-      disabled={!inputsFilled}
-      class="mt-2 bg-blue-500 text-white p-2 rounded w-full"
-    >
-      Create Room
-    </button>
+<div class="flex-center-page">
+  <form class="paper-card room-form">
+    <div class="form-group">
+      <label for="roomName" class="text-pen-blue">Room</label>
+      <input
+        type="text"
+        id="roomName"
+        bind:value={roomName}
+        placeholder="Enter Room Name"
+        required
+      />
+      <div class="text-error">{roomNameError}</div>
+    </div>
+    <div class="form-group">
+      <label for="playerName" class="text-pen-blue">Name</label>
+      <input
+        type="text"
+        id="playerName"
+        bind:value={playerName}
+        placeholder="Enter Your Player Name"
+        required
+      />
+      <div class="text-error">{playerNameError}</div>
+    </div>
+    <div class="button-group">
+      <button
+        id="joinRoom"
+        type="submit"
+        onclick={joinRoom}
+        disabled={!inputsFilled}
+      >
+        Join Room
+      </button>
+      <button
+        id="createRoom"
+        type="submit"
+        onclick={createRoom}
+        disabled={!inputsFilled}
+      >
+        Create Room
+      </button>
+    </div>
   </form>
 </div>
 
 <style>
-  form {
-    display: flex;
-    flex-direction: column;
-    width: 15em;
-    margin: auto;
+  .room-form {
+    transform: rotate(-2deg);
+    max-width: 25rem;
+  }
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: var(--text-lg);
+    text-align: left;
   }
   input {
-    padding: 0.7em;
-    border: 1px solid #ccc;
-    border-radius: 0.5em;
+    width: 100%;
+    /* padding inherited from global but 100% width needed here */
+  }
+  .button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
   }
   button {
-    padding: 0.5em;
-    cursor: pointer;
+    flex: 1;
   }
   button:disabled {
     cursor: not-allowed;
-  }
-  input,
-  button {
-    margin-bottom: 1em;
-  }
-  .error-text {
-    color: red;
-    font-size: 0.8em;
-    height: 1em;
-    margin-top: -0.75em;
-    margin-bottom: 0.75em;
+    opacity: 0.6;
   }
 </style>

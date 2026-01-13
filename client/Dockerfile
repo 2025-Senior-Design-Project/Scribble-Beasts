@@ -1,4 +1,6 @@
 FROM node:24-alpine AS base
+ARG REPO_URL
+LABEL org.opencontainers.image.source=$REPO_URL
 WORKDIR /app
 COPY package*.json ./
 RUN npm install

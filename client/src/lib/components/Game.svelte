@@ -9,13 +9,15 @@
   import ClientWebsocket from '../ClientWebsocket';
   import { ROUND_TYPE_COMPONENT_DICT } from '../constants/RoundTypeComponentDict';
 
+  import type { StartRoundAction } from '@shared/actions';
+
   onMount(() => {
     const handleServerEndRound = () => {
       endCurrentRound();
     };
 
-    const handleServerStartRound = () => {
-      startNextRound();
+    const handleServerStartRound = (action: StartRoundAction) => {
+      startNextRound(action.payload.timeout);
     };
 
     ClientWebsocket.addActionListener(
@@ -35,22 +37,39 @@
   });
 </script>
 
-<div>
-  {#if $roundStore}
-    <h1>{$roundStore.current.roundName}</h1>
+<div class="flex-center-page">
+  <div class="paper-card game-card">
+    {#if $roundStore}
+      <h1 class="text-pen-red">{$roundStore.current.roundName}</h1>
 
-    {#if $roundStore.ongoing}
-      <h3>{$roundStore.current.description}</h3>
+      {#if $roundStore.ongoing}
+        <h3 class="text-pen-blue">{$roundStore.current.description}</h3>
 
-      <div class="round-content">
-        <svelte:component
-          this={ROUND_TYPE_COMPONENT_DICT[$roundStore.current.roundType]}
-          on:end={() => endCurrentRound()}
-        />
-      </div>
-    {:else}
-      <!-- TODO: add check if ended from timeout or button for diff message -->
-      <p>Great job! Wait for everyone else to finish :D</p>
+        <div class="round-content">
+          <svelte:component
+            this={ROUND_TYPE_COMPONENT_DICT[$roundStore.current.roundType]}
+            on:end={() => endCurrentRound()}
+          />
+        </div>
+      {:else}
+        <p>Great job! Wait for everyone else to finish :D</p>
+      {/if}
     {/if}
-  {/if}
+  </div>
 </div>
+
+<style>
+  .game-card {
+    transform: rotate(-1deg);
+    max-width: 50rem;
+  }
+  h1 {
+    margin-bottom: 0.5rem;
+  }
+  h3 {
+    margin-bottom: 1.5rem;
+  }
+  .round-content {
+    margin-top: 2rem;
+  }
+</style>

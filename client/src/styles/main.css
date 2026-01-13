@@ -1,2 +1,176 @@
 @plugin "flowbite/plugin";
 @source "../node_modules/flowbite";
+
+@font-face {
+  font-family: 'AckiPreschool';
+  src: url('./font/acki-preschool/AckiPreschool.ttf') format('truetype'),
+    url('./font/acki-preschool/AckiPreschool.otf') format('opentype');
+}
+@font-face {
+  font-family: 'BrownBagLunch';
+  src: url('./font/brownbaglunch/BrownBagLunch.ttf') format('truetype'),
+    url('./font/brownbaglunch/BrownBagLunch.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Children';
+  src: url('./font/children/Children.ttf') format('truetype'),
+    url('./font/children/Children.otf') format('opentype');
+}
+@font-face {
+  font-family: 'DadHand';
+  src: url('./font/dadhand/dadha___.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Daniel';
+  src: url('./font/daniel/danielfont/DanielFont.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'OhMaria';
+  src: url('./font/ohmaria/OhMaria.ttf') format('truetype'),
+    url('./font/ohmaria/OhMaria.otf') format('opentype');
+}
+@font-face {
+  font-family: 'PopcornMountain';
+  src: url('./font/popcorn-mountain/Popcorn_Mountain--Standard.otf')
+      format('opentype'),
+    url('./font/popcorn-mountain/Popcorn_Mountain--Standard.ttf')
+      format('truetype');
+}
+@font-face {
+  font-family: 'SchoolTeacher';
+  src: url('./font/school-teacher/SchoolTeacher-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'SierraNevadaRoad';
+  src: url('./font/sierra-nevada-road/SierraNevadaRoad.otf') format('opentype'),
+    url('./font/sierra-nevada-road/SierraNevadaRoad.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'TheDogAteMyHomework';
+  src: url('./font/the-dog-ate-my-homework/TheDogAteMyHomework.otf')
+      format('opentype'),
+    url('./font/the-dog-ate-my-homework/TheDogAteMyHomework.ttf')
+      format('truetype');
+}
+@font-face {
+  font-family: 'ThinPencilHandwriting';
+  src: url('./font/thin-pencil-handwriting/Thin Pencil Handwriting.otf')
+      format('opentype'),
+    url('./font/thin-pencil-handwriting/Thin Pencil Handwriting.ttf')
+      format('truetype');
+}
+@font-face {
+  font-family: 'WCManoNegraBta';
+  src: url('./font/wc-mano-negra-bta/WCManoNegraBta.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Yahfie';
+  src: url('./font/yahfie/Yahfie-Normal.ttf') format('truetype'),
+    url('./font/yahfie/Yahfie-Normal.otf') format('opentype');
+}
+
+:root {
+  --pen-black: #2c3e50;
+  --pen-blue: #3498db;
+  --pen-red: #e74c3c;
+  --paper-white: #ecf0f1;
+  --grid-blue: #a9cce3;
+
+  /* Font Scaling */
+  --font-scale: 1.1;
+
+  /* Font Sizes */
+  --text-sm: calc(0.875rem * var(--font-scale));
+  --text-base: calc(1rem * var(--font-scale));
+  --text-lg: calc(1.125rem * var(--font-scale));
+  --text-xl: calc(1.25rem * var(--font-scale));
+  --text-2xl: calc(1.5rem * var(--font-scale));
+  --text-3xl: calc(1.875rem * var(--font-scale));
+}
+
+body {
+  margin: 0;
+  background-color: var(--paper-white);
+  background-image: linear-gradient(var(--grid-blue) 1px, transparent 1px),
+    linear-gradient(to right, var(--grid-blue) 1px, var(--paper-white) 1px);
+  background-size: 20px 20px;
+  font-family: 'Children', sans-serif;
+  color: var(--pen-black);
+  font-size: var(--text-base);
+}
+
+button {
+  background-color: var(--pen-blue);
+  color: var(--paper-white);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: 'Children', sans-serif;
+  font-size: var(--text-base);
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+input {
+  border: none;
+  /* Use gradient for underline to allow descenders to overlap/go below */
+  background-image: linear-gradient(
+    to right,
+    rgba(44, 62, 80, 0.5),
+    rgba(44, 62, 80, 0.5)
+  );
+  background-size: 100% 2px;
+  background-repeat: no-repeat;
+  background-position: left bottom 10px; /* Position line higher so descenders cross it */
+  /* NOTE: Padding adjusted specifically for 'TheDogAteMyHomework' font baseline */
+  padding: 0.5rem 1rem 0rem 1rem;
+  border-radius: 0;
+  font-family: 'TheDogAteMyHomework', sans-serif;
+  background-color: transparent;
+  color: var(--pen-black);
+  font-size: var(--text-xl); /* Increased for readability and input style */
+  line-height: 2.5; /* Large line-height to prevent clipping of tall glyphs */
+}
+
+input::placeholder {
+  font-size: 85%;
+  opacity: 0.7;
+  /* Ensure placeholder doesn't clip with custom font metrics */
+  line-height: inherit;
+  vertical-align: middle;
+}
+
+/* Utility Classes */
+.flex-center-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.paper-card {
+  background-color: var(--paper-white);
+  padding: 2.5rem;
+  border-radius: 0.25rem;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  text-align: center;
+}
+
+.text-pen-red {
+  color: var(--pen-red);
+}
+
+.text-pen-blue {
+  color: var(--pen-blue);
+}
+
+.text-error {
+  color: var(--pen-red);
+  font-size: var(--text-sm);
+  height: 1.2em;
+  margin-top: 0.25rem;
+}
