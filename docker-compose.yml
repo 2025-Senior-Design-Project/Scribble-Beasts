@@ -15,13 +15,13 @@ services:
 
   client:
     build:
-      context: ./client
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: client/Dockerfile
       args:
         - REPO_URL
     volumes:
-      - ./client:/app
-      - ./shared:/shared
+      - ./client:/app/client
+      - ./shared:/app/shared
       - /app/node_modules
     environment:
       - PORT=${CLIENT_PORT}
@@ -34,14 +34,14 @@ services:
 
   server:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/Dockerfile
       args:
         - REPO_URL
     volumes:
-      - ./server:/app
-      - ./server/docker.tsconfig.json:/app/tsconfig.json
-      - ./server/tsconfig.json:/app/local.tsconfig.json
+      - ./server:/app/server
+      - ./server/docker.tsconfig.json:/app/server/tsconfig.json
+      - ./server/tsconfig.json:/app/server/local.tsconfig.json
       - ./shared:/app/shared
       - /app/node_modules
     environment:

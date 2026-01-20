@@ -1,0 +1,27 @@
+# fly.toml app configuration file generated for scribble-beasts-server on 2026-01-20T12:42:16-05:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'scribble-server-jazmo'
+primary_region = 'ord'
+
+[env]
+  SERVER_PORT = "5001"
+  NGINX_PORT = "80"
+
+[build]
+  dockerfile = 'server/Dockerfile'
+
+[http_service]
+  internal_port = 5001
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '512mb'
+  cpus = 1
+  memory_mb = 512

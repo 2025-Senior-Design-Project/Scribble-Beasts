@@ -1,6 +1,6 @@
 import express from 'express';
 import { WebSocket, WebSocketServer } from 'ws';
-import { handleNewConnection } from './lib/scripts/roomless-handler';
+import { handleNewConnection } from './lib/scripts/roomless-handler.js';
 
 const app = express();
 if (!process.env.SERVER_PORT) {
@@ -12,7 +12,7 @@ const SERVER_PORT = process.env.SERVER_PORT;
 const httpServer = app.listen(SERVER_PORT, () => {
   console.log(`Server is running at http://localhost:${SERVER_PORT}/`);
   console.log(
-    `Ngnix is running at http://localhost:${process.env.NGINX_PORT}/`
+    `Ngnix is running at http://localhost:${process.env.NGINX_PORT}/`,
   );
 });
 

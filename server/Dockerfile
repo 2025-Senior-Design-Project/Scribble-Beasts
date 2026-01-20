@@ -1,22 +1,50 @@
-FROM node:24-alpine AS base
-ARG REPO_URL
-LABEL org.opencontainers.image.source=$REPO_URL
+FROM node:20-alpine AS base
 WORKDIR /app
+
+# Copy root package.json and workspace configuration
 COPY package*.json ./
+
+# Copy server package.json and config
+COPY server/package*.json ./server/
+COPY server/tsconfig.json ./server/
+
+# Copy shared package
+COPY shared/ ./shared/
+
+# Install dependencies for the workspace
 RUN npm install
-COPY . .
+
+# Copy source code
+COPY server/src ./server/src
+COPY server/shared ./server/shared
 
 FROM base AS development
-EXPOSE ${SERVER_PORT:-5000}
+WORKDIR /app/server
+EXPOSE 5001
 CMD ["npm", "run", "dev"]
 
 FROM base AS builder
-CMD ["npm", "run", "build"]
-
-FROM node:16-alpine AS production
 WORKDIR /app
-COPY package*.json ./
-RUN npm install --production
-COPY --from=builder /app/dist ./dist
-EXPOSE ${SERVER_PORT:-5000}
-CMD ["npm", "start"]
+# Build server and shared dependencies
+RUN npm run build:server
+
+FROM node:20-alpine AS production
+WORKDIR /app
+
+# Copy server package.json
+COPY --from=builder /app/server/package*.json ./
+
+# Install production dependencies directly
+RUN npm install --omit=dev
+
+# Copy built artifacts
+COPY --from=builder /app/server/dist ./dist
+
+# Environment variables
+ENV NODE_ENV=production
+ENV PORT=5001
+
+EXPOSE 5001
+
+# The start command needs to point to the correct file in dist
+CMD ["node", "dist/server/src/index.js"]
