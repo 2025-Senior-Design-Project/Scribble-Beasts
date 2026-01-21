@@ -8,6 +8,11 @@ if (!process.env.SERVER_PORT) {
 }
 const SERVER_PORT = process.env.SERVER_PORT;
 
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.send('OK');
+});
+
 // Create HTTP server
 const httpServer = app.listen(SERVER_PORT, () => {
   console.log(`Server is running at http://localhost:${SERVER_PORT}/`);

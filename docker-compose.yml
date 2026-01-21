@@ -5,9 +5,17 @@ services:
       - ${NGINX_PORT}:${NGINX_PORT}
     volumes:
       - ./nginx/templates:/etc/nginx/templates:ro
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:${NGINX_PORT}/']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     depends_on:
-      - client
-      - server
+      client:
+        condition: service_healthy
+      server:
+        condition: service_healthy
     env_file:
       - .env
     networks:
@@ -27,6 +35,13 @@ services:
       - PORT=${CLIENT_PORT}
     ports:
       - ${CLIENT_PORT}:${CLIENT_PORT}
+    healthcheck:
+      test:
+        ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:${CLIENT_PORT}/']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     env_file:
       - .env
     networks:
@@ -48,6 +63,13 @@ services:
       - PORT=${SERVER_PORT}
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
+    healthcheck:
+      test:
+        ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:${SERVER_PORT}/']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     env_file:
       - .env
     networks:

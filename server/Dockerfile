@@ -16,7 +16,6 @@ RUN npm install
 
 # Copy source code
 COPY server/src ./server/src
-COPY server/shared ./server/shared
 
 FROM base AS development
 WORKDIR /app/server
