@@ -2,56 +2,22 @@
   import RoomForm from './RoomForm.svelte';
   import { Rounds } from '@shared/rounds';
   import { currentSubRoute, navigateToPath } from '../Navigator';
-  import { cubicOut, cubicIn } from 'svelte/easing';
   import { tick } from 'svelte';
 
-  function throwIn(node: HTMLElement, { duration = 800 }) {
-    return {
-      duration,
-      css: (t: number) => {
-        const eased = cubicOut(t);
-        // Use lower offsets to help prevent scrollbars if viewport is tight
-        const x = 300 * (1 - eased);
-        const y = -300 * (1 - eased);
-        return `
-					transform: translate(${x}px, ${y}px);
-					opacity: ${t};
-				`;
-      },
-    };
-  }
-
   /**
-   * Animation for the old panel leaving:
-   * 1. Turns slightly dark as the new page appears (t: 1.0 -> 0.5)
-   * 2. Falls away smoothly (t: 0.5 -> 0.0)
+   * Bridges Svelte's transition system with pure CSS classes.
+   * We must use JS to coordinate with Svelte's lifecycle (knowing when to remove the element),
+   * but the animation itself is defined and executed entirely in CSS.
    */
-  function fallOut(node: HTMLElement, { duration = 1200 }) {
+  function useCssAnimation(
+    node: HTMLElement,
+    { duration, cls }: { duration: number; cls: string },
+  ) {
+    // Add the class that triggers the CSS animation
+    node.classList.add(cls);
+
     return {
       duration,
-      css: (t: number) => {
-        let y = 0;
-        let opacity = 1;
-        let brightness = 1;
-
-        if (t > 0.5) {
-          // Phase 1: Stay & Darken (0.5 of duration)
-          const progress = (1 - t) / 0.5;
-          brightness = 1 - progress * 0.2; // Fade to 80% brightness
-        } else {
-          // Phase 2: Fall & Fade (0.5 of duration)
-          const progress = (0.5 - t) / 0.5;
-          brightness = 0.8;
-          y = progress * 100; // Fall away
-          opacity = 1 - progress;
-        }
-
-        return `
-					transform: translateY(${y}px);
-					opacity: ${opacity};
-          filter: brightness(${brightness});
-				`;
-      },
     };
   }
 
@@ -69,7 +35,7 @@
 
   // Improved scroll handler
   const handleScroll = () => {
-    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
     isScrolled = scrollY > 5;
   };
 
@@ -125,8 +91,8 @@
     {#key $currentSubRoute}
       <div
         class="transition-wrapper"
-        in:throwIn={{ duration: 800 }}
-        out:fallOut={{ duration: 1200 }}
+        in:useCssAnimation={{ duration: 800, cls: 'animate-throw-in' }}
+        out:useCssAnimation={{ duration: 1200, cls: 'animate-fall-out' }}
       >
         {#if $currentSubRoute === 'play'}
           <div class="room-form-wrapper">
@@ -252,25 +218,33 @@
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
-    padding: 0 2rem 2rem 2rem;
+    padding: 0 0 2rem 0;
     box-sizing: border-box;
   }
 
   .content-viewport {
     margin-top: 6rem; /* Space for the sticky nav */
     width: 100%;
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-areas: 'stack';
+    justify-items: center;
+    align-items: start;
     position: relative;
     min-height: 500px;
   }
 
+  :global(body) {
+    overflow-x: hidden;
+  }
+
   .transition-wrapper {
-    position: absolute;
+    grid-area: stack;
     width: 100%;
     display: flex;
     justify-content: center;
     pointer-events: none;
+    padding: 0 2rem;
+    box-sizing: border-box;
   }
 
   .transition-wrapper > * {
@@ -454,5 +428,45 @@
 
   .round-item p {
     margin: 0;
+  }
+
+  /* Keyframes for page transitions */
+  @keyframes throwIn {
+    0% {
+      transform: translate(300px, -300px) rotate(10deg);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(0, 0) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fallOut {
+    0% {
+      transform: translateY(0);
+      opacity: 1;
+      filter: brightness(1);
+    }
+    50% {
+      transform: translateY(0);
+      opacity: 1;
+      filter: brightness(0.8);
+    }
+    100% {
+      transform: translateY(100px);
+      opacity: 0;
+      filter: brightness(0.8);
+    }
+  }
+
+  /* Utility classes to apply the animations */
+  /* Using :global ensures Svelte doesn't prune these as "unused" since they are added via JS */
+  :global(.animate-throw-in) {
+    animation: throwIn 0.8s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+  }
+
+  :global(.animate-fall-out) {
+    animation: fallOut 1.2s linear forwards;
   }
 </style>
