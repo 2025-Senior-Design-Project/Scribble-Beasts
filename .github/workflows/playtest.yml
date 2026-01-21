@@ -69,11 +69,10 @@ jobs:
         if: always()
         run: docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.playtest.yml down
 
-  # Job to deploy to Fly.io (only on push to main)
+  # Job to deploy to Fly.io
   deploy:
     runs-on: ubuntu-latest
     needs: [integration-test, lint]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
