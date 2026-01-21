@@ -37,11 +37,9 @@
         alt="Final Scribble Beast"
         class="drawing-image"
       />
-      <button class="download-btn" on:click={downloadImage}>
-        Download Image
-      </button>
+      <button class="btn" on:click={downloadImage}> Download Image </button>
       {#if $presenterName === $playerName}
-        <button class="download-btn" on:click={endPresentation}>
+        <button class="btn" on:click={endPresentation}>
           End Presentation
         </button>
       {/if}
@@ -78,7 +76,7 @@
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2);
   }
 
-  .download-btn {
+  .btn {
     padding: 12px 24px;
     font-family: 'AckiPreschool', sans-serif;
     font-size: 1.5rem;
