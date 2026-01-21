@@ -2,6 +2,58 @@
   import RoomForm from './RoomForm.svelte';
   import { Rounds } from '@shared/rounds';
   import { currentSubRoute, navigateToPath } from '../Navigator';
+  import { cubicOut, cubicIn } from 'svelte/easing';
+  import { tick } from 'svelte';
+
+  function throwIn(node: HTMLElement, { duration = 800 }) {
+    return {
+      duration,
+      css: (t: number) => {
+        const eased = cubicOut(t);
+        // Use lower offsets to help prevent scrollbars if viewport is tight
+        const x = 300 * (1 - eased);
+        const y = -300 * (1 - eased);
+        return `
+					transform: translate(${x}px, ${y}px);
+					opacity: ${t};
+				`;
+      },
+    };
+  }
+
+  /**
+   * Animation for the old panel leaving:
+   * 1. Turns slightly dark as the new page appears (t: 1.0 -> 0.5)
+   * 2. Falls away smoothly (t: 0.5 -> 0.0)
+   */
+  function fallOut(node: HTMLElement, { duration = 1200 }) {
+    return {
+      duration,
+      css: (t: number) => {
+        let y = 0;
+        let opacity = 1;
+        let brightness = 1;
+
+        if (t > 0.5) {
+          // Phase 1: Stay & Darken (0.5 of duration)
+          const progress = (1 - t) / 0.5;
+          brightness = 1 - progress * 0.2; // Fade to 80% brightness
+        } else {
+          // Phase 2: Fall & Fade (0.5 of duration)
+          const progress = (0.5 - t) / 0.5;
+          brightness = 0.8;
+          y = progress * 100; // Fall away
+          opacity = 1 - progress;
+        }
+
+        return `
+					transform: translateY(${y}px);
+					opacity: ${opacity};
+          filter: brightness(${brightness});
+				`;
+      },
+    };
+  }
 
   let showPlaytestInfo = $state(false);
   let isScrolled = $state(false);
@@ -15,24 +67,29 @@
     navigateToPath(path);
   }
 
-  $effect(() => {
-    const handleScroll = () => {
-      isScrolled = window.scrollY > 20;
-    };
+  // Improved scroll handler
+  const handleScroll = () => {
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+    isScrolled = scrollY > 5;
+  };
 
+  $effect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   });
 
   $effect(() => {
     // Scroll to top whenever the subroute changes
     if ($currentSubRoute) {
-      window.scrollTo({ top: 0, behavior: 'instant' });
+      tick().then(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
     }
   });
 </script>
 
-<div class="landing-container">
+<div class="landing-container relative">
   <nav class:scrolled={isScrolled}>
     <a
       href="/"
@@ -64,116 +121,129 @@
     </a>
   </nav>
 
-  {#if $currentSubRoute === 'play'}
-    <div class="room-form-wrapper">
-      <RoomForm />
-    </div>
-  {:else if $currentSubRoute === 'playtesting'}
-    <div class="paper-sheet">
-      <div class="content playtesting">
-        <h2>Next Playtest: TBD</h2>
-        <p>
-          Join our <a
-            href="https://discord.gg/BQ4JUh8fCE"
-            target="_blank"
-            rel="noopener noreferrer">Discord Server</a
-          > to participate! (That's where we host everything)
-        </p>
+  <div class="content-viewport">
+    {#key $currentSubRoute}
+      <div
+        class="transition-wrapper"
+        in:throwIn={{ duration: 800 }}
+        out:fallOut={{ duration: 1200 }}
+      >
+        {#if $currentSubRoute === 'play'}
+          <div class="room-form-wrapper">
+            <RoomForm />
+          </div>
+        {:else if $currentSubRoute === 'playtesting'}
+          <div class="paper-sheet">
+            <div class="content playtesting">
+              <h2>Next Playtest: TBD</h2>
+              <p>
+                Join our <a
+                  href="https://discord.gg/BQ4JUh8fCE"
+                  target="_blank"
+                  rel="noopener noreferrer">Discord Server</a
+                > to participate! (That's where we host everything)
+              </p>
 
-        <h3>
-          Alpha Playtesters <button
-            class="info-btn"
-            onclick={togglePlaytestInfo}
-            aria-label="What is alpha playtesting?">?</button
-          >
-        </h3>
-        {#if showPlaytestInfo}
-          <div class="info-tooltip">
-            Alpha is an early stage of development where the whole game isn't
-            finished and just core mechanics are being tested.
+              <h3>
+                Alpha Playtesters <button
+                  class="info-btn"
+                  onclick={togglePlaytestInfo}
+                  aria-label="What is alpha playtesting?">?</button
+                >
+              </h3>
+              {#if showPlaytestInfo}
+                <div class="info-tooltip">
+                  Alpha is an early stage of development where the whole game
+                  isn't finished and just core mechanics are being tested.
+                </div>
+              {/if}
+
+              <div class="playtesters-list">
+                <p class="empty-message">
+                  Thank you to everyone who has playtested so far, we'll compile
+                  your names here at a later date. You guys are integral to
+                  making this game fun and deserve credit for it :D
+                </p>
+              </div>
+            </div>
+          </div>
+        {:else if $currentSubRoute === 'about'}
+          <div class="paper-sheet">
+            <div class="content about">
+              Team Members
+              <div class="team-grid">
+                <div class="team-member">
+                  <h3>Ethan Chaplin</h3>
+                </div>
+                <div class="team-member center">
+                  <h3>Jasmine Mogadam</h3>
+                </div>
+                <div class="team-member">
+                  <h3>Ana Cedillo</h3>
+                </div>
+              </div>
+
+              <div class="project-info">
+                <p>
+                  This is our <a
+                    href="https://github.com/2025-Senior-Design-Project/Scribble-Beasts"
+                    target="_blank">UC Senior Design Project</a
+                  >.
+                </p>
+
+                <div class="achievement">
+                  <p>We placed 2nd in the Innovation Challenge!</p>
+                  <img
+                    src="/images/about/IC.jpeg"
+                    alt="Jasmine holding a comically large check"
+                  />
+                </div>
+
+                <div class="b-roll">
+                  <img
+                    src="/images/about/demo.jpeg"
+                    alt="Jasmine demoing the game"
+                  />
+                </div>
+
+                <div class="origin-story">
+                  <p>
+                    This game started as a physical card game in Jasmine's
+                    "Intro to Game Design" class at UC.
+                  </p>
+                  <a href="/files/ogRules.pdf" target="_blank" class="pdf-link"
+                    >View Original Physical Game Rules (PDF)</a
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        {:else if $currentSubRoute === 'rules'}
+          <div class="paper-sheet">
+            <div class="content rules">
+              <h2>Game Rules</h2>
+              <p>Here is how the game works, round by round:</p>
+
+              <div class="rounds-list">
+                {#each Rounds as round}
+                  <div class="round-item">
+                    <h3>{round.roundName}</h3>
+                    <p>{round.description}</p>
+                  </div>
+                {/each}
+              </div>
+
+              <div class="pdf-section">
+                <a href="/files/ogRules.pdf" target="_blank" class="pdf-link"
+                  >View Original Physical Card Game Rules</a
+                >
+              </div>
+            </div>
           </div>
         {/if}
-
-        <div class="playtesters-list">
-          <p class="empty-message">
-            Thank you to everyone who has playtested so far, we'll compile your
-            names here at a later date. You guys are integral to making this
-            game fun and deserve credit for it :D
-          </p>
-        </div>
       </div>
-    </div>
-  {:else if $currentSubRoute === 'about'}
-    <div class="paper-sheet">
-      <div class="content about">
-        Team Members
-        <div class="team-grid">
-          <div class="team-member">
-            <h3>Ethan Chaplin</h3>
-          </div>
-          <div class="team-member center">
-            <h3>Jasmine Mogadam</h3>
-          </div>
-          <div class="team-member">
-            <h3>Ana Cedillo</h3>
-          </div>
-        </div>
-
-        <div class="project-info">
-          <p>
-            This is our <a
-              href="https://github.com/2025-Senior-Design-Project/Scribble-Beasts"
-              target="_blank">UC Senior Design Project</a
-            >.
-          </p>
-
-          <div class="achievement">
-            <p>We placed 2nd in the Innovation Challenge!</p>
-            <img
-              src="/images/about/IC.jpeg"
-              alt="Jasmine holding a comically large check"
-            />
-          </div>
-
-          <div class="b-roll">
-            <img src="/images/about/demo.jpeg" alt="Jasmine demoing the game" />
-          </div>
-
-          <div class="origin-story">
-            <p>
-              This game started as a physical card game in Jasmine's "Intro to
-              Game Design" class at UC.
-            </p>
-            <a href="/files/ogRules.pdf" target="_blank" class="pdf-link"
-              >View Original Physical Game Rules (PDF)</a
-            >
-          </div>
-        </div>
-      </div>
-    </div>
-  {:else if $currentSubRoute === 'rules'}
-    <div class="paper-sheet">
-      <div class="content rules">
-        <h2>Game Rules</h2>
-        <p>Here is how the game works, round by round:</p>
-
-        <div class="rounds-list">
-          {#each Rounds as round}
-            <div class="round-item">
-              <h3>{round.roundName}</h3>
-              <p>{round.description}</p>
-            </div>
-          {/each}
-        </div>
-
-        <div class="pdf-section">
-          <a href="/files/ogRules.pdf" target="_blank" class="pdf-link"
-            >View Original Physical Card Game Rules</a
-          >
-        </div>
-      </div>
-    </div>
-  {/if}
+    {/key}
+  </div>
 </div>
 
 <style>
@@ -181,10 +251,38 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: calc(100vh - 6rem); /* Adjust for padding-top */
+    min-height: 100vh;
     padding: 0 2rem 2rem 2rem;
-    padding-top: 6rem; /* Space for the sticky nav */
     box-sizing: border-box;
+  }
+
+  .content-viewport {
+    margin-top: 6rem; /* Space for the sticky nav */
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    min-height: 500px;
+  }
+
+  .transition-wrapper {
+    position: absolute;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .transition-wrapper > * {
+    pointer-events: auto;
+  }
+
+  /* Ensure the incoming card is above the outgoing one */
+  :global(.transition-wrapper:has(+ .transition-wrapper)) {
+    z-index: 0;
+  }
+  :global(.transition-wrapper + .transition-wrapper) {
+    z-index: 1;
   }
 
   nav {
@@ -202,8 +300,8 @@
   }
 
   nav.scrolled {
-    background-color: var(--paper-white);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background-color: white !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
     padding: 1rem 2rem;
   }
 
@@ -235,16 +333,19 @@
     padding: 2.5rem;
     border-radius: 0.25rem;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-    transform: rotate(-2deg);
     width: 100%;
     max-width: 50rem;
     min-height: 400px;
     box-sizing: border-box;
+    transform: rotate(-2deg); /* Tilt applied specifically to the paper */
   }
 
   .room-form-wrapper {
     max-width: 25rem;
     margin: 0 auto;
+    transform: rotate(
+      -2deg
+    ); /* Tilt applied specifically to the form wrapper */
   }
 
   .content {

@@ -88,6 +88,10 @@
   --text-3xl: calc(1.875rem * var(--font-scale));
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   background-color: var(--paper-white);
