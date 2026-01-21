@@ -41,5 +41,10 @@ COPY --from=builder /app/client/dist /usr/share/nginx/html
 # Copy nginx config template
 COPY --from=builder /app/client/nginx.conf.template /etc/nginx/templates/default.conf.template
 
+# Default DNS resolver (local/docker), overridden in fly.toml
+ENV DNS_RESOLVER=127.0.0.11
+# Helper for nginx variable escaping in templates
+ENV DOLLAR=$
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

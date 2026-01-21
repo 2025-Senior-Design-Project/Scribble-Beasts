@@ -56,16 +56,16 @@ jobs:
           docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.playtest.yml up --build --detach
 
       - name: Wait for services to initialize
-        run: sleep 20
+        run: sleep 30
 
       # Verify critical services are up
       - name: Check service status
         run: |
           echo "Checking status of services..."
           docker compose ps
-          if [ $(docker compose ps -q client | wc -l) -eq 0 ]; then echo "Client service failed to start"; exit 1; fi
-          if [ $(docker compose ps -q server | wc -l) -eq 0 ]; then echo "Server service failed to start"; exit 1; fi
-          if [ $(docker compose ps -q nginx | wc -l) -eq 0 ]; then echo "Nginx service failed to start"; exit 1; fi
+          if [ $(docker compose ps -q client | wc -l) -eq 0 ]; then echo "Client service failed to start"; docker compose logs client; exit 1; fi
+          if [ $(docker compose ps -q server | wc -l) -eq 0 ]; then echo "Server service failed to start"; docker compose logs server; exit 1; fi
+          if [ $(docker compose ps -q nginx | wc -l) -eq 0 ]; then echo "Nginx service failed to start"; docker compose logs nginx; exit 1; fi
           echo "All critical services started successfully!"
 
       - name: Tear down services

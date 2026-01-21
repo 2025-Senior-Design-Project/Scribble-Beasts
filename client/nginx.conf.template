@@ -17,8 +17,16 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
+    # Use Docker's internal DNS resolver (127.0.0.11) or Fly.io's ([fdaa::3])
+    # to allow resolving upstream hostnames dynamically at runtime.
+    resolver ${DNS_RESOLVER} valid=30s;
+
     location /api {
-        proxy_pass ${API_URL};
+        # Use a variable to force re-resolution of the upstream hostname
+        # This prevents Nginx from crashing if the upstream is not available at startup
+        set ${DOLLAR}upstream_endpoint "${API_URL}";
+        
+        proxy_pass ${DOLLAR}upstream_endpoint;
         proxy_redirect off;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
