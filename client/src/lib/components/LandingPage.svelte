@@ -134,7 +134,7 @@
             </div>
           </div>
         {:else if $currentSubRoute === 'about'}
-          <div class="paper-sheet">
+          <div class="paper-sheet about-sheet">
             <div class="content about">
               Team Members
               <div class="team-grid">
@@ -274,7 +274,7 @@
   }
 
   nav.scrolled {
-    background-color: white !important;
+    background-color: var(--paper-white) !important;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
     padding: 1rem 2rem;
   }
@@ -303,15 +303,32 @@
   }
 
   .paper-sheet {
-    background-color: var(--paper-white);
+    background: linear-gradient(
+      135deg,
+      transparent 35.5px,
+      var(--paper-white) 35.5px
+    );
+    position: relative;
     padding: 2.5rem;
     border-radius: 0.25rem;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.2));
     width: 100%;
     max-width: 50rem;
     min-height: 400px;
     box-sizing: border-box;
     transform: rotate(-2deg); /* Tilt applied specifically to the paper */
+  }
+
+  .paper-sheet::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(to bottom right, transparent 50%, #ffffff 50%);
+    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.15));
+    pointer-events: none;
   }
 
   .room-form-wrapper {
@@ -373,6 +390,10 @@
   }
 
   /* About */
+  .about-sheet {
+    padding-top: 3.5rem;
+  }
+
   .team-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
