@@ -15,6 +15,7 @@ export const currentSubRoute = derived(currentPath, ($path) => {
 });
 
 export function navigateTo(view: View) {
+  console.log('Navigating to:', view);
   currentView.set(view);
 
   // If we're navigating back to ROOM_FORM from within the app, reset the path to root

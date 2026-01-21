@@ -79,7 +79,10 @@ export class Room {
       if (permanently) {
         playerToRemove.destroy();
       } else {
-        handleRoomless(playerToRemove.getWebSocket());
+        const ws = playerToRemove.getWebSocket();
+        if (ws) {
+          handleRoomless(ws);
+        }
       }
       delete this.players[playerName];
       this.playerListChanged();
@@ -115,6 +118,7 @@ export class Room {
   }
 
   startGame(): void {
+    if (this.game) return;
     this.sendActionToAll(new Actions.StartGame());
     this.game = new Game(
       Object.values(this.players),

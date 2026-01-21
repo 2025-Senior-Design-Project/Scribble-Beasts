@@ -1,8 +1,11 @@
 import express from 'express';
 import { WebSocket, WebSocketServer } from 'ws';
 import { handleNewConnection } from './lib/scripts/roomless-handler.js';
+import apiRoutes from './lib/scripts/api-routes.js';
 
 const app = express();
+app.use(express.json());
+
 if (!process.env.SERVER_PORT) {
   throw new Error('Missing SERVER_PORT in environment variables');
 }
@@ -12,6 +15,7 @@ const SERVER_PORT = process.env.SERVER_PORT;
 app.get('/', (req, res) => {
   res.send('OK');
 });
+app.use('/api/room', apiRoutes);
 
 // Create HTTP server
 const httpServer = app.listen(Number(SERVER_PORT), '0.0.0.0', () => {

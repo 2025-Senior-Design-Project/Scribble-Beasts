@@ -24,6 +24,10 @@
     $currentView === View.ROOM_FORM ||
       ['/playtesting', '/about', '/rules'].includes($currentPath),
   );
+
+  $effect(() => {
+    console.log('Current View Changed:', $currentView);
+  });
 </script>
 
 <main>

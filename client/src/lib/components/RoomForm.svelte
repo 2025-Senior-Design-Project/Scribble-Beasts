@@ -1,11 +1,5 @@
 <script lang="ts">
-  import {
-    Actions,
-    ActionEnum,
-    type RoomErrorAction,
-    type CreateRoomAction,
-    type JoinRoomAction,
-  } from '@shared/actions';
+  import { ActionEnum, type RoomJoinedAction } from '@shared/actions';
   import ClientWebsocket from '../ClientWebsocket';
   import {
     isHost,
@@ -14,6 +8,7 @@
     playerName as playerNameState,
   } from '../GameState';
   import { navigateTo, View } from '../Navigator';
+  import { jumpToRound } from '../stores/roundStore';
 
   let roomName: string = $state('');
   let roomNameError: string = $state('');
@@ -27,42 +22,31 @@
 
   function cleanupRoomForm() {
     clearErrors();
-    ClientWebsocket.removeActionListener(ActionEnum.ROOM_ERROR);
-    ClientWebsocket.removeActionListener(ActionEnum.CREATE_ROOM);
-    ClientWebsocket.removeActionListener(ActionEnum.JOIN_ROOM);
+    ClientWebsocket.removeActionListener(ActionEnum.ROOM_JOINED);
   }
 
-  ClientWebsocket.addActionListener<RoomErrorAction>(
-    ActionEnum.ROOM_ERROR,
-    (action) => {
-      clearErrors();
-      const { roomInputMessage, nameInputMessage } = action.payload;
-      roomNameError = roomInputMessage ?? '';
-      playerNameError = nameInputMessage ?? '';
-    },
-  );
-  ClientWebsocket.addActionListener<CreateRoomAction>(
-    ActionEnum.CREATE_ROOM,
+  ClientWebsocket.addActionListener<RoomJoinedAction>(
+    ActionEnum.ROOM_JOINED,
     (action) => {
       cleanupRoomForm();
-      const { hostName, roomName } = action.payload;
-      isHost.set(true);
-      hostNameState.set(hostName);
-      playerNameState.set(hostName);
-      roomNameState.set(roomName);
-      navigateTo(View.LOBBY);
-    },
-  );
-  ClientWebsocket.addActionListener<JoinRoomAction>(
-    ActionEnum.JOIN_ROOM,
-    (action) => {
-      cleanupRoomForm();
-      const { playerName, roomName, hostName } = action.payload;
-      isHost.set(false);
-      hostNameState.set(hostName);
-      playerNameState.set(playerName);
-      roomNameState.set(roomName);
-      navigateTo(View.LOBBY);
+      const {
+        playerName: pName,
+        roomName: rName,
+        hostName: hName,
+        currentRound,
+        timer,
+      } = action.payload;
+      isHost.set(pName === hName);
+      hostNameState.set(hName);
+      playerNameState.set(pName);
+      roomNameState.set(rName);
+
+      if (currentRound !== undefined && timer !== undefined) {
+        jumpToRound(currentRound, timer);
+        navigateTo(View.GAME);
+      } else {
+        navigateTo(View.LOBBY);
+      }
     },
   );
 
@@ -70,15 +54,63 @@
     roomName.trim() !== '' && playerName.trim() !== '',
   );
 
-  function joinRoom(event: Event): void {
-    event.preventDefault();
-    const joinRoomAction = new Actions.JoinRoom(roomName, playerName);
-    ClientWebsocket.sendAction(joinRoomAction);
+  async function handleApiError(response: Response) {
+    try {
+      const data = await response.json();
+      if (data.nameInputMessage) playerNameError = data.nameInputMessage;
+      if (data.roomInputMessage) roomNameError = data.roomInputMessage;
+    } catch (e) {
+      console.error('Failed to parse error response', e);
+    }
   }
-  function createRoom(event: Event): void {
+
+  async function handleApiSuccess(response: Response) {
+    try {
+      const data = await response.json();
+      ClientWebsocket.setCookie('playerId', data.playerId, 7);
+      ClientWebsocket.connect();
+      // Navigation happens via ROOM_JOINED listener
+    } catch (e) {
+      console.error('Failed to parse success response', e);
+    }
+  }
+
+  async function joinRoom(event: Event) {
     event.preventDefault();
-    const createRoomAction = new Actions.CreateRoom(roomName, playerName);
-    ClientWebsocket.sendAction(createRoomAction);
+    clearErrors();
+    try {
+      const res = await fetch('/api/room/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomName, playerName }),
+      });
+      if (res.ok) {
+        await handleApiSuccess(res);
+      } else {
+        await handleApiError(res);
+      }
+    } catch (e) {
+      console.error('API call failed', e);
+    }
+  }
+
+  async function createRoom(event: Event) {
+    event.preventDefault();
+    clearErrors();
+    try {
+      const res = await fetch('/api/room/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomName, hostName: playerName }),
+      });
+      if (res.ok) {
+        await handleApiSuccess(res);
+      } else {
+        await handleApiError(res);
+      }
+    } catch (e) {
+      console.error('API call failed', e);
+    }
   }
 </script>
 
