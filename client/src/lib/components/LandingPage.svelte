@@ -1,49 +1,74 @@
 <script lang="ts">
   import RoomForm from './RoomForm.svelte';
   import { Rounds } from '@shared/rounds';
-
-  let currentTab = $state('play'); // 'play', 'playtesting', 'about', 'rules'
+  import { currentSubRoute, navigateToPath } from '../Navigator';
 
   let showPlaytestInfo = $state(false);
+  let isScrolled = $state(false);
 
   function togglePlaytestInfo() {
     showPlaytestInfo = !showPlaytestInfo;
   }
+
+  function handleNav(e: MouseEvent, path: string) {
+    e.preventDefault();
+    navigateToPath(path);
+  }
+
+  $effect(() => {
+    const handleScroll = () => {
+      isScrolled = window.scrollY > 20;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  });
+
+  $effect(() => {
+    // Scroll to top whenever the subroute changes
+    if ($currentSubRoute) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  });
 </script>
 
 <div class="landing-container">
-  <nav>
-    <button
-      class:active={currentTab === 'play'}
-      onclick={() => (currentTab = 'play')}
+  <nav class:scrolled={isScrolled}>
+    <a
+      href="/"
+      class:active={$currentSubRoute === 'play'}
+      onclick={(e) => handleNav(e, '/')}
     >
       Play!
-    </button>
-    <button
-      class:active={currentTab === 'playtesting'}
-      onclick={() => (currentTab = 'playtesting')}
+    </a>
+    <a
+      href="/playtesting"
+      class:active={$currentSubRoute === 'playtesting'}
+      onclick={(e) => handleNav(e, '/playtesting')}
     >
       Playtesting
-    </button>
-    <button
-      class:active={currentTab === 'about'}
-      onclick={() => (currentTab = 'about')}
+    </a>
+    <a
+      href="/about"
+      class:active={$currentSubRoute === 'about'}
+      onclick={(e) => handleNav(e, '/about')}
     >
       About
-    </button>
-    <button
-      class:active={currentTab === 'rules'}
-      onclick={() => (currentTab = 'rules')}
+    </a>
+    <a
+      href="/rules"
+      class:active={$currentSubRoute === 'rules'}
+      onclick={(e) => handleNav(e, '/rules')}
     >
       Rules
-    </button>
+    </a>
   </nav>
 
-  {#if currentTab === 'play'}
+  {#if $currentSubRoute === 'play'}
     <div class="room-form-wrapper">
       <RoomForm />
     </div>
-  {:else if currentTab === 'playtesting'}
+  {:else if $currentSubRoute === 'playtesting'}
     <div class="paper-sheet">
       <div class="content playtesting">
         <h2>Next Playtest: TBD</h2>
@@ -78,7 +103,7 @@
         </div>
       </div>
     </div>
-  {:else if currentTab === 'about'}
+  {:else if $currentSubRoute === 'about'}
     <div class="paper-sheet">
       <div class="content about">
         Team Members
@@ -126,7 +151,7 @@
         </div>
       </div>
     </div>
-  {:else if currentTab === 'rules'}
+  {:else if $currentSubRoute === 'rules'}
     <div class="paper-sheet">
       <div class="content rules">
         <h2>Game Rules</h2>
@@ -155,21 +180,34 @@
   .landing-container {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    padding: 2rem;
+    min-height: calc(100vh - 6rem); /* Adjust for padding-top */
+    padding: 0 2rem 2rem 2rem;
+    padding-top: 6rem; /* Space for the sticky nav */
+    box-sizing: border-box;
   }
 
   nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
     display: flex;
     gap: 1rem;
-    margin-bottom: 2rem;
+    padding: 1.5rem 2rem;
     flex-wrap: wrap;
     justify-content: center;
+    z-index: 100;
+    transition: all 0.3s ease;
   }
 
-  nav button {
+  nav.scrolled {
+    background-color: var(--paper-white);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 1rem 2rem;
+  }
+
+  nav a {
     background: none;
     border: none;
     font-size: 1.5rem;
@@ -179,13 +217,14 @@
     padding: 0.5rem 1rem;
     border-bottom: 2px solid transparent;
     transition: all 0.2s;
+    text-decoration: none;
   }
 
-  nav button:hover {
+  nav a:hover {
     transform: scale(1.1);
   }
 
-  nav button.active {
+  nav a.active {
     border-bottom: 3px solid var(--pen-red);
     font-weight: bold;
     transform: rotate(-2deg);

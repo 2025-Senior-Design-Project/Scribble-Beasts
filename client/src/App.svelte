@@ -5,7 +5,7 @@
   import LandingPage from './lib/components/LandingPage.svelte';
   import Lobby from './lib/components/Lobby.svelte';
   import Game from './lib/components/Game.svelte';
-  import { View, currentView, navigateTo } from './lib/Navigator';
+  import { View, currentView, currentPath, navigateTo } from './lib/Navigator';
   import { resetState } from './lib/GameState';
 
   resetState();
@@ -14,14 +14,21 @@
     ClientWebsocket.sendAction(new Actions.LeaveRoom());
     navigateTo(View.ROOM_FORM);
   }
+
+  // Determine if we should show the landing page based on the current view or the path
+  // This allows direct URL access to /playtesting, /about, /rules
+  const showLandingPage = $derived(
+    $currentView === View.ROOM_FORM ||
+      ['/playtesting', '/about', '/rules'].includes($currentPath),
+  );
 </script>
 
 <main>
   <ErrorToast />
   {#if $currentView !== View.ROOM_FORM}
-    <button class="leave-room" on:click={leaveRoom}>Leave Room</button>
+    <button class="leave-room" onclick={leaveRoom}>Leave Room</button>
   {/if}
-  {#if $currentView === View.ROOM_FORM}
+  {#if showLandingPage}
     <LandingPage />
   {:else if $currentView === View.LOBBY}
     <Lobby />
