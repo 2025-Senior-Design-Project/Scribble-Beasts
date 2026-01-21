@@ -8,6 +8,7 @@ import {
   type StartGameAction,
   type PlayerDoneAction,
   type StartRoundAction,
+  SendPresenterChangeAction,
 } from '@shared/actions';
 import { derived, get, writable } from 'svelte/store';
 import ClientWebsocket from './ClientWebsocket';
@@ -17,6 +18,7 @@ import { getEotwCardFromId, type EotwCard } from '@shared/eotw';
 
 export const isHost = writable(false);
 export const hostName = writable<string | undefined>(undefined);
+export const presenterName = writable<string | undefined>(undefined);
 export const playerName = writable('');
 export const roomName = writable('');
 export const currentRound = writable(0);
@@ -30,7 +32,7 @@ export const everyoneDoneExceptYou = derived(
       otherPlayers.length > 0 &&
       otherPlayers.every((p) => $playersDone.includes(p))
     );
-  }
+  },
 );
 export const drawingImage = writable<string>(''); // Base64url encoded image to draw on
 export const eotwCard = writable<EotwCard>();
@@ -72,6 +74,11 @@ const drawingImageChange = (action: SendDrawingAction) => {
   drawingImage.set(image);
 };
 
+const presenterChange = (action: SendPresenterChangeAction) => {
+  const { newPresenter } = action.payload;
+  presenterName.set(newPresenter);
+};
+
 const eotwChange = (action: SendEotwAction) => {
   const { eotwId } = action.payload;
   eotwCard.set(getEotwCardFromId(eotwId));
@@ -98,34 +105,38 @@ export function resetState() {
 
   ClientWebsocket.addActionListener<JoinRoomAction>(
     ActionEnum.JOIN_ROOM,
-    joinRoom
+    joinRoom,
   );
   ClientWebsocket.addActionListener<PlayerListChangeAction>(
     ActionEnum.PLAYER_LIST_CHANGE,
-    playerChange
+    playerChange,
   );
   ClientWebsocket.addActionListener<HostChangeAction>(
     ActionEnum.HOST_CHANGE,
-    hostChange
+    hostChange,
   );
   ClientWebsocket.addActionListener<StartGameAction>(
     ActionEnum.START_GAME,
-    startGame
+    startGame,
   );
   ClientWebsocket.addActionListener<SendDrawingAction>(
     ActionEnum.SEND_DRAWING,
-    drawingImageChange
+    drawingImageChange,
   );
   ClientWebsocket.addActionListener<SendEotwAction>(
     ActionEnum.SEND_EOTW,
-    eotwChange
+    eotwChange,
+  );
+  ClientWebsocket.addActionListener<SendPresenterChangeAction>(
+    ActionEnum.PRESENTER_CHANGE,
+    presenterChange,
   );
   ClientWebsocket.addActionListener<PlayerDoneAction>(
     ActionEnum.PLAYER_DONE,
-    playerDone
+    playerDone,
   );
   ClientWebsocket.addActionListener<StartRoundAction>(
     ActionEnum.START_ROUND,
-    resetPlayersDone
+    resetPlayersDone,
   );
 }
