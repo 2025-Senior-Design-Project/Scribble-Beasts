@@ -1,21 +1,20 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 
-# Copy root package.json and workspace configuration
-COPY package*.json ./
+# Copy shared source code
+# Needed by server tsconfig paths
+COPY shared/ ./shared/
 
-# Copy server package.json and config
+# Copy server package files
 COPY server/package*.json ./server/
 COPY server/tsconfig.json ./server/
 
-# Copy shared package
-COPY shared/ ./shared/
-
-# Install dependencies for the workspace
+# Install server dependencies
+WORKDIR /app/server
 RUN npm install
 
-# Copy source code
-COPY server/src ./server/src
+# Copy server source code
+COPY server/src ./src
 
 FROM base AS development
 WORKDIR /app/server
@@ -23,27 +22,29 @@ EXPOSE 5001
 CMD ["npm", "run", "dev"]
 
 FROM base AS builder
-WORKDIR /app
-# Build server and shared dependencies
-RUN npm run build:server
+WORKDIR /app/server
+# Build server
+RUN npm run build
 
 FROM node:20-alpine AS production
 WORKDIR /app
 
-# Copy server package.json
-COPY --from=builder /app/server/package*.json ./
+# Copy server package files for production install
+COPY --from=builder /app/server/package*.json ./server/
 
-# Install production dependencies directly
+# Install production dependencies
+WORKDIR /app/server
 RUN npm install --omit=dev
 
 # Copy built artifacts
 COPY --from=builder /app/server/dist ./dist
 
-# Environment variables
+# Set environment variables
 ENV NODE_ENV=production
 ENV PORT=5001
 
 EXPOSE 5001
 
-# The start command needs to point to the correct file in dist
+# Start the server
+# Note: dist/server/src/index.js path comes from tsc output structure
 CMD ["node", "dist/server/src/index.js"]

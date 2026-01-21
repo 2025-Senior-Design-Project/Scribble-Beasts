@@ -27,10 +27,6 @@ services:
       dockerfile: client/Dockerfile
       args:
         - REPO_URL
-    volumes:
-      - ./client:/app/client
-      - ./shared:/app/shared
-      - /app/node_modules
     environment:
       - PORT=${CLIENT_PORT}
     ports:
@@ -53,12 +49,6 @@ services:
       dockerfile: server/Dockerfile
       args:
         - REPO_URL
-    volumes:
-      - ./server:/app/server
-      - ./server/docker.tsconfig.json:/app/server/tsconfig.json
-      - ./server/tsconfig.json:/app/server/local.tsconfig.json
-      - ./shared:/app/shared
-      - /app/node_modules
     environment:
       - PORT=${SERVER_PORT}
     ports:

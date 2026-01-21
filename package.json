@@ -9,7 +9,7 @@
     "dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "playtest": "docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.playtest.yml up --build",
     "playtest:run": "docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.playtest.yml up --build --wait",
-    "prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans && npm run build && docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build",
+    "prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans && docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build",
     "prod:run": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build --wait",
     "down": "docker compose down",
     "down:playtest": "docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.playtest.yml down",

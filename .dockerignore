@@ -148,3 +148,7 @@
 # macOS system files
 **/.DS_Store
 fly.toml
+
+# Git
+.git
+.gitignore
