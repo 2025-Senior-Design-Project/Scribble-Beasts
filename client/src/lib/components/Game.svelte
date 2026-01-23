@@ -120,8 +120,9 @@
 
 <style>
   .game-viewport {
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-areas: 'stack';
+    justify-items: center;
     align-items: center;
     min-height: 100vh;
     width: 100%;
@@ -129,6 +130,7 @@
     box-sizing: border-box;
   }
   .game-card {
+    grid-area: stack;
     pointer-events: auto;
     width: 100%;
     max-width: 35rem;
