@@ -101,6 +101,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+    padding-top:.5rem;
   }
 
   .timer {

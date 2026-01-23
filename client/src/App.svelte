@@ -15,6 +15,8 @@
 
   function leaveRoom() {
     ClientWebsocket.sendAction(new Actions.LeaveRoom());
+    ClientWebsocket.destroy();
+    ClientWebsocket.setCookie('playerId', '', -1);
     navigateTo(View.ROOM_FORM);
   }
 

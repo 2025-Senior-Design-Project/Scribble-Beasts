@@ -51,16 +51,14 @@ function handlePendingConnection(
   pending: { type: 'create' | 'join'; roomName: string; name: string },
 ) {
   if (pending.type === 'create') {
+    // Check if room exists (race condition prevention)
     if (Rooms[pending.roomName]) {
-      // Room already exists (race condition?), fail or reconnect?
-      // If room exists, maybe we are reconnecting to it?
-      // But type is 'create'.
-      // Assume creation always valid if pending.
-      console.warn(`Room ${pending.roomName} already exists during creation.`);
-      // Proceed to overwrite? Or fail?
-      // For now, let's assume overwriting or handling as reconnect is better?
-      // But we have 'name' as hostName.
-      // Let's create new Room/Host.
+      console.warn(
+        `Room ${pending.roomName} already exists during creation. Rejecting connection.`,
+      );
+      // Close with error code 4002 (Room Exists)
+      ws.close(4002, 'Room already exists');
+      return;
     }
 
     const host = new Host(pending.name, ws, playerId);
@@ -70,9 +68,6 @@ function handlePendingConnection(
 
     // Notify client
     host.sendAction(new Actions.RoomJoined(newRoom.name, host.name, host.name));
-    // Also send Reconnect action (with ID) to confirm ID?
-    // Client already has ID.
-    // RoomJoined is enough.
   } else if (pending.type === 'join') {
     const room = Rooms[pending.roomName];
     if (!room) {

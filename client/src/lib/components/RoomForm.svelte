@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { ActionEnum, type RoomJoinedAction } from '@shared/actions';
   import ClientWebsocket from '../ClientWebsocket';
   import {
@@ -15,40 +16,50 @@
   let playerName: string = $state('');
   let playerNameError: string = $state('');
 
+  onMount(() => {
+    // If we have a player ID cookie, this is a reconnect attempt
+    if (ClientWebsocket.getCookie('playerId')) {
+      ClientWebsocket.connect();
+    }
+
+    // Add listener for room joined action
+    ClientWebsocket.addActionListener<RoomJoinedAction>(
+      ActionEnum.ROOM_JOINED,
+      handleRoomJoined,
+    );
+
+    // Cleanup listener on destroy
+    return () => {
+      ClientWebsocket.removeActionListener(ActionEnum.ROOM_JOINED);
+    };
+  });
+
   function clearErrors() {
     roomNameError = '';
     playerNameError = '';
   }
 
-  function cleanupRoomForm() {
+  function handleRoomJoined(action: RoomJoinedAction) {
     clearErrors();
-    ClientWebsocket.removeActionListener(ActionEnum.ROOM_JOINED);
+    const {
+      playerName: pName,
+      roomName: rName,
+      hostName: hName,
+      currentRound,
+      timer,
+    } = action.payload;
+    isHost.set(pName === hName);
+    hostNameState.set(hName);
+    playerNameState.set(pName);
+    roomNameState.set(rName);
+
+    if (currentRound !== undefined && timer !== undefined) {
+      jumpToRound(currentRound - 1, timer);
+      navigateTo(View.GAME);
+    } else {
+      navigateTo(View.LOBBY);
+    }
   }
-
-  ClientWebsocket.addActionListener<RoomJoinedAction>(
-    ActionEnum.ROOM_JOINED,
-    (action) => {
-      cleanupRoomForm();
-      const {
-        playerName: pName,
-        roomName: rName,
-        hostName: hName,
-        currentRound,
-        timer,
-      } = action.payload;
-      isHost.set(pName === hName);
-      hostNameState.set(hName);
-      playerNameState.set(pName);
-      roomNameState.set(rName);
-
-      if (currentRound !== undefined && timer !== undefined) {
-        jumpToRound(currentRound, timer);
-        navigateTo(View.GAME);
-      } else {
-        navigateTo(View.LOBBY);
-      }
-    },
-  );
 
   const inputsFilled = $derived(
     roomName.trim() !== '' && playerName.trim() !== '',
@@ -68,6 +79,11 @@
     try {
       const data = await response.json();
       ClientWebsocket.setCookie('playerId', data.playerId, 7);
+
+      // Force a reconnect to ensure the new player ID is used
+      if (ClientWebsocket.isConnected()) {
+        ClientWebsocket.destroy();
+      }
       ClientWebsocket.connect();
       // Navigation happens via ROOM_JOINED listener
     } catch (e) {

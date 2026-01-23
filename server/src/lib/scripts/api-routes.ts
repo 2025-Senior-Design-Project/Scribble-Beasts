@@ -21,7 +21,7 @@ router.post('/create', (req: Request, res: Response) => {
     return;
   }
 
-  if (findRoom(roomName)) {
+  if (findRoom(roomName) || isRoomPendingCreation(roomName)) {
     res.status(400).json({
       error: 'Room exists',
       roomInputMessage: 'Room name already taken.',
@@ -120,6 +120,12 @@ function checkIfParamsAreEmpty(
 
 function findRoom(roomName: string): Room | undefined {
   return Rooms[roomName];
+}
+
+function isRoomPendingCreation(roomName: string): boolean {
+  return Object.values(PendingConnections).some(
+    (pending) => pending.type === 'create' && pending.roomName === roomName,
+  );
 }
 
 function playerExistsInRoom(room: Room, playerName: string): boolean {

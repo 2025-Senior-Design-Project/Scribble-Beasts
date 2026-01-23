@@ -8,6 +8,7 @@ import {
 
 class CWebsocket extends ActionTarget<WebSocket, MessageEvent<string>> {
   #ws: WebSocket;
+  #listeners: { type: string; listener: (ev: any) => void }[] = [];
 
   constructor(ws: WebSocket) {
     super(ws);
@@ -64,8 +65,26 @@ class CWebsocket extends ActionTarget<WebSocket, MessageEvent<string>> {
     };
   }
 
+  addEventListener(type: string, listener: (ev: any) => void): void {
+    super.addEventListener(type, listener);
+    this.#listeners.push({ type, listener });
+  }
+
+  removeEventListener(type: string, listener: (ev: any) => void): void {
+    super.removeEventListener(type, listener);
+    this.#listeners = this.#listeners.filter(
+      (l) => l.type !== type || l.listener !== listener,
+    );
+  }
+
   destroy() {
+    this.#listeners.forEach((l) => {
+      this.#ws.removeEventListener(l.type, l.listener);
+    });
+    this.#listeners = [];
+
     this.#ws.onclose = null; // Prevent reconnect
+    this.#ws.close(1000, 'Normal Closure');
     super.destroy();
   }
 }
@@ -243,10 +262,5 @@ const ClientWebsocketProxy = {
   setCookie,
   getCookie,
 };
-
-// Check for cookie on load
-if (getCookie('playerId')) {
-  initClientWebsocket();
-}
 
 export default ClientWebsocketProxy;

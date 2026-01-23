@@ -42,5 +42,5 @@ export function getRandomEotwCard() {
 }
 
 export function getEotwCardFromId(id: number) {
-  return EotwCards[id];
+  return EotwCards[id - 1];
 }

@@ -11,6 +11,7 @@
     });
 
     ClientWebsocket.addEventListener('close', (event) => {
+      if (event.code === 1000) return;
       message +=
         "Can't connect to server, try refreshing the page (server might be down)." +
         '\n';
