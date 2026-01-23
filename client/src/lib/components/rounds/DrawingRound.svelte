@@ -5,14 +5,15 @@
   import ClientWebsocket from '../../ClientWebsocket';
   import { roundStore, endCurrentRound } from '../../stores/roundStore';
   import { LayerMode } from '../../types/LayerMode';
+  import type { PenParams } from '../../types/PenParams';
   import Round from '../Round.svelte';
 
   let {
-    lineType = 'line',
+    pen: initialPen,
     showWidget = false,
     layerMode = LayerMode.BehindLayer,
   }: {
-    lineType?: 'scribble' | 'line' | 'color' | 'detail' | 'name';
+    pen: PenParams;
     showWidget?: boolean;
     layerMode?: LayerMode;
   } = $props();
@@ -25,8 +26,9 @@
   let shouldDraw = $state(false);
   let timer = $state(0);
   let randTimerMod = $state(5);
-  let selectedColor = $state('#db2828');
-  let randomFont = $state<{ name: string; size: number } | null>(null);
+  let selectedColor = $state(initialPen.strokeStyle ?? '#db2828');
+  //let randomFont = $state<{ name: string; size: number } | null>(null);
+  let pen = $state<PenParams>({ ...initialPen });
 
   const COLORS = [
     { color: 'red', value: '#db2828' },
@@ -62,7 +64,7 @@
 
     // Set canvas to fixed 520x520 for consistent sizing across devices
     canvas.width = 520;
-    canvas.height = lineType === 'name' ? 545 : 520;
+    canvas.height = !!pen.font ? 545 : 520;
 
     context = canvas.getContext('2d');
 
@@ -101,49 +103,26 @@
   async function setLineProperties() {
     if (!context) return;
 
-    switch (lineType) {
-      case 'name':
-        randomFont = FONTS[Math.floor(Math.random() * FONTS.length)];
-        console.log('Selected font:', randomFont.name);
-        try {
-          await document.fonts.load(
-            `${randomFont.size}px '${randomFont.name}'`
-          );
-          context.font = `${randomFont.size}px '${randomFont.name}'`;
-        } catch (e) {
-          console.error('Font could not be loaded:', e);
-          context.font = `${randomFont.size}px sans-serif`;
-        }
-        context.fillStyle = 'black';
-        context.textAlign = 'center';
-        context.textBaseline = 'bottom';
-        break;
-      case 'color':
-        context.strokeStyle = selectedColor;
-        context.lineWidth = 15;
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        break;
-      case 'scribble':
-        context.strokeStyle = 'rgb(0 0 0 / .02)';
-        context.lineWidth = 3;
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        break;
-      case 'detail':
-        context.strokeStyle = 'black';
-        context.lineWidth = 4;
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        break;
-      case 'line':
-      default:
-        context.strokeStyle = 'black';
-        context.lineWidth = 4;
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        break;
+    // Text / name round
+    if (pen.font) {
+      try {
+        await document.fonts.load(`${pen.font.size}px '${pen.font.name}'`);
+        context.font = `${pen.font.size}px '${pen.font.name}'`;
+      } catch {
+        context.font = `${pen.font.size}px sans-serif`;
+      }
+
+      context.fillStyle = 'black';
+      context.textAlign = 'center';
+      context.textBaseline = 'bottom';
+      return;
     }
+
+    // Drawing rounds
+    context.strokeStyle = pen.strokeStyle ?? 'black';
+    context.lineWidth = pen.lineWidth ?? 4;
+    context.lineJoin = pen.lineJoin ?? 'round';
+    context.lineCap = pen.lineCap ?? 'round';
   }
 
   function getScaleFactor(): number {
@@ -153,7 +132,7 @@
   }
 
   function handleMouseDown(event: MouseEvent) {
-    if (lineType === 'name' || event.button !== 0) return;
+    if (!!pen.font || event.button !== 0) return;
     if (!context || !canvas) return;
 
     shouldDraw = true;
@@ -164,7 +143,7 @@
     const scale = getScaleFactor();
     context.moveTo(
       (event.clientX - rect.left) * scale,
-      (event.clientY - rect.top) * scale
+      (event.clientY - rect.top) * scale,
     );
   }
 
@@ -185,13 +164,13 @@
     context.lineTo(x, y);
     context.stroke();
 
-    if (lineType === 'scribble') {
+    if (pen.scribble) {
       scribbleStutter(x, y);
     }
   }
 
   function handleTouchStart(event: TouchEvent) {
-    if (lineType === 'name') return;
+    if (!!pen.font) return;
     if (!context || !canvas) return;
 
     event.preventDefault();
@@ -204,7 +183,7 @@
     context.beginPath();
     context.moveTo(
       (touch.clientX - rect.left) * scale,
-      (touch.clientY - rect.top) * scale
+      (touch.clientY - rect.top) * scale,
     );
   }
 
@@ -221,7 +200,7 @@
     context.lineTo(x, y);
     context.stroke();
 
-    if (lineType === 'scribble') {
+    if (pen.scribble) {
       scribbleStutter(x, y);
     }
   }
@@ -248,7 +227,7 @@
   }
 
   function handleTextInput(event: Event) {
-    if (!context || !canvas || !randomFont) return;
+    if (!context || !canvas || !pen.font) return;
 
     const input = event.target as HTMLInputElement;
     const text = input.value;
@@ -262,6 +241,7 @@
 
   function handleColorChange(color: string) {
     selectedColor = color;
+    pen.strokeStyle = color;
     setLineProperties();
   }
 
@@ -368,7 +348,7 @@
       ActionEnum.END_ROUND,
       async () => {
         await handleRoundEnd();
-      }
+      },
     );
 
     const timerId = setTimeout(async () => {
@@ -421,7 +401,7 @@
 
     {#if showWidget}
       <div class="widget-container">
-        {#if lineType === 'color'}
+        {#if pen.strokeStyle && pen.lineWidth === 15}
           <div class="color-picker">
             {#each COLORS as colorOption}
               <input
@@ -438,7 +418,7 @@
               >
             {/each}
           </div>
-        {:else if lineType === 'name'}
+        {:else if pen.font}
           <input
             type="text"
             id="scribble-beast-name"
