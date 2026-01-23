@@ -3,4 +3,9 @@
   import { LayerMode } from '../../types/LayerMode';
 </script>
 
-<DrawingRound lineType="scribble" layerMode={LayerMode.BehindLayer} />
+<DrawingRound layerMode={LayerMode.BehindLayer} 
+pen={{
+    strokeStyle: 'rgb(0 0 0 / .02)',
+    lineWidth: 3,
+    scribble: true,
+  }}/>
