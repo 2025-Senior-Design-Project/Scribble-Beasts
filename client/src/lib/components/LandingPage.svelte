@@ -55,38 +55,41 @@
   });
 </script>
 
-<div class="landing-container relative">
-  <nav class:scrolled={isScrolled}>
-    <a
-      href="/"
-      class:active={$currentSubRoute === 'play'}
-      onclick={(e) => handleNav(e, '/')}
-    >
-      Play!
-    </a>
-    <a
-      href="/playtesting"
-      class:active={$currentSubRoute === 'playtesting'}
-      onclick={(e) => handleNav(e, '/playtesting')}
-    >
-      Playtesting
-    </a>
-    <a
-      href="/about"
-      class:active={$currentSubRoute === 'about'}
-      onclick={(e) => handleNav(e, '/about')}
-    >
-      About
-    </a>
-    <a
-      href="/rules"
-      class:active={$currentSubRoute === 'rules'}
-      onclick={(e) => handleNav(e, '/rules')}
-    >
-      Rules
-    </a>
-  </nav>
+<nav class:scrolled={isScrolled}>
+  <a
+    href="/"
+    class:active={$currentSubRoute === 'play'}
+    onclick={(e) => handleNav(e, '/')}
+  >
+    Play!
+  </a>
+  <a
+    href="/playtesting"
+    class:active={$currentSubRoute === 'playtesting'}
+    onclick={(e) => handleNav(e, '/playtesting')}
+  >
+    Playtesting
+  </a>
+  <a
+    href="/about"
+    class:active={$currentSubRoute === 'about'}
+    onclick={(e) => handleNav(e, '/about')}
+  >
+    About
+  </a>
+  <a
+    href="/rules"
+    class:active={$currentSubRoute === 'rules'}
+    onclick={(e) => handleNav(e, '/rules')}
+  >
+    Rules
+  </a>
+</nav>
 
+<div
+  class="landing-container relative"
+  class:play-route={$currentSubRoute === 'play'}
+>
   <div class="content-viewport">
     {#key $currentSubRoute}
       <div
@@ -101,7 +104,7 @@
         {:else if $currentSubRoute === 'playtesting'}
           <div class="paper-sheet">
             <div class="content playtesting">
-              <h2>Next Playtest: TBD</h2>
+              <h2>Next Playtest: Friday 23rd, 3:30-5:30</h2>
               <p>
                 Join our <a
                   href="https://discord.gg/BQ4JUh8fCE"
@@ -174,7 +177,7 @@
 
                 <div class="origin-story">
                   <p>
-                    This game started as a physical card game in Jasmine's
+                    This game started as a physical drawing game in Jasmine's
                     "Intro to Game Design" class at UC.
                   </p>
                   <a href="/files/ogRules.pdf" target="_blank" class="pdf-link"
@@ -217,9 +220,16 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: 100vh;
-    padding: 0 0 2rem 0;
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 100vw; /* Ensure it doesn't exceed viewport */
+    overflow-x: hidden; /* Clip animations */
+    padding: 0 0 4rem 0; /* Padding at bottom of the page */
     box-sizing: border-box;
+  }
+
+  .landing-container.play-route {
+    padding-bottom: 0;
   }
 
   .content-viewport {
@@ -230,7 +240,7 @@
     justify-items: center;
     align-items: start;
     position: relative;
-    min-height: 500px;
+    min-height: 400px;
   }
 
   :global(body) {
@@ -315,6 +325,7 @@
     width: 100%;
     max-width: 50rem;
     min-height: 400px;
+    margin-bottom: 2rem; /* Margin below each card */
     box-sizing: border-box;
     transform: rotate(-2deg); /* Tilt applied specifically to the paper */
   }
@@ -489,5 +500,18 @@
 
   :global(.animate-fall-out) {
     animation: fallOut 1.2s linear forwards;
+  }
+
+  @media (max-width: 768px) {
+    /* Stabilize navbar size to prevent jumping animations */
+    nav,
+    nav.scrolled {
+      padding: 1rem 1rem; /* Constant padding */
+    }
+
+    /* Increase content spacing to account for wrapped navbar */
+    .content-viewport {
+      margin-top: 10rem;
+    }
   }
 </style>

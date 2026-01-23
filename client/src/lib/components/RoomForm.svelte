@@ -149,7 +149,8 @@
     text-align: left;
   }
   input {
-    width: 100%;
+    width: 90%;
+    padding-left: 1rem;
     /* padding inherited from global but 100% width needed here */
   }
   .button-group {

@@ -91,17 +91,31 @@
 html {
   scroll-behavior: smooth;
   background-color: var(--paper-white);
+  overscroll-behavior: none;
 }
 
 body {
   margin: 0;
+  font-family: 'Children', sans-serif;
+  color: var(--pen-black);
+  font-size: var(--text-base);
+  overscroll-behavior: none;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: -1;
   background-color: var(--paper-white);
   background-image: linear-gradient(var(--grid-blue) 1px, transparent 1px),
     linear-gradient(to right, var(--grid-blue) 1px, var(--paper-white) 1px);
   background-size: 20px 20px;
-  font-family: 'Children', sans-serif;
-  color: var(--pen-black);
-  font-size: var(--text-base);
 }
 
 button {
@@ -163,7 +177,7 @@ input::placeholder {
     var(--paper-white) 35.5px
   );
   position: relative;
-  padding: 2.5rem;
+  padding: 1.5rem;
   border-radius: 0.25rem;
   filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.2));
   width: 100%;
