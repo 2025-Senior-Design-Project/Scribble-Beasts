@@ -107,7 +107,7 @@
         console.log('Selected font:', randomFont.name);
         try {
           await document.fonts.load(
-            `${randomFont.size}px '${randomFont.name}'`
+            `${randomFont.size}px '${randomFont.name}'`,
           );
           context.font = `${randomFont.size}px '${randomFont.name}'`;
         } catch (e) {
@@ -164,7 +164,7 @@
     const scale = getScaleFactor();
     context.moveTo(
       (event.clientX - rect.left) * scale,
-      (event.clientY - rect.top) * scale
+      (event.clientY - rect.top) * scale,
     );
   }
 
@@ -204,7 +204,7 @@
     context.beginPath();
     context.moveTo(
       (touch.clientX - rect.left) * scale,
-      (touch.clientY - rect.top) * scale
+      (touch.clientY - rect.top) * scale,
     );
   }
 
@@ -368,7 +368,7 @@
       ActionEnum.END_ROUND,
       async () => {
         await handleRoundEnd();
-      }
+      },
     );
 
     const timerId = setTimeout(async () => {
@@ -456,7 +456,7 @@
   .drawing-container {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
     width: 100%;
     height: 100%;
     align-items: center;

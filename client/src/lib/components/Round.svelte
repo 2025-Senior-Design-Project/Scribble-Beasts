@@ -79,6 +79,7 @@
       <button
         onclick={handleEnd}
         disabled={!canClickDone}
+        class="done-button"
         class:hidden-until-active={!canClickDone}>Done</button
       >
     {/if}
@@ -93,7 +94,7 @@
   .round-container {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
   }
 
   .round-footer {
@@ -105,5 +106,11 @@
   .timer {
     font-size: var(--text-xl);
     font-weight: bold;
+  }
+  .done-button {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 999;
   }
 </style>

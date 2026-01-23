@@ -22,12 +22,12 @@
 
     ClientWebsocket.addActionListener(
       ActionEnum.END_ROUND,
-      handleServerEndRound
+      handleServerEndRound,
     );
 
     ClientWebsocket.addActionListener(
       ActionEnum.START_ROUND,
-      handleServerStartRound
+      handleServerStartRound,
     );
 
     return () => {
@@ -37,9 +37,9 @@
   });
 </script>
 
-<div class="flex-center-page">
-  <div class="paper-card game-card">
-    {#if $roundStore}
+<div class="game-viewport overflow-hidden relative">
+  {#if $roundStore}
+    <div class="paper-card game-card">
       <h1 class="text-pen-red">{$roundStore.current.roundName}</h1>
 
       {#if $roundStore.ongoing}
@@ -54,22 +54,38 @@
       {:else}
         <p>Great job! Wait for everyone else to finish :D</p>
       {/if}
-    {/if}
-  </div>
+    </div>
+  {/if}
 </div>
 
 <style>
+  .game-viewport {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    padding: 1rem;
+    box-sizing: border-box;
+  }
   .game-card {
+    pointer-events: auto;
+    width: 100%;
+    max-width: 35rem;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     transform: rotate(-1deg);
-    max-width: 50rem;
   }
-  h1 {
-    margin-bottom: 0.5rem;
-  }
+
+  h1,
   h3 {
-    margin-bottom: 1.5rem;
+    margin: 0.15rem;
   }
   .round-content {
-    margin-top: 2rem;
+    margin-top: 0.15rem;
+    width: 100%;
   }
 </style>
