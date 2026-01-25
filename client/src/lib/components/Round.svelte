@@ -5,6 +5,8 @@
   import { onMount } from 'svelte';
   import { ActionEnum } from '@shared/actions';
   import { type Snippet } from 'svelte';
+  import { RoundEnum } from '@shared/rounds';
+  import { playerName, presenterName } from '../GameState';
 
   let { children, onRoundEnd }: { 
     children: Snippet;
@@ -75,7 +77,7 @@
   <div class="round-footer">
     <div class="timer">{$roundStore?.timeLeft ?? 0}s</div>
 
-    {#if !$roundStore?.current.hideButton}
+    {#if !$roundStore?.current.hideButton || ($roundStore?.current.roundType === RoundEnum.PRESENT && $presenterName === $playerName)}
       <button
         onclick={handleEnd}
         disabled={!canClickDone}
