@@ -1,24 +1,22 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 
+# Copy root package files (needed for npm ci with workspaces)
+COPY package.json package-lock.json ./
+
+# Copy workspace package files
+COPY client/package.json ./client/
+COPY server/package.json ./server/
+
+# Install dependencies using clean install
+# This installs all dependencies for the workspace and is faster/more reliable than npm install
+RUN npm ci
+
 # Copy shared source code
 COPY shared/ ./shared/
 
-# Copy client package files and config
-COPY client/package*.json ./client/
-COPY client/tsconfig*.json ./client/
-COPY client/vite.config.ts ./client/
-COPY client/index.html ./client/
-COPY client/nginx.conf ./client/
-COPY client/nginx.conf.template ./client/
-
-# Install client dependencies
-WORKDIR /app/client
-RUN npm install
-
-# Copy client source code
-COPY client/src ./src
-COPY client/public ./public
+# Copy client source code and config
+COPY client/ ./client/
 
 FROM base AS development
 WORKDIR /app/client
@@ -43,6 +41,7 @@ COPY --from=builder /app/client/nginx.conf.template /etc/nginx/templates/default
 ENV DNS_RESOLVER=127.0.0.11
 # Helper for nginx variable escaping in templates
 ENV DOLLAR=$
+ENV PORT=80
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

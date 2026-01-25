@@ -39,7 +39,14 @@ export function handleRoomless(ws: WebSocket) {
 
 export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
   const cookies = parseCookies(req.headers.cookie);
-  const playerId = cookies.playerId;
+  let playerId = cookies.playerId;
+
+  if (!playerId && req.url) {
+    const match = req.url.match(/[?&]playerId=([^&]+)/);
+    if (match) {
+      playerId = match[1];
+    }
+  }
 
   if (playerId) {
     const result = findGlobalPlayer(playerId);

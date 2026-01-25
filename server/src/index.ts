@@ -14,8 +14,8 @@ app.get('/', (req, res) => {
 });
 
 // Create HTTP server
-const httpServer = app.listen(SERVER_PORT, () => {
-  console.log(`Server is running at http://localhost:${SERVER_PORT}/`);
+const httpServer = app.listen(Number(SERVER_PORT), '0.0.0.0', () => {
+  console.log(`Server is running at http://0.0.0.0:${SERVER_PORT}/`);
   console.log(
     `Ngnix is running at http://localhost:${process.env.NGINX_PORT}/`,
   );

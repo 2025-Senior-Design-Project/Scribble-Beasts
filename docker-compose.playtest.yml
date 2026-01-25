@@ -1,4 +1,24 @@
 services:
+  client:
+    build:
+      target: development
+    command: ['npm', 'run', 'dev']
+    volumes:
+      - ./client:/app/client
+      - ./shared:/app/shared
+      - /app/client/node_modules
+
+  server:
+    build:
+      target: development
+    command: ['npm', 'run', 'dev']
+    volumes:
+      - ./server:/app/server
+      - ./server/docker.tsconfig.json:/app/server/tsconfig.json
+      - ./server/tsconfig.json:/app/server/local.tsconfig.json
+      - ./shared:/app/shared
+      - /app/server/node_modules
+
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped

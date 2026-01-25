@@ -7,7 +7,7 @@ app = 'scribble-client-jazmo'
 primary_region = 'ord'
 
 [env]
-  API_URL = "http://scribble-server-jazmo.internal:5001"
+  DNS_RESOLVER = "[fdaa::3]"
 
 [build]
   dockerfile = 'client/Dockerfile'
