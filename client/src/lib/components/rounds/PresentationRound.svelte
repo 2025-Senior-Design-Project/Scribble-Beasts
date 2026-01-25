@@ -3,10 +3,17 @@
   import { drawingImage, presenterName, playerName } from '../../GameState';
   import ClientWebsocket from '../../ClientWebsocket';
   import { ActionEnum } from '@shared/actions';
+  import { onMount } from 'svelte';
+  import { roundStore } from 'src/lib/stores/roundStore';
 
   async function handleRoundEnd() {
-    // base function will already send end round action for us
+    $roundStore.current.hideButton = true;
   }
+
+  onMount(() => {
+    // hides the done button for presentation rounds
+    $roundStore.current.hideButton = false;
+  });
 
   function endPresentation() {
     // send presenter end action
