@@ -9,6 +9,7 @@ import {
   type PlayerDoneAction,
   type StartRoundAction,
   SendPresenterChangeAction,
+  SendMonsterNameAction,
 } from '@shared/actions';
 import { derived, get, writable } from 'svelte/store';
 import ClientWebsocket from './ClientWebsocket';
@@ -79,6 +80,10 @@ const presenterChange = (action: SendPresenterChangeAction) => {
   presenterName.set(newPresenter);
 };
 
+const nameMonster = (action: SendMonsterNameAction) => {
+  const { monsterName } = action.payload;
+};
+
 const eotwChange = (action: SendEotwAction) => {
   const { eotwId } = action.payload;
   eotwCard.set(getEotwCardFromId(eotwId));
@@ -130,6 +135,10 @@ export function resetState() {
   ClientWebsocket.addActionListener<SendPresenterChangeAction>(
     ActionEnum.PRESENTER_CHANGE,
     presenterChange,
+  );
+  ClientWebsocket.addActionListener<SendMonsterNameAction>(
+    ActionEnum.SEND_MONSTER_NAME,
+    nameMonster,
   );
   ClientWebsocket.addActionListener<PlayerDoneAction>(
     ActionEnum.PLAYER_DONE,
