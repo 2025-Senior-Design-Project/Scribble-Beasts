@@ -43,6 +43,6 @@ export class ServerPresentRound extends Mixin(ServerRound, PresentRound) {
         p.sendAction(new SendDrawingAction(nextPresenter.lastUploadedImage));
       });
     }
-    return false;
+    return true;
   }
 }
