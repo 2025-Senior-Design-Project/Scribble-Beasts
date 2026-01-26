@@ -2,16 +2,16 @@ import {
   ActionEnum,
   AnyRoundAction,
   SendEOTWAction as SendEotwAction,
-} from '@shared/actions';
+} from '../../../../../shared/actions/index.js';
 import {
   EndOfTheWorldRound,
   PlaceholderRound,
   WinnerRound,
-} from '@shared/rounds';
-import { ServerRound } from './ServerRound';
-import { Player } from '../Player';
+} from '../../../../../shared/rounds/index.js';
+import { ServerRound } from './ServerRound.js';
+import { Player } from '../Player.js';
 import { Mixin } from 'ts-mixer';
-import { getRandomEotwCard } from '@shared/eotw';
+import { getRandomEotwCard } from '../../../../../shared/eotw/index.js';
 
 export abstract class ServerConfirmationRound extends ServerRound {
   expectedActions = [ActionEnum.END_ROUND];
@@ -28,12 +28,12 @@ export abstract class ServerConfirmationRound extends ServerRound {
 
 export class ServerPlaceholderRound extends Mixin(
   ServerConfirmationRound,
-  PlaceholderRound
+  PlaceholderRound,
 ) {}
 
 export class ServerEndOfTheWorldRound extends Mixin(
   ServerConfirmationRound,
-  EndOfTheWorldRound
+  EndOfTheWorldRound,
 ) {
   setup(players: Player[]): void {
     const card = getRandomEotwCard();
@@ -47,7 +47,7 @@ export class ServerEndOfTheWorldRound extends Mixin(
 
 export class ServerWinnerRound extends Mixin(
   ServerConfirmationRound,
-  WinnerRound
+  WinnerRound,
 ) {
   roundResponseHandler(action: AnyRoundAction, player: Player): boolean {
     // only the host can end the game from the winner round

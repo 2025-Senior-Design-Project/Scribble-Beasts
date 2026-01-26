@@ -18,7 +18,11 @@ export default defineConfig({
   server: {
     port: Number(process.env.CLIENT_PORT) || 3000,
     host: '0.0.0.0',
-    allowedHosts: ['host.docker.internal', 'scribble-beasts.com'],
+    allowedHosts: [
+      'host.docker.internal',
+      'scribble-beasts.com',
+      'playtest.scribble-beasts.com',
+    ],
     hmr: {
       protocol: 'wss',
       host: 'scribble-beasts.com',

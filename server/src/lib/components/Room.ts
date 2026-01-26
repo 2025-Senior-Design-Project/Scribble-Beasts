@@ -1,7 +1,7 @@
-import { Actions, ActionEnum } from '@shared/actions';
-import { Player, Host } from './Player';
-import { Game } from './Game';
-import { handleRoomless } from '../scripts/roomless-handler';
+import { Actions, ActionEnum } from '../../../../shared/actions/index.js';
+import { Player, Host } from './Player.js';
+import { Game } from './Game.js';
+import { handleRoomless } from '../scripts/roomless-handler.js';
 
 export const Rooms: Record<string, Room> = {};
 
@@ -28,7 +28,7 @@ export class Room {
       const newHost = playerToBecomeHost as Host;
       this.host = newHost;
       console.log(
-        `Host ${this.host.name} disconnected from room ${this.name}. New host is ${newHost.name}`
+        `Host ${this.host.name} disconnected from room ${this.name}. New host is ${newHost.name}`,
       );
       this.hostSetup();
       const hostChangeAction = new Actions.HostChange(this.host.name);
@@ -36,7 +36,7 @@ export class Room {
     });
     this.host.addActionListener(
       ActionEnum.START_GAME,
-      this.startGame.bind(this)
+      this.startGame.bind(this),
     );
   }
 
@@ -64,7 +64,7 @@ export class Room {
 
       player.handleDisconnect(() => {
         console.log(
-          `Player ${playerName} was removed from room ${this.name} because they were disconnected for too long.`
+          `Player ${playerName} was removed from room ${this.name} because they were disconnected for too long.`,
         );
         this.removePlayer(playerName);
       });
@@ -97,8 +97,8 @@ export class Room {
   playerListChanged() {
     this.sendActionToAll(
       new Actions.PlayerListChange(
-        this.getConnectedPlayers().map((p) => p.name)
-      )
+        this.getConnectedPlayers().map((p) => p.name),
+      ),
     );
   }
 
@@ -119,7 +119,7 @@ export class Room {
     this.game = new Game(
       Object.values(this.players),
       this.sendActionToAll.bind(this),
-      () => {}
+      () => {},
     );
     this.game.startGame();
   }

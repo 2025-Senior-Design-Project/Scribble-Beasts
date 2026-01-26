@@ -5,9 +5,17 @@ services:
       - ${NGINX_PORT}:${NGINX_PORT}
     volumes:
       - ./nginx/templates:/etc/nginx/templates:ro
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:${NGINX_PORT}/']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     depends_on:
-      - client
-      - server
+      client:
+        condition: service_healthy
+      server:
+        condition: service_healthy
     env_file:
       - .env
     networks:
@@ -15,18 +23,21 @@ services:
 
   client:
     build:
-      context: ./client
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: client/Dockerfile
       args:
         - REPO_URL
-    volumes:
-      - ./client:/app
-      - ./shared:/shared
-      - /app/node_modules
     environment:
       - PORT=${CLIENT_PORT}
     ports:
       - ${CLIENT_PORT}:${CLIENT_PORT}
+    healthcheck:
+      test:
+        ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:${CLIENT_PORT}/']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     env_file:
       - .env
     networks:
@@ -34,20 +45,21 @@ services:
 
   server:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/Dockerfile
       args:
         - REPO_URL
-    volumes:
-      - ./server:/app
-      - ./server/docker.tsconfig.json:/app/tsconfig.json
-      - ./server/tsconfig.json:/app/local.tsconfig.json
-      - ./shared:/app/shared
-      - /app/node_modules
     environment:
       - PORT=${SERVER_PORT}
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
+    healthcheck:
+      test:
+        ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:${SERVER_PORT}/']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     env_file:
       - .env
     networks:

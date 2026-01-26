@@ -1,22 +1,50 @@
-FROM node:24-alpine AS base
-ARG REPO_URL
-LABEL org.opencontainers.image.source=$REPO_URL
+FROM node:20-alpine AS base
 WORKDIR /app
-COPY package*.json ./
+
+# Copy shared source code
+# Needed by server tsconfig paths
+COPY shared/ ./shared/
+
+# Copy server package files
+COPY server/package*.json ./server/
+COPY server/tsconfig.json ./server/
+
+# Install server dependencies
+WORKDIR /app/server
 RUN npm install
-COPY . .
+
+# Copy server source code
+COPY server/src ./src
 
 FROM base AS development
-EXPOSE ${SERVER_PORT:-5000}
+WORKDIR /app/server
+EXPOSE 5001
 CMD ["npm", "run", "dev"]
 
 FROM base AS builder
-CMD ["npm", "run", "build"]
+WORKDIR /app/server
+# Build server
+RUN npm run build
 
-FROM node:16-alpine AS production
+FROM node:20-alpine AS production
 WORKDIR /app
-COPY package*.json ./
-RUN npm install --production
-COPY --from=builder /app/dist ./dist
-EXPOSE ${SERVER_PORT:-5000}
-CMD ["npm", "start"]
+
+# Copy server package files for production install
+COPY --from=builder /app/server/package*.json ./server/
+
+# Install production dependencies
+WORKDIR /app/server
+RUN npm install --omit=dev
+
+# Copy built artifacts
+COPY --from=builder /app/server/dist ./dist
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=5001
+
+EXPOSE 5001
+
+# Start the server
+# Note: dist/server/src/index.js path comes from tsc output structure
+CMD ["node", "dist/server/src/index.js"]

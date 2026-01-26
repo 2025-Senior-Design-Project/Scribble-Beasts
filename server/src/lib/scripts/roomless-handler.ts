@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import { Room, Rooms } from '../components/Room';
+import { Room, Rooms } from '../components/Room.js';
 import {
   Actions,
   ActionEnum,
@@ -7,8 +7,8 @@ import {
   JoinRoomAction,
   ParseAction,
   type AnyAction,
-} from '@shared/actions';
-import { Player, Host } from '../components/Player';
+} from '../../../../shared/actions/index.js';
+import { Player, Host } from '../components/Player.js';
 import { IncomingMessage } from 'http';
 
 export function handleRoomless(ws: WebSocket) {
@@ -30,7 +30,7 @@ export function handleRoomless(ws: WebSocket) {
       default:
         console.warn(
           'Unexpected action type while user is not in room: ',
-          action.type
+          action.type,
         );
         break;
     }
@@ -39,7 +39,14 @@ export function handleRoomless(ws: WebSocket) {
 
 export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
   const cookies = parseCookies(req.headers.cookie);
-  const playerId = cookies.playerId;
+  let playerId = cookies.playerId;
+
+  if (!playerId && req.url) {
+    const match = req.url.match(/[?&]playerId=([^&]+)/);
+    if (match) {
+      playerId = match[1];
+    }
+  }
 
   if (playerId) {
     const result = findGlobalPlayer(playerId);
@@ -60,12 +67,12 @@ function createRoom(action: CreateRoomAction, ws: WebSocket) {
   const { roomName, hostName } = action.payload;
   let { roomInputMessage, nameInputMessage } = checkIfParamsAreEmpty(
     roomName,
-    hostName
+    hostName,
   );
 
   if (roomInputMessage && nameInputMessage) {
     ws.send(
-      JSON.stringify(new Actions.RoomError(nameInputMessage, roomInputMessage))
+      JSON.stringify(new Actions.RoomError(nameInputMessage, roomInputMessage)),
     );
     return;
   }
@@ -73,8 +80,8 @@ function createRoom(action: CreateRoomAction, ws: WebSocket) {
   if (findRoom(roomName)) {
     ws.send(
       JSON.stringify(
-        new Actions.RoomError(nameInputMessage, 'Room name already taken.')
-      )
+        new Actions.RoomError(nameInputMessage, 'Room name already taken.'),
+      ),
     );
     return;
   }
@@ -91,12 +98,12 @@ function joinRoom(action: JoinRoomAction, ws: WebSocket) {
   const { roomName, playerName } = action.payload;
   let { roomInputMessage, nameInputMessage } = checkIfParamsAreEmpty(
     roomName,
-    playerName
+    playerName,
   );
 
   if (roomInputMessage && nameInputMessage) {
     ws.send(
-      JSON.stringify(new Actions.RoomError(nameInputMessage, roomInputMessage))
+      JSON.stringify(new Actions.RoomError(nameInputMessage, roomInputMessage)),
     );
     return;
   }
@@ -112,7 +119,7 @@ function joinRoom(action: JoinRoomAction, ws: WebSocket) {
 
   if (!room || nameInputMessage || roomInputMessage) {
     ws.send(
-      JSON.stringify(new Actions.RoomError(nameInputMessage, roomInputMessage))
+      JSON.stringify(new Actions.RoomError(nameInputMessage, roomInputMessage)),
     );
     return;
   }
@@ -120,7 +127,7 @@ function joinRoom(action: JoinRoomAction, ws: WebSocket) {
   const player = new Player(playerName, ws);
   room.addPlayer(player);
   ws.send(
-    JSON.stringify(new Actions.JoinRoom(roomName, playerName, room.host.name))
+    JSON.stringify(new Actions.JoinRoom(roomName, playerName, room.host.name)),
   );
   ws.send(JSON.stringify(new Actions.Reconnect(player.id)));
   console.log(`Player ${playerName} joined room ${roomName}`);
@@ -128,7 +135,7 @@ function joinRoom(action: JoinRoomAction, ws: WebSocket) {
 
 function checkIfParamsAreEmpty(
   roomName: string,
-  playerName: string
+  playerName: string,
 ): { roomInputMessage?: string; nameInputMessage?: string } {
   let nameInputMessage: string | undefined;
   let roomInputMessage: string | undefined;
@@ -167,7 +174,7 @@ function parseCookies(cookieHeader?: string): Record<string, string> {
 }
 
 function findGlobalPlayer(
-  playerId: string
+  playerId: string,
 ): { player: Player; room: Room } | undefined {
   for (const room of Object.values(Rooms)) {
     const player = room.findPlayerById(playerId);
