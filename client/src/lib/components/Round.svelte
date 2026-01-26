@@ -6,9 +6,10 @@
   import { ActionEnum } from '@shared/actions';
   import { type Snippet } from 'svelte';
 
-  let { children, onRoundEnd }: { 
+  let { children, onRoundEnd, showDoneButton = true }: { 
     children: Snippet;
     onRoundEnd: () => Promise<void> | void;
+    showDoneButton?: boolean;
   } = $props();
 
   let canClickDone = $state(false);
@@ -75,7 +76,7 @@
   <div class="round-footer">
     <div class="timer">{$roundStore?.timeLeft ?? 0}s</div>
 
-    {#if !$roundStore?.current.hideButton}
+    {#if !$roundStore?.current.hideButton && showDoneButton}
       <button
         onclick={handleEnd}
         disabled={!canClickDone}
