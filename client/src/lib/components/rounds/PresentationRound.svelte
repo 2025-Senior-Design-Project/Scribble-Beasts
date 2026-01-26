@@ -6,7 +6,14 @@
   import { onMount } from 'svelte';
   import { roundStore } from 'src/lib/stores/roundStore';
 
-  async function handleRoundEnd() {}
+  async function handleRoundEnd() {
+    $roundStore.current.hideButton = true;
+  }
+
+  onMount(() => {
+    // hides the done button for presentation rounds
+    $roundStore.current.hideButton = false;
+  });
 
   function endPresentation() {
     // send presenter end action
@@ -38,6 +45,11 @@
         class="drawing-image"
       />
       <button class="btn" on:click={downloadImage}> Download Image </button>
+      {#if $presenterName === $playerName}
+        <button class="btn" on:click={endPresentation}>
+          End Presentation
+        </button>
+      {/if}
     {:else}
       <p>No image to display D:</p>
     {/if}
