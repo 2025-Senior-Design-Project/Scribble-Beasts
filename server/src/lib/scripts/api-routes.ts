@@ -1,6 +1,6 @@
 import { Request, Response, Router } from 'express';
-import { Rooms, Room } from '../components/Room';
-import { PendingConnections } from './pending-connections';
+import { Rooms, Room } from '../components/Room.js';
+import { PendingConnections } from './pending-connections.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
@@ -74,10 +74,26 @@ router.post('/join', (req: Request, res: Response) => {
     return;
   }
 
-  if (playerExistsInRoom(room, playerName)) {
-    res.status(400).json({
-      error: 'Name taken',
-      nameInputMessage: 'Name already taken in this room.',
+  const existingPlayer = findPlayerInRoom(room, playerName);
+  if (existingPlayer) {
+    if (!existingPlayer.disconnected) {
+      res.status(400).json({
+        error: 'Name taken',
+        nameInputMessage: 'Name already taken in this room.',
+      });
+      return;
+    }
+
+    // Player is disconnected, allow reconnect
+    console.log(
+      `Player ${playerName} reconnecting to room ${roomName} via API`,
+    );
+    res.json({
+      success: true,
+      playerId: existingPlayer.id,
+      roomName,
+      hostName: room.host.name,
+      playerName,
     });
     return;
   }
@@ -128,8 +144,8 @@ function isRoomPendingCreation(roomName: string): boolean {
   );
 }
 
-function playerExistsInRoom(room: Room, playerName: string): boolean {
-  return !!Object.values(room.players).find((p) => p.name === playerName);
+function findPlayerInRoom(room: Room, playerName: string) {
+  return Object.values(room.players).find((p) => p.name === playerName);
 }
 
 export default router;

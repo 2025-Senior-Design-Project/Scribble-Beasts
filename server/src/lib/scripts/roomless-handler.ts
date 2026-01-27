@@ -1,6 +1,6 @@
 import WebSocket from 'ws';
 import { Room, Rooms } from '../components/Room.js';
-import { Actions } from '@shared/actions/index.js';
+import { Actions } from '../../../../shared/actions/index.js';
 import { Player, Host } from '../components/Player.js';
 import { IncomingMessage } from 'http';
 import { PendingConnections } from './pending-connections.js';
@@ -35,6 +35,15 @@ export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
     const result = findGlobalPlayer(playerId);
     if (result) {
       const { player, room } = result;
+
+      if (!player.disconnected) {
+        console.log(
+          `Player ${player.name} is already connected. Rejecting new connection.`,
+        );
+        ws.close(4001, 'Session active elsewhere');
+        return;
+      }
+
       player.reconnect(ws, room);
       console.log(`Player ${player.name} reconnected.`);
       return;

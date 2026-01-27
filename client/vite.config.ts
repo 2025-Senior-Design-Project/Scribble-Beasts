@@ -23,10 +23,6 @@ export default defineConfig({
       'scribble-beasts.com',
       'playtest.scribble-beasts.com',
     ],
-    hmr: {
-      protocol: 'wss',
-      host: 'scribble-beasts.com',
-    },
   },
   resolve: {
     alias: {

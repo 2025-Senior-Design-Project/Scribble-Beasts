@@ -102,11 +102,15 @@ const bufferedEventListeners: {
   listener: (ev: any) => void;
 }[] = [];
 
+function getWebsocketUrl() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${window.location.host}/api`;
+}
+
 function initClientWebsocket() {
   if (instance) return;
 
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${protocol}//${window.location.host}/api`;
+  const wsUrl = getWebsocketUrl();
   const ws = new WebSocket(wsUrl);
   instance = new CWebsocket(ws);
 
