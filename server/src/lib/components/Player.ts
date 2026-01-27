@@ -1,7 +1,11 @@
-import { ActionTarget, ActionEnum, Actions } from '@shared/actions';
+import {
+  ActionTarget,
+  ActionEnum,
+  Actions,
+} from '../../../../shared/actions/index.js';
 import WebSocket, { MessageEvent } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
-import { Room } from './Room';
+import { Room } from './Room.js';
 
 // base64 encoded url for a blank pixel
 export const BLANK_PIXEL =
@@ -63,15 +67,15 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
       this.sendAction(
         new Actions.StartGame(
           room.game.currentRoundNumber,
-          room.game.getRemainingTime()
-        )
+          room.game.getRemainingTime(),
+        ),
       );
       this.sendAction(
-        new Actions.SendDrawing(room.game.playerDrawings[this.id])
+        new Actions.SendDrawing(room.game.playerDrawings[this.id]),
       );
     } else {
       this.sendAction(
-        new Actions.JoinRoom(room.name, this.name, room.host.name)
+        new Actions.JoinRoom(room.name, this.name, room.host.name),
       );
     }
 

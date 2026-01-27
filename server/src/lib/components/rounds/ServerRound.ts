@@ -1,6 +1,9 @@
-import type { Player } from '../Player';
-import { Game } from '../Game';
-import { ActionEnum, AnyRoundAction } from '@shared/actions';
+import type { Player } from '../Player.js';
+import { Game } from '../Game.js';
+import {
+  ActionEnum,
+  AnyRoundAction,
+} from '../../../../../shared/actions/index.js';
 
 export abstract class ServerRound {
   game: Game;
@@ -18,6 +21,6 @@ export abstract class ServerRound {
    * */
   abstract roundResponseHandler(
     action: AnyRoundAction,
-    player: Player
+    player: Player,
   ): boolean;
 }

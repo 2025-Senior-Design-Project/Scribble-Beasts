@@ -1,8 +1,11 @@
-import { ActionEnum, AnyRoundAction } from '@shared/actions';
-import { VoteRound } from '@shared/rounds';
-import { ServerRound } from './ServerRound';
+import {
+  ActionEnum,
+  AnyRoundAction,
+} from '../../../../../shared/actions/index.js';
+import { VoteRound } from '../../../../../shared/rounds/index.js';
+import { ServerRound } from './ServerRound.js';
 import { Mixin } from 'ts-mixer';
-import { Player } from '../Player';
+import { Player } from '../Player.js';
 
 export class ServerVoteRound extends Mixin(ServerRound, VoteRound) {
   expectedActions = [ActionEnum.SEND_VOTE];

@@ -1,18 +1,18 @@
 import {
   ServerEndOfTheWorldRound,
   ServerWinnerRound,
-} from './ConfirmationRounds';
+} from './ConfirmationRounds.js';
 import {
   ServerColorRound,
   ServerDetailRound,
   ServerLineRound,
   ServerNameRound,
   ServerScribbleRound,
-} from './DrawingRounds';
-import { ServerPresentRound } from './PresentRound';
-import type { ServerRound } from './ServerRound';
-import { ServerVoteRound } from './VoteRound';
-import { Game } from '../Game';
+} from './DrawingRounds.js';
+import { ServerPresentRound } from './PresentRound.js';
+import type { ServerRound } from './ServerRound.js';
+import { ServerVoteRound } from './VoteRound.js';
+import { Game } from '../Game.js';
 
 export function initializeRounds(game: Game): ServerRound[] {
   return [

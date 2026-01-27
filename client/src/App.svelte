@@ -2,27 +2,45 @@
   import ClientWebsocket from './lib/ClientWebsocket';
   import { Actions } from '@shared/actions';
   import ErrorToast from './lib/components/ErrorToast.svelte';
-  import RoomForm from './lib/components/RoomForm.svelte';
+  import LandingPage from './lib/components/LandingPage.svelte';
   import Lobby from './lib/components/Lobby.svelte';
   import Game from './lib/components/Game.svelte';
-  import { View, currentView, navigateTo } from './lib/Navigator';
+  import ConfirmationModal from './lib/components/ConfirmationModal.svelte';
+  import { View, currentView, currentPath, navigateTo } from './lib/Navigator';
   import { resetState } from './lib/GameState';
 
   resetState();
+
+  let showLeaveConfirm = $state(false);
 
   function leaveRoom() {
     ClientWebsocket.sendAction(new Actions.LeaveRoom());
     navigateTo(View.ROOM_FORM);
   }
+
+  // Determine if we should show the landing page based on the current view or the path
+  // This allows direct URL access to /playtesting, /about, /rules
+  const showLandingPage = $derived(
+    $currentView === View.ROOM_FORM ||
+      ['/playtesting', '/about', '/rules'].includes($currentPath),
+  );
 </script>
 
 <main>
   <ErrorToast />
+  <ConfirmationModal
+    bind:show={showLeaveConfirm}
+    title="Leave Room?"
+    message="Are you sure you want to leave the room?"
+    onConfirm={leaveRoom}
+  />
   {#if $currentView !== View.ROOM_FORM}
-    <button class="leave-room" on:click={leaveRoom}>Leave Room</button>
+    <button class="leave-room" onclick={() => (showLeaveConfirm = true)}>
+      Leave Room
+    </button>
   {/if}
-  {#if $currentView === View.ROOM_FORM}
-    <RoomForm />
+  {#if showLandingPage}
+    <LandingPage />
   {:else if $currentView === View.LOBBY}
     <Lobby />
   {:else if $currentView === View.GAME}
@@ -34,7 +52,7 @@
   .leave-room {
     position: fixed;
     z-index: 999;
-    bottom: 1rem;
+    top: 1rem;
     right: 1rem;
     background-color: #ff0000;
     color: white;

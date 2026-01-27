@@ -1,0 +1,24 @@
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+}
+
+server {
+    listen ${PORT};
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Enable gzip compression
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Use Docker's internal DNS resolver (127.0.0.11) or Fly.io's ([fdaa::3])
+    # to allow resolving upstream hostnames dynamically at runtime.
+    resolver ${DNS_RESOLVER} valid=30s;
+
+}

@@ -3,11 +3,11 @@ import {
   AnyRoundAction,
   SendDrawingAction,
   SendPresenterChangeAction,
-} from '@shared/actions';
-import { PresentRound } from '@shared/rounds';
-import { ServerRound } from './ServerRound';
+} from '../../../../../shared/actions/index.js';
+import { PresentRound } from '../../../../../shared/rounds/index.js';
+import { ServerRound } from './ServerRound.js';
 import { Mixin } from 'ts-mixer';
-import { Player } from '../Player';
+import { Player } from '../Player.js';
 import { randomInt } from 'crypto';
 
 export class ServerPresentRound extends Mixin(ServerRound, PresentRound) {

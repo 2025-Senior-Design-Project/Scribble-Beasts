@@ -2,16 +2,16 @@ import {
   ActionEnum,
   type AnyRoundAction,
   SendDrawingAction,
-} from '@shared/actions';
+} from '../../../../../shared/actions/index.js';
 import {
   ColorRound,
   DetailRound,
   LineRound,
   NameRound,
   ScribbleRound,
-} from '@shared/rounds';
-import { BLANK_PIXEL, Player } from '../Player';
-import { ServerRound } from './ServerRound';
+} from '../../../../../shared/rounds/index.js';
+import { BLANK_PIXEL, Player } from '../Player.js';
+import { ServerRound } from './ServerRound.js';
 import { Mixin } from 'ts-mixer';
 
 export abstract class ServerDrawingRound extends ServerRound {
@@ -44,7 +44,7 @@ export abstract class ServerDrawingRound extends ServerRound {
 
 export class ServerScribbleRound extends Mixin(
   ServerDrawingRound,
-  ScribbleRound
+  ScribbleRound,
 ) {
   setup(players: Player[]): void {
     // set everyone up with an empty image

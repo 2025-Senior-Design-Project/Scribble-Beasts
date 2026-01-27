@@ -31,6 +31,8 @@ export const enum ActionEnum {
   PLAYER_DONE = 'PLAYER_DONE',
 }
 
+type Base64URLString = string;
+
 class Action<Payload> {
   type: ActionEnum;
   payload: Payload;
@@ -198,11 +200,11 @@ export const Actions = {
 interface IWebSocket {
   addEventListener(
     type: string,
-    listener: (this: IWebSocket, ev: any) => void
+    listener: (this: IWebSocket, ev: any) => void,
   ): void;
   removeEventListener(
     type: string,
-    listener: (this: IWebSocket, ev: any) => void
+    listener: (this: IWebSocket, ev: any) => void,
   ): void;
   send(data: string): void;
   close(): void;
@@ -237,16 +239,22 @@ export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
   }
 
   addEventListener(type: string, listener: (this: T, ev: E) => void): void {
-    this.#ws.addEventListener(type, listener);
+    this.#ws.addEventListener(
+      type,
+      listener as (this: IWebSocket, ev: any) => void,
+    );
   }
 
   removeEventListener(type: string, listener: (this: T, ev: E) => void): void {
-    this.#ws.removeEventListener(type, listener);
+    this.#ws.removeEventListener(
+      type,
+      listener as (this: IWebSocket, ev: any) => void,
+    );
   }
 
   addActionListener<A extends AnyAction>(
     actionType: ActionEnum,
-    listener: (action: A) => void
+    listener: (action: A) => void,
   ): () => void {
     const actionListener = (ev: E) => {
       const action = ParseAction<A>(ev.data, actionType);
@@ -270,8 +278,9 @@ export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
   }
 
   removeActionListener(actionType: ActionEnum) {
-    if (!this.#actionListeners[actionType]) return;
-    this.#actionListeners[actionType].forEach((listener) => {
+    const listeners = this.#actionListeners[actionType];
+    if (!listeners) return;
+    listeners.forEach((listener) => {
       this.removeEventListener('message', listener);
     });
     delete this.#actionListeners[actionType];
@@ -299,13 +308,13 @@ export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
 
   destroy() {
     this.#ws.close();
-    this.#ws.removeAllListeners();
+    this.#ws.removeAllListeners?.();
   }
 }
 
 export function ParseAction<T extends AnyAction>(
   data: string,
-  desiredType?: ActionEnum
+  desiredType?: ActionEnum,
 ): T | null {
   try {
     // check that data has the structure of an Action

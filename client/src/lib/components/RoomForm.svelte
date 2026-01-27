@@ -39,7 +39,7 @@
       const { roomInputMessage, nameInputMessage } = action.payload;
       roomNameError = roomInputMessage ?? '';
       playerNameError = nameInputMessage ?? '';
-    }
+    },
   );
   ClientWebsocket.addActionListener<CreateRoomAction>(
     ActionEnum.CREATE_ROOM,
@@ -51,7 +51,7 @@
       playerNameState.set(hostName);
       roomNameState.set(roomName);
       navigateTo(View.LOBBY);
-    }
+    },
   );
   ClientWebsocket.addActionListener<JoinRoomAction>(
     ActionEnum.JOIN_ROOM,
@@ -63,11 +63,11 @@
       playerNameState.set(playerName);
       roomNameState.set(roomName);
       navigateTo(View.LOBBY);
-    }
+    },
   );
 
   const inputsFilled = $derived(
-    roomName.trim() !== '' && playerName.trim() !== ''
+    roomName.trim() !== '' && playerName.trim() !== '',
   );
 
   function joinRoom(event: Event): void {
@@ -128,9 +128,16 @@
 </div>
 
 <style>
+  div {
+    display: contents;
+  }
   .room-form {
     transform: rotate(-2deg);
     max-width: 25rem;
+    /* Styles are now handled by parent wrapper or shared */
+    width: 100%;
+    /* max-width: 25rem; This will be controlled by parent */
+    padding-top: 4rem;
   }
   .form-group {
     margin-bottom: 1.5rem;
@@ -142,7 +149,8 @@
     text-align: left;
   }
   input {
-    width: 100%;
+    width: 90%;
+    padding-left: 1rem;
     /* padding inherited from global but 100% width needed here */
   }
   .button-group {
