@@ -89,6 +89,7 @@ export class PresentRound extends Round {
   roundName = 'Present';
   description = 'present your beast to the group';
   staggered = true;
+  hideButton = true;
 }
 
 export class VoteRound extends Round {

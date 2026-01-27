@@ -1,9 +1,19 @@
 <script lang="ts">
   import Round from '../Round.svelte';
-  import { drawingImage } from '../../GameState';
+  import { drawingImage, presenterName, isPresenter } from '../../GameState';
+  import ClientWebsocket from '../../ClientWebsocket';
+  import { ActionEnum } from '@shared/actions';
 
   async function handleRoundEnd() {
     // base function will already send end round action for us
+  }
+
+  function endPresentation() {
+    // send presenter end action
+    ClientWebsocket.sendAction({
+      type: ActionEnum.PRESENTER_END,
+      payload: {},
+    });
   }
 
   function downloadImage() {
@@ -21,14 +31,22 @@
 <Round onRoundEnd={handleRoundEnd}>
   <div class="presentation-container">
     {#if $drawingImage}
+      {#if !$isPresenter}
+        <p>Presenter: {$presenterName}</p>
+      {:else}
+        <p>You are presenting!</p>
+      {/if}
       <img
         src={$drawingImage}
         alt="Final Scribble Beast"
         class="drawing-image"
       />
-      <button class="download-btn" on:click={downloadImage}>
-        Download Image
-      </button>
+      <button class="btn" on:click={downloadImage}> Download Image </button>
+      {#if $isPresenter}
+        <button class="btn" on:click={endPresentation}>
+          End Presentation
+        </button>
+      {/if}
     {:else}
       <p>No image to display D:</p>
     {/if}
@@ -62,7 +80,7 @@
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2);
   }
 
-  .download-btn {
+  .btn {
     padding: 12px 24px;
     font-family: 'AckiPreschool', sans-serif;
     font-size: 1.5rem;
@@ -74,11 +92,11 @@
     transition: transform 0.1s;
   }
 
-  .download-btn:hover {
+  .btn:hover {
     transform: scale(1.05);
   }
 
-  .download-btn:active {
+  .btn:active {
     transform: scale(0.95);
   }
 </style>
