@@ -32,7 +32,7 @@
   });
 </script>
 
-<main>
+<main class="container">
   <ErrorToast />
   <ConfirmationModal
     bind:show={showLeaveConfirm}
@@ -40,11 +40,13 @@
     message="Are you sure you want to leave the room?"
     onConfirm={leaveRoom}
   />
-  {#if $currentView !== View.ROOM_FORM}
-    <button class="leave-room" onclick={() => (showLeaveConfirm = true)}>
-      Leave Room
-    </button>
-  {/if}
+  <div class="fixed-ui-layer">
+    {#if $currentView !== View.ROOM_FORM}
+      <button class="leave-room" onclick={() => (showLeaveConfirm = true)}>
+        Leave Room
+      </button>
+    {/if}
+  </div>
   {#if showLandingPage}
     <LandingPage />
   {:else if $currentView === View.LOBBY}
@@ -55,9 +57,18 @@
 </main>
 
 <style>
-  .leave-room {
+  .fixed-ui-layer {
     position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 0;
     z-index: 999;
+    pointer-events: none;
+  }
+  .leave-room {
+    position: absolute;
+    pointer-events: auto;
     top: 1rem;
     right: 1rem;
     background-color: #ff0000;

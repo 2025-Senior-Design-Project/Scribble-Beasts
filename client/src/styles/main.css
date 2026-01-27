@@ -163,6 +163,14 @@ input::placeholder {
 }
 
 /* Utility Classes */
+.container {
+  width: 100vw;
+  /* elements inside won't be affected by scrollbars */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .flex-center-page {
   display: flex;
   justify-content: center;
