@@ -1,6 +1,6 @@
 <script lang="ts">
   import Round from '../Round.svelte';
-  import { drawingImage, presenterName, playerName } from '../../GameState';
+  import { drawingImage, presenterName, isPresenter } from '../../GameState';
   import ClientWebsocket from '../../ClientWebsocket';
   import { ActionEnum } from '@shared/actions';
 
@@ -31,14 +31,18 @@
 <Round onRoundEnd={handleRoundEnd} showDoneButton={false}>
   <div class="presentation-container">
     {#if $drawingImage}
-      <p>Presenter: {$presenterName}</p>
+      {#if !$isPresenter}
+        <p>Presenter: {$presenterName}</p>
+      {:else}
+        <p>You are presenting!</p>
+      {/if}
       <img
         src={$drawingImage}
         alt="Final Scribble Beast"
         class="drawing-image"
       />
       <button class="btn" on:click={downloadImage}> Download Image </button>
-      {#if $presenterName === $playerName}
+      {#if $isPresenter}
         <button class="btn" on:click={endPresentation}>
           End Presentation
         </button>
