@@ -28,7 +28,7 @@
   }
 </script>
 
-<Round onRoundEnd={handleRoundEnd} showDoneButton={false}>
+<Round onRoundEnd={handleRoundEnd}>
   <div class="presentation-container">
     {#if $drawingImage}
       {#if !$isPresenter}
