@@ -7,7 +7,8 @@
   "exports": "./dist/*.js",
   "scripts": {
     "start": "node dist/server/src/index.js",
-    "dev": "tsx watch src/index.ts",
+    "dev": "npm run generate-assets && tsx watch src/index.ts",
+    "generate-assets": "tsx src/lib/scripts/generate-assets-data.ts",
     "build": "tsc",
     "watch": "tsc -w"
   },

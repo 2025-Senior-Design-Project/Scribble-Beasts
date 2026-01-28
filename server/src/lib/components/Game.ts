@@ -20,6 +20,8 @@ export class Game {
   roundStartTime: number = 0;
   players: Player[];
   playerDrawings: Record<string, string> = {};
+  private forceRoundEndResolve: ((value?: any) => void) | undefined;
+
   constructor(
     players: Player[],
     sendActionToAllPlayers: (action: AnyAction) => void,
@@ -33,6 +35,12 @@ export class Game {
 
   startGame() {
     this.nextRound();
+  }
+
+  forceEndRound() {
+    if (this.forceRoundEndResolve) {
+      this.forceRoundEndResolve('force_end');
+    }
   }
 
   async nextRound() {
@@ -110,11 +118,19 @@ export class Game {
     const waitForTimeout = new Promise((res) =>
       setTimeout(() => res('timeout'), timeout * 1000),
     );
+
+    const forceEndPromise = new Promise((res) => {
+      this.forceRoundEndResolve = res;
+    });
+
     // wait till one of these finishes
     const winner = await Promise.race([
       Promise.all(playerPromises),
       waitForTimeout,
+      forceEndPromise,
     ]);
+
+    this.forceRoundEndResolve = undefined;
 
     // If timeout won, we give players a grace period to respond to our EndRound signal
     if (winner === 'timeout') {

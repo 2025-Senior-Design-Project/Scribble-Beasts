@@ -2,6 +2,7 @@ import {
   ActionEnum,
   SendEOTWAction as SendEotwAction,
   type HostChangeAction,
+  type AudioSettingsChangeAction,
   type JoinRoomAction,
   type PlayerListChangeAction,
   type SendDrawingAction,
@@ -14,6 +15,7 @@ import ClientWebsocket from './ClientWebsocket';
 import { View, navigateTo } from './Navigator';
 import { startNextRound, jumpToRound } from './stores/roundStore';
 import { getEotwCardFromId, type EotwCard } from '@shared/eotw';
+import { AudioMode } from '@shared/actions';
 
 export const isHost = writable(false);
 export const hostName = writable<string | undefined>(undefined);
@@ -21,6 +23,17 @@ export const playerName = writable('');
 export const roomName = writable('');
 export const currentRound = writable(0);
 export const players = writable<string[]>([]);
+
+export const audioMode = writable<AudioMode>(AudioMode.IN_PERSON);
+export const designatedSpeaker = writable<string | undefined>(undefined);
+export const isSpeaker = derived(
+  [audioMode, designatedSpeaker, hostName, playerName],
+  ([$audioMode, $designatedSpeaker, $hostName, $playerName]) => {
+    if ($audioMode === AudioMode.REMOTE) return true;
+    const speaker = $designatedSpeaker || $hostName;
+    return speaker === $playerName;
+  },
+);
 export const playersDone = writable<string[]>([]);
 export const everyoneDoneExceptYou = derived(
   [playersDone, players, playerName],
@@ -30,7 +43,7 @@ export const everyoneDoneExceptYou = derived(
       otherPlayers.length > 0 &&
       otherPlayers.every((p) => $playersDone.includes(p))
     );
-  }
+  },
 );
 export const drawingImage = writable<string>(''); // Base64url encoded image to draw on
 export const eotwCard = writable<EotwCard>();
@@ -86,6 +99,12 @@ const resetPlayersDone = (_action: StartRoundAction) => {
   playersDone.set([]);
 };
 
+const audioSettingsChange = (action: AudioSettingsChangeAction) => {
+  const { mode, speaker } = action.payload;
+  if (mode) audioMode.set(mode);
+  if (speaker) designatedSpeaker.set(speaker);
+};
+
 export function resetState() {
   ClientWebsocket.removeActionListener(ActionEnum.JOIN_ROOM);
   ClientWebsocket.removeActionListener(ActionEnum.PLAYER_LIST_CHANGE);
@@ -98,34 +117,38 @@ export function resetState() {
 
   ClientWebsocket.addActionListener<JoinRoomAction>(
     ActionEnum.JOIN_ROOM,
-    joinRoom
+    joinRoom,
   );
   ClientWebsocket.addActionListener<PlayerListChangeAction>(
     ActionEnum.PLAYER_LIST_CHANGE,
-    playerChange
+    playerChange,
   );
   ClientWebsocket.addActionListener<HostChangeAction>(
     ActionEnum.HOST_CHANGE,
-    hostChange
+    hostChange,
   );
   ClientWebsocket.addActionListener<StartGameAction>(
     ActionEnum.START_GAME,
-    startGame
+    startGame,
   );
   ClientWebsocket.addActionListener<SendDrawingAction>(
     ActionEnum.SEND_DRAWING,
-    drawingImageChange
+    drawingImageChange,
   );
   ClientWebsocket.addActionListener<SendEotwAction>(
     ActionEnum.SEND_EOTW,
-    eotwChange
+    eotwChange,
   );
   ClientWebsocket.addActionListener<PlayerDoneAction>(
     ActionEnum.PLAYER_DONE,
-    playerDone
+    playerDone,
   );
   ClientWebsocket.addActionListener<StartRoundAction>(
     ActionEnum.START_ROUND,
-    resetPlayersDone
+    resetPlayersDone,
+  );
+  ClientWebsocket.addActionListener<AudioSettingsChangeAction>(
+    ActionEnum.AUDIO_SETTINGS_CHANGE,
+    audioSettingsChange,
   );
 }

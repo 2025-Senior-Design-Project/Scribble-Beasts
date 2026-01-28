@@ -9,9 +9,11 @@ const EOTW_TIMEOUT = 20;
 const PRESENT_TIMEOUT = 6000;
 const VOTE_TIMEOUT = 60;
 const WINNER_TIMEOUT = 600;
+const INTRO_TIMEOUT = 60; // Default if not overridden
 
 export const enum RoundEnum {
   PLACEHOLDER = 'PLACEHOLDER',
+  INTRO = 'INTRO',
   SCRIBBLE = 'SCRIBBLE',
   LINE = 'LINE',
   COLOR = 'COLOR',
@@ -37,6 +39,14 @@ export class PlaceholderRound extends Round {
   timeout = PLACEHOLDER_TIMEOUT;
   roundName = 'Placeholder';
   description = 'this is a dummy placeholder round';
+}
+
+export class IntroRound extends Round {
+  roundType = RoundEnum.INTRO;
+  timeout = INTRO_TIMEOUT;
+  roundName = 'Intro';
+  description = 'Watch the intro';
+  hideButton = true;
 }
 
 export class ScribbleRound extends Round {
@@ -108,6 +118,7 @@ export class WinnerRound extends Round {
 /** All rounds in order of occurrence */
 export const Rounds: Round[] = [
   // new PlaceholderRound(), // removed now that we have real rounds
+  new IntroRound(),
   new ScribbleRound(),
   new LineRound(),
   new ColorRound(),

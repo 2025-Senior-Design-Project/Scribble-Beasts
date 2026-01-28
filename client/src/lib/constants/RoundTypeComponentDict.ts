@@ -8,6 +8,7 @@ import DetailRound from '../components/rounds/DetailRound.svelte';
 import NameRound from '../components/rounds/NameRound.svelte';
 import EotwRound from '../components/rounds/EotwRound.svelte';
 import PresentationRound from '../components/rounds/PresentationRound.svelte';
+import IntroRound from '../components/rounds/IntroRound.svelte';
 
 export interface RoundProps {
   onEnd?: () => void;
@@ -19,6 +20,7 @@ export const ROUND_TYPE_COMPONENT_DICT: Record<
   typeof PlaceholderRound
 > = {
   [RoundEnum.PLACEHOLDER]: PlaceholderRound,
+  [RoundEnum.INTRO]: IntroRound,
   [RoundEnum.SCRIBBLE]: ScribbleRound,
   [RoundEnum.LINE]: LineRound,
   [RoundEnum.COLOR]: ColorRound,

@@ -22,7 +22,7 @@
   // This allows direct URL access to /playtesting, /about, /rules
   const showLandingPage = $derived(
     $currentView === View.ROOM_FORM ||
-      ['/playtesting', '/about', '/rules'].includes($currentPath),
+      ['/playtesting', '/about', '/rules', '/credits'].includes($currentPath),
   );
 </script>
 

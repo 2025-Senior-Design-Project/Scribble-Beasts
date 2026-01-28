@@ -38,6 +38,9 @@ export class Room {
       ActionEnum.START_GAME,
       this.startGame.bind(this),
     );
+    this.host.addActionListener(ActionEnum.AUDIO_SETTINGS_CHANGE, (action) =>
+      this.sendActionToAll(action),
+    );
   }
 
   destroy() {

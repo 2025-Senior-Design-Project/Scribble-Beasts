@@ -13,9 +13,11 @@ import { ServerPresentRound } from './PresentRound.js';
 import type { ServerRound } from './ServerRound.js';
 import { ServerVoteRound } from './VoteRound.js';
 import { Game } from '../Game.js';
+import { ServerIntroRound } from './IntroRound.js';
 
 export function initializeRounds(game: Game): ServerRound[] {
   return [
+    new ServerIntroRound(game),
     new ServerScribbleRound(game),
     new ServerLineRound(game),
     new ServerColorRound(game),

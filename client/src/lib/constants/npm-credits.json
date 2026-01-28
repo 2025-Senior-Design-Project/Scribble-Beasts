@@ -1,0 +1,42 @@
+[
+  {
+    "name": "express",
+    "version": "^4.18.2",
+    "url": "https://www.npmjs.com/package/express"
+  },
+  {
+    "name": "pixi-live2d-display",
+    "version": "^0.4.0",
+    "url": "https://www.npmjs.com/package/pixi-live2d-display"
+  },
+  {
+    "name": "pixi.js",
+    "version": "^7.4.3",
+    "url": "https://www.npmjs.com/package/pixi.js"
+  },
+  {
+    "name": "svelte-preprocess",
+    "version": "^6.0.3",
+    "url": "https://www.npmjs.com/package/svelte-preprocess"
+  },
+  {
+    "name": "ts-mixer",
+    "version": "^6.0.4",
+    "url": "https://www.npmjs.com/package/ts-mixer"
+  },
+  {
+    "name": "tsx",
+    "version": "^4.20.5",
+    "url": "https://www.npmjs.com/package/tsx"
+  },
+  {
+    "name": "uuid",
+    "version": "^13.0.0",
+    "url": "https://www.npmjs.com/package/uuid"
+  },
+  {
+    "name": "ws",
+    "version": "^8.13.0",
+    "url": "https://www.npmjs.com/package/ws"
+  }
+]

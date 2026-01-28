@@ -111,6 +111,24 @@ npm run setup
 npm run prod
 ```
 
+# Animations (Live2D)
+
+We use **PixiJS** and **Live2D Cubism** for game animations (intros, tutorials).
+
+### Adding New Models
+
+1.  Place your Live2D model folder in `client/public/live2d/`.
+    - The folder structure should follow the standard Cubism export: `model_name/model_name.model3.json`.
+    - Ensure all referenced files (textures, physics, motions) are present.
+2.  Run the asset generation script (automatically runs on dev start, or manually: `npm run generate-assets` in server).
+    - This script scans the directory, calculates animation durations from `.motion3.json` files, and updates `client/src/lib/constants/asset-manifest.json` and `server/src/lib/constants/durations.json`.
+3.  The client will automatically preload these assets in the Lobby.
+
+### Modifying Animations
+
+- To change the **duration** logic or add buffer time, check `server/src/lib/scripts/generate-assets-data.ts`.
+- To change how the model **renders/behaves** (position, scale), check `client/src/lib/components/rounds/IntroRound.svelte`.
+
 # Quirks
 
 Node is cursed, so there's two tsconfig files in server folder. Make sure that any changes between the two of them are kept consistent. This is because docker has the shared folder added directly to the app dir instead of them being seperate like for client. In server, docker.tsconfig.json has the root dir as ., and tsconfig.json has the root dir as ..

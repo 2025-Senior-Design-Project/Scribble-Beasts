@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "generate-credits": "node scripts/generate-credits.js",
+    "build": "npm run generate-credits && vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
@@ -20,6 +21,8 @@
     "vite": "^7.1.5"
   },
   "dependencies": {
+    "pixi-live2d-display": "^0.4.0",
+    "pixi.js": "^7.4.3",
     "svelte-preprocess": "^6.0.3"
   }
 }

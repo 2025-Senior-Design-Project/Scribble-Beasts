@@ -29,6 +29,13 @@ export const enum ActionEnum {
   PRESENTER_END = 'PRESENTER_END',
   SEND_VOTE = 'VOTE_ROUND',
   PLAYER_DONE = 'PLAYER_DONE',
+  AUDIO_SETTINGS_CHANGE = 'AUDIO_SETTINGS_CHANGE',
+  SKIP_ROUND = 'SKIP_ROUND',
+}
+
+export enum AudioMode {
+  IN_PERSON = 'IN_PERSON',
+  REMOTE = 'REMOTE',
 }
 
 type Base64URLString = string;
@@ -159,13 +166,29 @@ export class PlayerDoneAction extends Action<{ playerName: string }> {
   }
 }
 
+export class SkipRoundAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.SKIP_ROUND, {});
+  }
+}
+
+export class AudioSettingsChangeAction extends Action<{
+  mode?: AudioMode;
+  speaker?: string;
+}> {
+  constructor(mode?: AudioMode, speaker?: string) {
+    super(ActionEnum.AUDIO_SETTINGS_CHANGE, { mode, speaker });
+  }
+}
+
 export type AnyRoundAction =
   | EndRoundAction
   | StartRoundAction
   | SendDrawingAction
   | SendEOTWAction
   | SendVoteAction
-  | PlayerDoneAction;
+  | PlayerDoneAction
+  | SkipRoundAction;
 
 // Type for any action
 export type AnyAction =
@@ -177,6 +200,7 @@ export type AnyAction =
   | HostChangeAction
   | StartGameAction
   | PlayerListChangeAction
+  | AudioSettingsChangeAction
   | AnyRoundAction;
 
 // Actions object for easy import and readability
@@ -195,6 +219,8 @@ export const Actions = {
   SendETOW: SendEOTWAction,
   SendVote: SendVoteAction,
   PlayerDone: PlayerDoneAction,
+  SkipRound: SkipRoundAction,
+  AudioSettingsChange: AudioSettingsChangeAction,
 };
 
 interface IWebSocket {

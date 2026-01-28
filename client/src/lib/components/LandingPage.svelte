@@ -3,6 +3,8 @@
   import { Rounds } from '@shared/rounds';
   import { currentSubRoute, navigateToPath } from '../Navigator';
   import { tick } from 'svelte';
+  import npmPackages from '../constants/npm-credits.json';
+  import { assetCredits } from '../constants/asset-credits';
 
   /**
    * Bridges Svelte's transition system with pure CSS classes.
@@ -83,6 +85,13 @@
     onclick={(e) => handleNav(e, '/rules')}
   >
     Rules
+  </a>
+  <a
+    href="/credits"
+    class:active={$currentSubRoute === 'credits'}
+    onclick={(e) => handleNav(e, '/credits')}
+  >
+    Credits
   </a>
 </nav>
 
@@ -206,6 +215,49 @@
                 <a href="/files/ogRules.pdf" target="_blank" class="pdf-link"
                   >View Original Physical Card Game Rules</a
                 >
+              </div>
+            </div>
+          </div>
+        {:else if $currentSubRoute === 'credits'}
+          <div class="paper-sheet">
+            <div class="content credits">
+              <h2>Credits</h2>
+
+              <div class="credits-section">
+                <h3>Assets</h3>
+                <ul class="asset-list">
+                  {#each assetCredits as asset}
+                    <li>
+                      <a
+                        href={asset.url}
+                        target="_blank"
+                        rel="noopener noreferrer">{asset.name}</a
+                      >
+                      <span class="attribution">
+                        by {asset.author} — {asset.license}</span
+                      >
+                    </li>
+                  {/each}
+                </ul>
+              </div>
+
+              <div class="credits-section">
+                <h3>Open Source Software</h3>
+                <p>We use the following NPM packages:</p>
+                <ul class="npm-list">
+                  {#each npmPackages as pkg}
+                    <li>
+                      <a
+                        href={pkg.url}
+                        target="_blank"
+                        rel="noopener noreferrer">{pkg.name}</a
+                      >
+                      {#if pkg.version}
+                        <span class="version"> v{pkg.version}</span>
+                      {/if}
+                    </li>
+                  {/each}
+                </ul>
               </div>
             </div>
           </div>
@@ -460,6 +512,39 @@
 
   .round-item p {
     margin: 0;
+  }
+
+  /* Credits */
+  .credits-section {
+    margin-bottom: 2rem;
+  }
+
+  .asset-list,
+  .npm-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .asset-list li,
+  .npm-list li {
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+  }
+
+  .attribution {
+    font-style: italic;
+    color: #666;
+    margin-left: 0.5rem;
+  }
+
+  .version {
+    color: #888;
+    font-size: 0.9em;
+    margin-left: 0.5rem;
   }
 
   /* Keyframes for page transitions */
