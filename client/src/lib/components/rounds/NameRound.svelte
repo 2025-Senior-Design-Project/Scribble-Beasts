@@ -3,4 +3,10 @@
   import { LayerMode } from '../../types/LayerMode';
 </script>
 
-<DrawingRound lineType="name" showWidget layerMode={LayerMode.FrontLayer} />
+<DrawingRound showWidget layerMode={LayerMode.FrontLayer} 
+pen={{
+    font: {
+      name: 'TheDogAteMyHomework',
+      size: 30,
+    },
+  }}/>
