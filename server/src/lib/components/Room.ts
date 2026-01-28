@@ -32,7 +32,7 @@ export class Room {
       );
       this.hostSetup();
       const hostChangeAction = new Actions.HostChange(this.host.name);
-      this.host.sendAction(hostChangeAction);
+      this.sendActionToAll(hostChangeAction);
     });
     this.host.addActionListener(
       ActionEnum.START_GAME,
@@ -79,10 +79,28 @@ export class Room {
       if (permanently) {
         playerToRemove.destroy();
       } else {
-        handleRoomless(playerToRemove.getWebSocket());
+        const ws = playerToRemove.getWebSocket();
+        if (ws) {
+          handleRoomless(ws);
+        }
       }
       delete this.players[playerName];
       this.playerListChanged();
+
+      if (this.host.name === playerName) {
+        const connectedPlayers = this.getConnectedPlayers();
+        if (connectedPlayers.length > 0) {
+          const playerToBecomeHost = connectedPlayers[0];
+          playerToBecomeHost.isHost = true;
+          const newHost = playerToBecomeHost as Host;
+          this.host = newHost;
+          console.log(
+            `Host ${playerName} left room ${this.name}. New host is ${newHost.name}`,
+          );
+          this.hostSetup();
+          this.sendActionToAll(new Actions.HostChange(this.host.name));
+        }
+      }
     }
     if (Object.keys(this.players).length === 0) {
       console.log(`All players left room ${this.name}, it will be destroyed.`);
@@ -115,13 +133,21 @@ export class Room {
   }
 
   startGame(): void {
-    this.sendActionToAll(new Actions.StartGame());
-    this.game = new Game(
-      Object.values(this.players),
-      this.sendActionToAll.bind(this),
-      () => {},
-    );
-    this.game.startGame();
+    if (this.game) return;
+    try {
+      this.sendActionToAll(new Actions.StartGame());
+      this.game = new Game(
+        Object.values(this.players),
+        this.sendActionToAll.bind(this),
+        () => {
+          this.game = null;
+        },
+      );
+      this.game.startGame();
+    } catch (e) {
+      console.error('Failed to start game:', e);
+      this.game = null;
+    }
   }
 
   getConnectedPlayers(): Player[] {

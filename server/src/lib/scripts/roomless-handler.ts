@@ -1,40 +1,14 @@
 import WebSocket from 'ws';
 import { Room, Rooms } from '../components/Room.js';
-import {
-  Actions,
-  ActionEnum,
-  CreateRoomAction,
-  JoinRoomAction,
-  ParseAction,
-  type AnyAction,
-} from '../../../../shared/actions/index.js';
+import { Actions } from '../../../../shared/actions/index.js';
 import { Player, Host } from '../components/Player.js';
 import { IncomingMessage } from 'http';
+import { PendingConnections } from './pending-connections.js';
 
 export function handleRoomless(ws: WebSocket) {
-  ws.on('error', console.error);
-
-  ws.on('message', function message(data) {
-    const action = ParseAction<AnyAction>(data.toString());
-    if (!action) return;
-
-    switch (action.type) {
-      case ActionEnum.CREATE_ROOM:
-        createRoom(action as CreateRoomAction, ws);
-        break;
-
-      case ActionEnum.JOIN_ROOM:
-        joinRoom(action as JoinRoomAction, ws);
-        break;
-
-      default:
-        console.warn(
-          'Unexpected action type while user is not in room: ',
-          action.type,
-        );
-        break;
-    }
-  });
+  // This should not happen for authenticated users
+  console.warn('Unexpected message on roomless socket. Closing.');
+  ws.close();
 }
 
 export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
@@ -49,113 +23,80 @@ export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
   }
 
   if (playerId) {
+    // Check pending connections first
+    const pending = PendingConnections[playerId];
+    if (pending) {
+      handlePendingConnection(ws, playerId, pending);
+      delete PendingConnections[playerId];
+      return;
+    }
+
+    // Check existing players (reconnect)
     const result = findGlobalPlayer(playerId);
     if (result) {
       const { player, room } = result;
+
+      if (!player.disconnected) {
+        console.log(
+          `Player ${player.name} is already connected. Rejecting new connection.`,
+        );
+        ws.close(4001, 'Session active elsewhere');
+        return;
+      }
+
       player.reconnect(ws, room);
       console.log(`Player ${player.name} reconnected.`);
-      // Send a reconnected action to the client
       return;
     }
   }
 
-  console.log('New WebSocket connection');
-  handleRoomless(ws);
+  console.log('New WebSocket connection without valid player ID. Closing.');
+  ws.close(4001, 'Invalid Session');
 }
 
-function createRoom(action: CreateRoomAction, ws: WebSocket) {
-  const { roomName, hostName } = action.payload;
-  let { roomInputMessage, nameInputMessage } = checkIfParamsAreEmpty(
-    roomName,
-    hostName,
-  );
+function handlePendingConnection(
+  ws: WebSocket,
+  playerId: string,
+  pending: { type: 'create' | 'join'; roomName: string; name: string },
+) {
+  if (pending.type === 'create') {
+    // Check if room exists (race condition prevention)
+    if (Rooms[pending.roomName]) {
+      console.warn(
+        `Room ${pending.roomName} already exists during creation. Rejecting connection.`,
+      );
+      // Close with error code 4002 (Room Exists)
+      ws.close(4002, 'Room already exists');
+      return;
+    }
 
-  if (roomInputMessage && nameInputMessage) {
-    ws.send(
-      JSON.stringify(new Actions.RoomError(nameInputMessage, roomInputMessage)),
+    const host = new Host(pending.name, ws, playerId);
+    const newRoom = new Room(pending.roomName, host);
+    Rooms[pending.roomName] = newRoom;
+    console.log(`Room ${pending.roomName} finalized with host ${host.name}`);
+
+    // Notify client
+    host.sendAction(new Actions.RoomJoined(newRoom.name, host.name, host.name));
+  } else if (pending.type === 'join') {
+    const room = Rooms[pending.roomName];
+    if (!room) {
+      console.warn(`Room ${pending.roomName} not found for pending join.`);
+      ws.close();
+      return;
+    }
+
+    const player = new Player(pending.name, ws, playerId);
+    room.addPlayer(player);
+    console.log(`Player ${player.name} finalized join to ${room.name}`);
+
+    // RoomJoined is sent by Room.addPlayer? No.
+    // Room.addPlayer adds listeners.
+    // We need to send RoomJoined.
+    player.sendAction(
+      new Actions.RoomJoined(room.name, player.name, room.host.name),
     );
-    return;
+    // Also send Reconnect?
   }
-
-  if (findRoom(roomName)) {
-    ws.send(
-      JSON.stringify(
-        new Actions.RoomError(nameInputMessage, 'Room name already taken.'),
-      ),
-    );
-    return;
-  }
-
-  const host = new Host(hostName, ws);
-  const newRoom = new Room(roomName, host);
-  Rooms[roomName] = newRoom;
-  ws.send(JSON.stringify(new Actions.CreateRoom(roomName, hostName)));
-  ws.send(JSON.stringify(new Actions.Reconnect(host.id)));
-  console.log(`Room ${roomName} created with host ${hostName}`);
-}
-
-function joinRoom(action: JoinRoomAction, ws: WebSocket) {
-  const { roomName, playerName } = action.payload;
-  let { roomInputMessage, nameInputMessage } = checkIfParamsAreEmpty(
-    roomName,
-    playerName,
-  );
-
-  if (roomInputMessage && nameInputMessage) {
-    ws.send(
-      JSON.stringify(new Actions.RoomError(nameInputMessage, roomInputMessage)),
-    );
-    return;
-  }
-
-  const room = findRoom(roomName);
-  if (!room) {
-    roomInputMessage = 'Room does not exist.';
-  }
-
-  if (room && playerExistsInRoom(room, playerName)) {
-    nameInputMessage = 'Name already taken in this room.';
-  }
-
-  if (!room || nameInputMessage || roomInputMessage) {
-    ws.send(
-      JSON.stringify(new Actions.RoomError(nameInputMessage, roomInputMessage)),
-    );
-    return;
-  }
-
-  const player = new Player(playerName, ws);
-  room.addPlayer(player);
-  ws.send(
-    JSON.stringify(new Actions.JoinRoom(roomName, playerName, room.host.name)),
-  );
-  ws.send(JSON.stringify(new Actions.Reconnect(player.id)));
-  console.log(`Player ${playerName} joined room ${roomName}`);
-}
-
-function checkIfParamsAreEmpty(
-  roomName: string,
-  playerName: string,
-): { roomInputMessage?: string; nameInputMessage?: string } {
-  let nameInputMessage: string | undefined;
-  let roomInputMessage: string | undefined;
-
-  if (!playerName?.trim()) {
-    nameInputMessage = 'Name cannot be empty.';
-  }
-  if (!roomName?.trim()) {
-    roomInputMessage = 'Room name cannot be empty.';
-  }
-
-  return { roomInputMessage, nameInputMessage };
-}
-
-function findRoom(roomName: string): Room | undefined {
-  return Rooms[roomName];
-}
-
-function playerExistsInRoom(room: Room, playerName: string): boolean {
-  return !!Object.values(room.players).find((p) => p.name === playerName);
 }
 
 function parseCookies(cookieHeader?: string): Record<string, string> {

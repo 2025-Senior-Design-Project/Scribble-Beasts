@@ -2,7 +2,7 @@ import {
   ActionEnum,
   SendEOTWAction as SendEotwAction,
   type HostChangeAction,
-  type JoinRoomAction,
+  type RoomJoinedAction,
   type PlayerListChangeAction,
   type SendDrawingAction,
   type StartGameAction,
@@ -41,16 +41,24 @@ export const everyoneDoneExceptYou = derived(
 export const drawingImage = writable<string>(''); // Base64url encoded image to draw on
 export const eotwCard = writable<EotwCard>();
 
-const joinRoom = (action: JoinRoomAction) => {
+const roomJoined = (action: RoomJoinedAction) => {
   const {
     roomName: roomNameValue,
     playerName: playerNameValue,
     hostName: hostNameValue,
+    currentRound,
+    timer,
   } = action.payload;
   roomName.set(roomNameValue);
   playerName.set(playerNameValue);
   hostName.set(hostNameValue);
-  navigateTo(View.LOBBY);
+
+  if (currentRound) {
+    jumpToRound(currentRound - 1, timer || 0);
+    navigateTo(View.GAME);
+  } else {
+    navigateTo(View.LOBBY);
+  }
 };
 
 const playerChange = (action: PlayerListChangeAction) => {
@@ -97,7 +105,7 @@ const resetPlayersDone = (_action: StartRoundAction) => {
 };
 
 export function resetState() {
-  ClientWebsocket.removeActionListener(ActionEnum.JOIN_ROOM);
+  ClientWebsocket.removeActionListener(ActionEnum.ROOM_JOINED);
   ClientWebsocket.removeActionListener(ActionEnum.PLAYER_LIST_CHANGE);
   ClientWebsocket.removeActionListener(ActionEnum.HOST_CHANGE);
   ClientWebsocket.removeActionListener(ActionEnum.START_GAME);
@@ -106,9 +114,9 @@ export function resetState() {
   ClientWebsocket.removeActionListener(ActionEnum.PLAYER_DONE);
   ClientWebsocket.removeActionListener(ActionEnum.START_ROUND);
 
-  ClientWebsocket.addActionListener<JoinRoomAction>(
-    ActionEnum.JOIN_ROOM,
-    joinRoom,
+  ClientWebsocket.addActionListener<RoomJoinedAction>(
+    ActionEnum.ROOM_JOINED,
+    roomJoined,
   );
   ClientWebsocket.addActionListener<PlayerListChangeAction>(
     ActionEnum.PLAYER_LIST_CHANGE,

@@ -10,6 +10,19 @@
   import { ROUND_TYPE_COMPONENT_DICT } from '../constants/RoundTypeComponentDict';
 
   import type { StartRoundAction } from '@shared/actions';
+  import PaperTransition from './PaperTransition.svelte';
+
+  // We want to trigger the transition whenever the round phase changes
+  // Phases: start of round, end of round (waiting), next round
+  const roundKey = $derived(
+    `${$roundStore?.current.roundName}-${$roundStore?.ongoing}`,
+  );
+
+  const RoundComponent = $derived(
+    $roundStore
+      ? ROUND_TYPE_COMPONENT_DICT[$roundStore.current.roundType]
+      : null,
+  );
 
   onMount(() => {
     const handleServerEndRound = () => {
@@ -39,41 +52,51 @@
 
 <div class="game-viewport overflow-hidden relative">
   {#if $roundStore}
-    <div class="paper-card game-card">
-      <h1 class="text-pen-red">{$roundStore.current.roundName}</h1>
+    {#key roundKey}
+      <PaperTransition class="game-wrapper">
+        <div class="paper-card game-card">
+          <h1 class="text-pen-red">{$roundStore.current.roundName}</h1>
 
-      {#if $roundStore.ongoing}
-        <h3 class="text-pen-blue">{$roundStore.current.description}</h3>
+          {#if $roundStore.ongoing}
+            <h3 class="text-pen-blue">{$roundStore.current.description}</h3>
 
-        <div class="round-content">
-          <svelte:component
-            this={ROUND_TYPE_COMPONENT_DICT[$roundStore.current.roundType]}
-            on:end={() => endCurrentRound()}
-          />
+            <div class="round-content">
+              {#if RoundComponent}
+                <RoundComponent />
+              {/if}
+            </div>
+          {:else}
+            <p>Great job! Wait for everyone else to finish :D</p>
+          {/if}
         </div>
-      {:else}
-        <p>Great job! Wait for everyone else to finish :D</p>
-      {/if}
-    </div>
+      </PaperTransition>
+    {/key}
   {/if}
 </div>
 
 <style>
   .game-viewport {
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-areas: 'stack';
+    justify-items: center;
     align-items: center;
     min-height: 100vh;
     width: 100%;
     padding: 1rem;
     box-sizing: border-box;
   }
+  .game-viewport :global(.game-wrapper) {
+    grid-area: stack;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 1;
+  }
   .game-card {
     pointer-events: auto;
     width: 100%;
     max-width: 35rem;
     position: relative;
-    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;

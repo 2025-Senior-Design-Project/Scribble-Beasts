@@ -10,11 +10,10 @@ HOW TO ADD A NEW ACTION:
 
 export const enum ActionEnum {
   /* Room Actions */
-  CREATE_ROOM = 'CREATE_ROOM',
-  JOIN_ROOM = 'JOIN_ROOM',
   LEAVE_ROOM = 'LEAVE_ROOM',
   RECONNECT = 'RECONNECT',
-  ROOM_ERROR = 'ROOM_ERROR',
+  ROOM_JOINED = 'ROOM_JOINED',
+  SESSION_ERROR = 'SESSION_ERROR',
   /* Lobby Actions */
   HOST_CHANGE = 'HOST_CHANGE',
   PLAYER_LIST_CHANGE = 'PLAYER_LIST_CHANGE',
@@ -43,43 +42,45 @@ class Action<Payload> {
   }
 }
 
-export class CreateRoomAction extends Action<{
-  roomName: string;
-  hostName: string;
-}> {
-  constructor(roomName: string, hostName: string) {
-    super(ActionEnum.CREATE_ROOM, { roomName, hostName });
-  }
-}
-
-export class JoinRoomAction extends Action<{
-  roomName: string;
-  playerName: string;
-  hostName?: string; // Used only on server reply (because I'm lazy)
-}> {
-  constructor(roomName: string, playerName: string, hostName?: string) {
-    super(ActionEnum.JOIN_ROOM, { roomName, playerName, hostName });
-  }
-}
-
 export class ReconnectAction extends Action<{ playerId: string }> {
   constructor(playerId: string) {
     super(ActionEnum.RECONNECT, { playerId });
   }
 }
 
-export class LeaveRoomAction extends Action<{}> {
-  constructor() {
-    super(ActionEnum.LEAVE_ROOM, {});
+export class RoomJoinedAction extends Action<{
+  roomName: string;
+  playerName: string;
+  hostName: string;
+  currentRound?: number;
+  timer?: number;
+}> {
+  constructor(
+    roomName: string,
+    playerName: string,
+    hostName: string,
+    currentRound?: number,
+    timer?: number,
+  ) {
+    super(ActionEnum.ROOM_JOINED, {
+      roomName,
+      playerName,
+      hostName,
+      currentRound,
+      timer,
+    });
   }
 }
 
-export class RoomErrorAction extends Action<{
-  nameInputMessage?: string;
-  roomInputMessage?: string;
-}> {
-  constructor(nameInputMessage?: string, roomInputMessage?: string) {
-    super(ActionEnum.ROOM_ERROR, { nameInputMessage, roomInputMessage });
+export class SessionErrorAction extends Action<{ message: string }> {
+  constructor(message: string) {
+    super(ActionEnum.SESSION_ERROR, { message });
+  }
+}
+
+export class LeaveRoomAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.LEAVE_ROOM, {});
   }
 }
 
@@ -169,11 +170,10 @@ export type AnyRoundAction =
 
 // Type for any action
 export type AnyAction =
-  | CreateRoomAction
-  | JoinRoomAction
   | LeaveRoomAction
   | ReconnectAction
-  | RoomErrorAction
+  | RoomJoinedAction
+  | SessionErrorAction
   | HostChangeAction
   | StartGameAction
   | PlayerListChangeAction
@@ -181,11 +181,10 @@ export type AnyAction =
 
 // Actions object for easy import and readability
 export const Actions = {
-  CreateRoom: CreateRoomAction,
-  JoinRoom: JoinRoomAction,
   LeaveRoom: LeaveRoomAction,
   Reconnect: ReconnectAction,
-  RoomError: RoomErrorAction,
+  RoomJoined: RoomJoinedAction,
+  SessionError: SessionErrorAction,
   HostChange: HostChangeAction,
   StartGame: StartGameAction,
   PlayerListChange: PlayerListChangeAction,

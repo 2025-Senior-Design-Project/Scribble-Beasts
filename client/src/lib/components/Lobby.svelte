@@ -3,10 +3,25 @@
   import ClientWebsocket from '../ClientWebsocket';
   import { hostName, isHost, players, roomName } from '../GameState';
   import { navigateTo, View } from '../Navigator';
+  import { onMount } from 'svelte';
+
+  let starting = $state(false);
+  let connected = $state(false);
+
+  onMount(() => {
+    const interval = setInterval(() => {
+      connected = ClientWebsocket.isConnected();
+    }, 500);
+    return () => clearInterval(interval);
+  });
 
   function startGame() {
-    const startGameAction = new Actions.StartGame();
-    ClientWebsocket.sendAction(startGameAction);
+    console.log('Lobby: startGame called. isHost:', $isHost);
+    starting = true;
+    if ($isHost) {
+      const startGameAction = new Actions.StartGame();
+      ClientWebsocket.sendAction(startGameAction);
+    }
     ClientWebsocket.removeActionListener(ActionEnum.START_GAME);
     navigateTo(View.GAME);
   }
@@ -23,7 +38,15 @@
         <p>You need one more player to start.</p>
       {:else}
         <p>Start the game whenever you are ready</p>
-        <button on:click={startGame}> Start Game </button>
+        <button onclick={startGame} disabled={starting || !connected}>
+          {#if starting}
+            Starting...
+          {:else if !connected}
+            Connecting...
+          {:else}
+            Start Game
+          {/if}
+        </button>
       {/if}
     {:else}
       <p>Waiting on {$hostName} to start the game</p>

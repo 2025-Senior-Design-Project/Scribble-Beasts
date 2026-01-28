@@ -3,23 +3,7 @@
   import { Rounds } from '@shared/rounds';
   import { currentSubRoute, navigateToPath } from '../Navigator';
   import { tick } from 'svelte';
-
-  /**
-   * Bridges Svelte's transition system with pure CSS classes.
-   * We must use JS to coordinate with Svelte's lifecycle (knowing when to remove the element),
-   * but the animation itself is defined and executed entirely in CSS.
-   */
-  function useCssAnimation(
-    node: HTMLElement,
-    { duration, cls }: { duration: number; cls: string },
-  ) {
-    // Add the class that triggers the CSS animation
-    node.classList.add(cls);
-
-    return {
-      duration,
-    };
-  }
+  import PaperTransition from './PaperTransition.svelte';
 
   let showPlaytestInfo = $state(false);
   let isScrolled = $state(false);
@@ -92,11 +76,7 @@
 >
   <div class="content-viewport">
     {#key $currentSubRoute}
-      <div
-        class="transition-wrapper"
-        in:useCssAnimation={{ duration: 800, cls: 'animate-throw-in' }}
-        out:useCssAnimation={{ duration: 1200, cls: 'animate-fall-out' }}
-      >
+      <PaperTransition class="transition-wrapper">
         {#if $currentSubRoute === 'play'}
           <div class="room-form-wrapper">
             <RoomForm />
@@ -210,7 +190,7 @@
             </div>
           </div>
         {/if}
-      </div>
+      </PaperTransition>
     {/key}
   </div>
 </div>
@@ -247,7 +227,7 @@
     overflow-x: hidden;
   }
 
-  .transition-wrapper {
+  .landing-container :global(.transition-wrapper) {
     grid-area: stack;
     width: 100%;
     display: flex;
@@ -257,7 +237,7 @@
     box-sizing: border-box;
   }
 
-  .transition-wrapper > * {
+  .landing-container :global(.transition-wrapper > *) {
     pointer-events: auto;
   }
 
@@ -273,7 +253,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
+    width: 100vw;
     display: flex;
     gap: 1rem;
     padding: 1.5rem 2rem;
@@ -460,46 +440,6 @@
 
   .round-item p {
     margin: 0;
-  }
-
-  /* Keyframes for page transitions */
-  @keyframes throwIn {
-    0% {
-      transform: translate(300px, -300px) rotate(10deg);
-      opacity: 0;
-    }
-    100% {
-      transform: translate(0, 0) rotate(0deg);
-      opacity: 1;
-    }
-  }
-
-  @keyframes fallOut {
-    0% {
-      transform: translateY(0);
-      opacity: 1;
-      filter: brightness(1);
-    }
-    50% {
-      transform: translateY(0);
-      opacity: 1;
-      filter: brightness(0.8);
-    }
-    100% {
-      transform: translateY(100px);
-      opacity: 0;
-      filter: brightness(0.8);
-    }
-  }
-
-  /* Utility classes to apply the animations */
-  /* Using :global ensures Svelte doesn't prune these as "unused" since they are added via JS */
-  :global(.animate-throw-in) {
-    animation: throwIn 0.8s cubic-bezier(0.33, 1, 0.68, 1) forwards;
-  }
-
-  :global(.animate-fall-out) {
-    animation: fallOut 1.2s linear forwards;
   }
 
   @media (max-width: 768px) {

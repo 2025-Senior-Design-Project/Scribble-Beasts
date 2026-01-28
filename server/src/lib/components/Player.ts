@@ -22,9 +22,9 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
   disconnectTimeout: ReturnType<typeof setTimeout> | undefined;
   lastUploadedImage: string; // base64encoded url
 
-  constructor(name: string, ws: WebSocket) {
+  constructor(name: string, ws: WebSocket, id?: string) {
     super(ws);
-    this.id = uuidv4();
+    this.id = id || uuidv4();
     this.#ws = ws;
     this.name = name;
     this.lastUploadedImage = BLANK_PIXEL;
@@ -62,10 +62,14 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
 
     this.disconnected = false;
     this.setWebsocket(ws);
+    this.#ws = ws;
 
     if (room.game) {
       this.sendAction(
-        new Actions.StartGame(
+        new Actions.RoomJoined(
+          room.name,
+          this.name,
+          room.host.name,
           room.game.currentRoundNumber,
           room.game.getRemainingTime(),
         ),
@@ -75,7 +79,7 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
       );
     } else {
       this.sendAction(
-        new Actions.JoinRoom(room.name, this.name, room.host.name),
+        new Actions.RoomJoined(room.name, this.name, room.host.name),
       );
     }
 
