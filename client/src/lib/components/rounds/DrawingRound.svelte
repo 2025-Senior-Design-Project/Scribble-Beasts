@@ -26,9 +26,9 @@
   let shouldDraw = $state(false);
   let timer = $state(0);
   let randTimerMod = $state(5);
-  let selectedColor = $state(initialPen.strokeStyle ?? '#db2828');
-  //let randomFont = $state<{ name: string; size: number } | null>(null);
+
   let pen = $state<PenParams>({ ...initialPen });
+  const isTextPen = !!pen.font;
 
   const COLORS = [
     { color: 'red', value: '#db2828' },
@@ -64,7 +64,8 @@
 
     // Set canvas to fixed 520x520 for consistent sizing across devices
     canvas.width = 520;
-    canvas.height = !!pen.font ? 545 : 520;
+    // Adds whitespace for text if pen is adding writing to the bottom
+    canvas.height = isTextPen ? 545 : 520;
 
     context = canvas.getContext('2d');
 
@@ -132,7 +133,7 @@
   }
 
   function handleMouseDown(event: MouseEvent) {
-    if (!!pen.font || event.button !== 0) return;
+    if (isTextPen || event.button !== 0) return;
     if (!context || !canvas) return;
 
     shouldDraw = true;
@@ -170,7 +171,7 @@
   }
 
   function handleTouchStart(event: TouchEvent) {
-    if (!!pen.font) return;
+    if (isTextPen) return;
     if (!context || !canvas) return;
 
     event.preventDefault();
@@ -240,7 +241,6 @@
   }
 
   function handleColorChange(color: string) {
-    selectedColor = color;
     pen.strokeStyle = color;
     setLineProperties();
   }
@@ -409,7 +409,6 @@
                 id={colorOption.color}
                 name="color"
                 value={colorOption.value}
-                checked={selectedColor === colorOption.value}
                 onchange={() => handleColorChange(colorOption.value)}
               />
               <label
