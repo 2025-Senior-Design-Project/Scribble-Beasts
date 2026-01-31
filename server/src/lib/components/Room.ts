@@ -115,6 +115,10 @@ export class Room {
   }
 
   startGame(): void {
+    if (this.getConnectedPlayers().length < 2) {
+      console.log('Not enough players to start game.');
+      return;
+    }
     this.sendActionToAll(new Actions.StartGame());
     this.game = new Game(
       Object.values(this.players),
