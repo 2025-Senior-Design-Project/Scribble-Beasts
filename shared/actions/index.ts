@@ -29,6 +29,7 @@ export const enum ActionEnum {
   PRESENTER_END = 'PRESENTER_END',
   SEND_VOTE = 'VOTE_ROUND',
   PLAYER_DONE = 'PLAYER_DONE',
+  SEND_ALL_BEASTS = 'SEND_ALL_BEASTS',
 }
 
 type Base64URLString = string;
@@ -137,18 +138,24 @@ export class SendPresenterStartAction extends Action<{}> {
     super(ActionEnum.PRESENTER_START, {});
   }
 }
+export class SendAllBeastsAction extends Action<{
+  drawings: { playerName: string; drawing: Base64URLString }[];
+}> {
+  constructor(drawings: { playerName: string; drawing: Base64URLString }[]) {
+    super(ActionEnum.SEND_ALL_BEASTS, { drawings });
+  }
+}
 export class SendPresenterEndAction extends Action<{}> {
   constructor() {
     super(ActionEnum.PRESENTER_END, {});
   }
 }
 export class SendVoteAction extends Action<{
-  // all are string[] in the case of ties
-  first: string[]; // player who had the best
-  second?: string[]; // second best (might only be 2 players)
-  third?: string[]; // third best (might only be 3 players)
+  first: string; // player who had the best
+  second?: string; // second best (might only be 2 players)
+  third?: string; // third best (might only be 3 players)
 }> {
-  constructor(first: string[], second: string[], third: string[]) {
+  constructor(first: string, second?: string, third?: string) {
     super(ActionEnum.SEND_VOTE, { first, second, third });
   }
 }
@@ -177,6 +184,10 @@ export type AnyAction =
   | HostChangeAction
   | StartGameAction
   | PlayerListChangeAction
+  | SendPresenterChangeAction
+  | SendPresenterStartAction
+  | SendPresenterEndAction
+  | SendAllBeastsAction
   | AnyRoundAction;
 
 // Actions object for easy import and readability
@@ -192,8 +203,12 @@ export const Actions = {
   EndRound: EndRoundAction,
   StartRound: StartRoundAction,
   SendDrawing: SendDrawingAction,
+  PresenterChange: SendPresenterChangeAction,
+  PresenterEnd: SendPresenterEndAction,
+  PresenterStart: SendPresenterStartAction,
   SendETOW: SendEOTWAction,
   SendVote: SendVoteAction,
+  SendBeasts: SendAllBeastsAction,
   PlayerDone: PlayerDoneAction,
 };
 

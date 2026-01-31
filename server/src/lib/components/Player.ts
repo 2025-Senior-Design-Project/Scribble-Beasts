@@ -21,6 +21,7 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
   disconnected: boolean = false;
   disconnectTimeout: ReturnType<typeof setTimeout> | undefined;
   lastUploadedImage: string; // base64encoded url
+  score: number;
 
   constructor(name: string, ws: WebSocket) {
     super(ws);
@@ -28,6 +29,7 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
     this.#ws = ws;
     this.name = name;
     this.lastUploadedImage = BLANK_PIXEL;
+    this.score = 0;
 
     // remove inital roomless listeners
     this.#ws.removeAllListeners('message');
@@ -81,6 +83,11 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
 
     room.playerListChanged();
     this.sendAction(new Actions.HostChange(room.host.name));
+  }
+
+  setScore(newScore: number) {
+    this.score = newScore;
+    console.log(`Player ${this.name} score set to ${this.score}`);
   }
 }
 
