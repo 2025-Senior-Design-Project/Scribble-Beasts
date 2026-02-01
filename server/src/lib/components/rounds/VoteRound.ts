@@ -26,24 +26,21 @@ export class ServerVoteRound extends Mixin(ServerRound, VoteRound) {
   roundResponseHandler(action: AnyRoundAction, player: Player): boolean {
     if (action.type == ActionEnum.SEND_VOTE) {
       if (this.votedPlayers.has(player.name)) {
-        return false; // player has already voted
+        return true;
       }
       this.votedPlayers.add(player.name);
       const { first, second, third } = (action as SendVoteAction).payload;
       this.players
         .filter((p) => p.name === first)
         .forEach((p) => p.setScore(p.score + 3));
-      if (second) {
-        this.players
-          .filter((p) => p.name === second)
-          .forEach((p) => p.setScore(p.score + 2));
-      }
-      if (third) {
-        this.players
-          .filter((p) => p.name === third)
-          .forEach((p) => p.setScore(p.score + 1));
-      }
+      this.players
+        .filter((p) => p.name === second)
+        .forEach((p) => p.setScore(p.score + 2));
+      this.players
+        .filter((p) => p.name === third)
+        .forEach((p) => p.setScore(p.score + 1));
+      return true;
     }
-    return true;
+    return false;
   }
 }
