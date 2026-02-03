@@ -195,6 +195,12 @@
     shouldDraw = false;
   }
 
+  function handlePenSizeChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    pen.lineWidth = Number(input.value);
+    setLineProperties();
+  }
+
   // Picks up the pen and puts it down sporadically with a random opacity each time
   // This mimics the jagged look of graphite on paper
   function scribbleStutter(x: number, y: number) {
@@ -385,7 +391,7 @@
 
     {#if showWidget}
       <div class="widget-container">
-        {#if pen.strokeStyle && pen.lineWidth === 15}
+        {#if pen.strokeStyle}
           <div class="color-picker">
             {#each COLORS as colorOption}
               <input
@@ -400,6 +406,24 @@
                 style="background-color: {colorOption.value}"><!-- --></label
               >
             {/each}
+          </div>
+
+          <!-- Pen size control-->
+          <div class="pen-size-control">
+            <input
+              type="range"
+              min="4"
+              max="40"
+              step="1"
+              value={pen.lineWidth}
+              oninput={handlePenSizeChange}
+            />
+            <div class="pen-preview">
+              <span
+                class="pen-dot"
+                style="width: {pen.lineWidth}px; height: {pen.lineWidth}px; background-color: {pen.strokeStyle};"
+              />
+            </div>
           </div>
         {:else if pen.font}
           <input
@@ -525,5 +549,30 @@
     width: 200px;
     line-height: 2.5;
     background-image: none; /* remove global underline gradient */
+  }
+
+  /* Styles for color pen slider */
+  .pen-size-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .pen-size-control input[type='range'] {
+    width: 200px;
+  }
+
+  .pen-preview {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pen-dot {
+    border-radius: 50%;
+    display: inline-block;
   }
 </style>
