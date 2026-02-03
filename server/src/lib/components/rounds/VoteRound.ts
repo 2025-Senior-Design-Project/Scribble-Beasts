@@ -30,6 +30,9 @@ export class ServerVoteRound extends Mixin(ServerRound, VoteRound) {
       }
       this.votedPlayers.add(player.name);
       const { first, second, third } = (action as SendVoteAction).payload;
+      console.log(
+        `Player ${player.name} voted: 1st=${first}, 2nd=${second}, 3rd=${third}`,
+      );
       this.players
         .filter((p) => p.name === first)
         .forEach((p) => p.setScore(p.score + 3));

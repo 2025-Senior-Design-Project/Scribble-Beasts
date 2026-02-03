@@ -1,14 +1,15 @@
 <script lang="ts">
   import { writable } from 'svelte/store';
-  import { allBeasts, players } from '../../GameState';
+  import { allBeasts, playerName, players } from '../../GameState';
   import Round from '../Round.svelte';
   import ClientWebsocket from '../../ClientWebsocket';
   import { ActionEnum } from '@shared/actions';
   import { roundStore } from '../../stores/roundStore';
+  import { onMount } from 'svelte';
 
   // Two-column layout with centered final card when odd count.
   // Compute reactive count.
-  const count = $derived($allBeasts ? $allBeasts.length : 0);
+  const submissionCount = $derived($allBeasts ? $allBeasts.length : 0);
   // How many picks the local player should make: min(3, players - 1)
   const maxPicks = $derived(
     $players ? Math.max(0, Math.min(3, $players.length - 1)) : 0,
@@ -20,7 +21,7 @@
   // Local picks array of indices into $allBeasts in selection order
   let picks: number[] = $state([]);
 
-  const ordinals = ['1st', '2nd', '3rd'];
+  const ordinals = ['', 'second', 'third'];
 
   const promptText = $derived(
     maxPicks === 0
@@ -29,7 +30,7 @@
       ? `Pick your ${ordinals[0]} favorite beast`
       : picks.length < maxPicks
       ? `Pick your ${ordinals[picks.length]} favorite beast`
-      : `You have chosen ${picks.length} picks`,
+      : `Submit your vote!`,
   );
   const cols = 2;
 
@@ -37,9 +38,14 @@
     // cleans up for next round + sends actions to server
   }
 
-  function handleCardClick(i: number) {
+  function handleCardClick(
+    i: number,
+    beast: { drawing: string; playerName: string },
+  ) {
     // If no votes required, ignore
     if (maxPicks === 0) return;
+
+    if (beast.playerName === $playerName) return; // don't vote for self
 
     const idx = picks.indexOf(i);
     if (idx !== -1) {
@@ -60,15 +66,52 @@
     ClientWebsocket.sendAction({
       type: ActionEnum.SEND_VOTE,
       payload: {
-        first: $allBeasts[picks[0]].playerName ?? '',
-        second: $allBeasts[picks[1]].playerName ?? '',
-        third: $allBeasts[picks[2]].playerName ?? '',
+        first: $allBeasts[picks[0]]?.playerName ?? '',
+        second: $allBeasts[picks[1]]?.playerName ?? '',
+        third: $allBeasts[picks[2]]?.playerName ?? '',
       },
     });
     roundStore.update((state) => ({
       ...state,
       ongoing: false,
     }));
+  }
+
+  // Carousel / mobile browsing state
+  let carousel: HTMLDivElement | null = null;
+  let currentIndex = 0;
+
+  function scrollToIndex(i: number) {
+    if (!carousel) return;
+    const width = carousel.clientWidth;
+    carousel.scrollTo({ left: i * width, behavior: 'smooth' });
+    currentIndex = i;
+  }
+
+  function prevCard() {
+    if (currentIndex > 0) scrollToIndex(currentIndex - 1);
+  }
+
+  function nextCard() {
+    if (!$allBeasts) return;
+    if (currentIndex < $allBeasts.length - 1) scrollToIndex(currentIndex + 1);
+  }
+
+  let resizeObserver: ResizeObserver | null = null;
+  onMount(() => {
+    if (!carousel) return;
+    // Keep current index aligned on resize
+    resizeObserver = new ResizeObserver(() => scrollToIndex(currentIndex));
+    resizeObserver.observe(carousel);
+    return () => resizeObserver && resizeObserver.disconnect();
+  });
+
+  function handleScroll() {
+    if (!carousel) return;
+    const idx = Math.round(
+      carousel.scrollLeft / Math.max(1, carousel.clientWidth),
+    );
+    currentIndex = idx;
   }
 </script>
 
@@ -78,17 +121,20 @@
     {#if $allBeasts && $allBeasts.length > 0}
       <div
         class="voting-grid"
+        bind:this={carousel}
+        onscroll={handleScroll}
         style={`grid-template-columns: repeat(${cols}, minmax(var(--min-card-size), 1fr)); column-gap: var(--col-gap); row-gap: var(--row-gap);`}
       >
-        {#each $allBeasts as beast, i (i)}
+        {#each $allBeasts as beast, i}
           <div
             class="card"
-            class:center-span={count % 2 === 1 && i === count - 1}
+            class:center-span={submissionCount % 2 === 1 &&
+              i === submissionCount - 1}
             class:selected={picks.includes(i)}
             role="button"
             aria-pressed={picks.includes(i)}
             aria-label={`Drawing by ${beast.playerName}`}
-            on:click={() => handleCardClick(i)}
+            onclick={() => handleCardClick(i, beast)}
           >
             <div class="image-wrap">
               <img src={beast.drawing} alt={`Drawing by ${beast.playerName}`} />
@@ -101,9 +147,30 @@
           </div>
         {/each}
       </div>
+      <button
+        class="carousel-arrow left"
+        onclick={prevCard}
+        aria-label="Previous drawing"
+        ><span class="arrow-char">
+          <img src="/icons/arrow-left.svg" alt="‹" height="20px" width="20px" />
+        </span></button
+      >
+      <button
+        class="carousel-arrow right"
+        onclick={nextCard}
+        aria-label="Next drawing"
+        ><span class="arrow-char">
+          <img
+            src="/icons/arrow-right.svg"
+            alt="›"
+            height="20px"
+            width="20px"
+          />
+        </span></button
+      >
       <div class="voting-actions">
         {#if picks.length === maxPicks && maxPicks > 0}
-          <button class="btn" on:click={finishVoting}>Finish Voting</button>
+          <button class="btn" onclick={finishVoting}>Finish Voting</button>
         {/if}
       </div>
     {:else}
@@ -126,7 +193,9 @@
     padding: 1.25rem;
     box-sizing: border-box;
     overflow: visible; /* let the page handle scrolling */
+    position: relative;
     --min-card-size: 200px; /* adjustable minimum card dimension */
+    --vertical-offset: 160px; /* space for prompt, actions and padding */
     --row-gap: 1.5rem; /* vertical separation between rows */
     --col-gap: 1.5rem; /* horizontal separation between columns */
   }
@@ -152,6 +221,8 @@
     box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.08);
     min-width: var(--min-card-size);
     min-height: var(--min-card-size);
+    max-height: 75vh;
+    overflow: hidden;
     box-sizing: border-box;
     cursor: pointer;
   }
@@ -170,7 +241,8 @@
     overflow: hidden;
     background: white;
     flex: 1 1 auto; /* let image area grow to fill card */
-    max-height: calc(var(--min-card-size) * 1.2);
+    aspect-ratio: 3 / 4; /* force portrait container */
+    max-height: 75vh;
   }
 
   .selected-overlay {
@@ -215,6 +287,11 @@
     background: white;
   }
 
+  /* hide arrows by default (visible only on small screens) */
+  .carousel-arrow {
+    display: none;
+  }
+
   .drawer {
     margin-top: 8px;
     text-align: center;
@@ -228,6 +305,72 @@
   @media (min-width: 900px) {
     .voting-grid {
       grid-template-columns: repeat(2, minmax(var(--min-card-size), 1fr));
+    }
+  }
+
+  /* Mobile carousel behavior: show one card at a time, allow swipe */
+  @media (max-width: 899px) {
+    .voting-grid {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      padding-bottom: 0.5rem; /* space for swipe */
+      height: 75vh;
+    }
+
+    .voting-grid .card {
+      flex: 0 0 100%;
+      min-width: 100%;
+      max-width: 100%;
+      scroll-snap-align: center;
+      margin: 0; /* use column gap as spacing via padding if needed */
+      height: 100%;
+      box-sizing: border-box;
+    }
+
+    .card.center-span {
+      grid-column: auto; /* ignore grid span on mobile */
+      max-width: 100%;
+    }
+
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #222;
+      color: #222;
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      cursor: pointer;
+      z-index: 20;
+      box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Nudge the glyph down slightly to account for font metrics so it appears visually centered */
+    .carousel-arrow .arrow-char {
+      display: inline-block;
+      line-height: 1;
+      transform: translateY(1px);
+    }
+
+    .carousel-arrow.left {
+      left: 8px;
+    }
+    .carousel-arrow.right {
+      right: 8px;
+    }
+
+    /* Hide arrows on larger screens (they are positioned but not needed) */
+    .carousel-arrow {
+      display: flex;
     }
   }
 </style>
