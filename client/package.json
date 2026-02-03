@@ -20,6 +20,7 @@
     "vite": "^7.1.5"
   },
   "dependencies": {
+    "debug": "^4.4.3",
     "svelte-preprocess": "^6.0.3"
   }
 }

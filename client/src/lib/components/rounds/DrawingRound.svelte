@@ -5,14 +5,15 @@
   import ClientWebsocket from '../../ClientWebsocket';
   import { roundStore, endCurrentRound } from '../../stores/roundStore';
   import { LayerMode } from '../../types/LayerMode';
+  import type { PenParams } from '../../types/PenParams';
   import Round from '../Round.svelte';
 
   let {
-    lineType = 'line',
+    pen: initialPen,
     showWidget = false,
     layerMode = LayerMode.BehindLayer,
   }: {
-    lineType?: 'scribble' | 'line' | 'color' | 'detail' | 'name';
+    pen: PenParams;
     showWidget?: boolean;
     layerMode?: LayerMode;
   } = $props();
@@ -25,36 +26,46 @@
   let shouldDraw = $state(false);
   let timer = $state(0);
   let randTimerMod = $state(5);
-  let selectedColor = $state('#db2828');
-  let randomFont = $state<{ name: string; size: number } | null>(null);
+
+  let pen = $state<PenParams>({ ...initialPen });
+  const isTextPen = !!pen.font;
 
   const COLORS = [
+    // Reds / Pinks
+    { color: 'maroon', value: '#A30000' },
     { color: 'red', value: '#db2828' },
+    { color: 'coral', value: '#ff6f61' },
+    { color: 'pink', value: '#e03997' },
+    { color: 'hot-pink', value: '#ff4f9a' },
+
+    // Oranges / Yellows
     { color: 'orange', value: '#f2711c' },
     { color: 'yellow', value: '#fbbd08' },
-    { color: 'olive', value: '#b5cc18' },
+    { color: 'gold', value: '#ffd700' },
+    { color: 'lemon', value: '#fff176' },
+
+    // Greens
+    { color: 'dark-green', value: '#006400' },
     { color: 'green', value: '#21ba45' },
+    { color: 'lime', value: '#84cc16' },
+    { color: 'olive', value: '#b5cc18' },
+    { color: 'mint', value: '#6ee7b7' },
+
+    // Blues
     { color: 'teal', value: '#00b5ad' },
+    { color: 'sky-blue', value: '#38bdf8' },
     { color: 'blue', value: '#2185d0' },
+    { color: 'navy-blue', value: '#07409C' },
+
+    // Purples
     { color: 'violet', value: '#6435c9' },
     { color: 'purple', value: '#a333c8' },
-    { color: 'pink', value: '#e03997' },
-  ];
+    { color: 'lavender', value: '#c4b5fd' },
 
-  const FONTS = [
-    { name: 'AckiPreschool', size: 30 },
-    { name: 'BrownBagLunch', size: 30 },
-    { name: 'Children', size: 30 },
-    { name: 'DadHand', size: 30 },
-    { name: 'Daniel', size: 30 },
-    { name: 'OhMaria', size: 30 },
-    { name: 'PopcornMountain', size: 30 },
-    { name: 'SchoolTeacher', size: 30 },
-    { name: 'SierraNevadaRoad', size: 30 },
-    { name: 'TheDogAteMyHomework', size: 30 },
-    { name: 'ThinPencilHandwriting', size: 30 },
-    { name: 'WCManoNegraBta', size: 30 },
-    { name: 'Yahfie', size: 30 },
+    // Browns / Neutrals
+    { color: 'grey', value: '#808080' },
+    { color: 'brown', value: '#a16207' },
+    { color: 'apricot', value: '#FBCEB1' },
   ];
 
   function prepareContext() {
@@ -62,7 +73,8 @@
 
     // Set canvas to fixed 520x520 for consistent sizing across devices
     canvas.width = 520;
-    canvas.height = lineType === 'name' ? 545 : 520;
+    // Adds whitespace for text if pen is adding writing to the bottom
+    canvas.height = isTextPen ? 545 : 520;
 
     context = canvas.getContext('2d');
 
@@ -101,49 +113,26 @@
   async function setLineProperties() {
     if (!context) return;
 
-    switch (lineType) {
-      case 'name':
-        randomFont = FONTS[Math.floor(Math.random() * FONTS.length)];
-        console.log('Selected font:', randomFont.name);
-        try {
-          await document.fonts.load(
-            `${randomFont.size}px '${randomFont.name}'`,
-          );
-          context.font = `${randomFont.size}px '${randomFont.name}'`;
-        } catch (e) {
-          console.error('Font could not be loaded:', e);
-          context.font = `${randomFont.size}px sans-serif`;
-        }
-        context.fillStyle = 'black';
-        context.textAlign = 'center';
-        context.textBaseline = 'bottom';
-        break;
-      case 'color':
-        context.strokeStyle = selectedColor;
-        context.lineWidth = 15;
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        break;
-      case 'scribble':
-        context.strokeStyle = 'rgb(0 0 0 / .02)';
-        context.lineWidth = 3;
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        break;
-      case 'detail':
-        context.strokeStyle = 'black';
-        context.lineWidth = 4;
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        break;
-      case 'line':
-      default:
-        context.strokeStyle = 'black';
-        context.lineWidth = 4;
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        break;
+    // Text / name round
+    if (pen.font) {
+      try {
+        await document.fonts.load(`${pen.font.size}px '${pen.font.name}'`);
+        context.font = `${pen.font.size}px '${pen.font.name}'`;
+      } catch {
+        context.font = `${pen.font.size}px sans-serif`;
+      }
+
+      context.fillStyle = 'black';
+      context.textAlign = 'center';
+      context.textBaseline = 'bottom';
+      return;
     }
+
+    // Drawing rounds
+    context.strokeStyle = pen.strokeStyle ?? 'black';
+    context.lineWidth = pen.lineWidth ?? 4;
+    context.lineJoin = pen.lineJoin ?? 'round';
+    context.lineCap = pen.lineCap ?? 'round';
   }
 
   function getScaleFactor(): number {
@@ -153,7 +142,7 @@
   }
 
   function handleMouseDown(event: MouseEvent) {
-    if (lineType === 'name' || event.button !== 0) return;
+    if (isTextPen || event.button !== 0) return;
     if (!context || !canvas) return;
 
     shouldDraw = true;
@@ -185,13 +174,13 @@
     context.lineTo(x, y);
     context.stroke();
 
-    if (lineType === 'scribble') {
+    if (pen.scribble) {
       scribbleStutter(x, y);
     }
   }
 
   function handleTouchStart(event: TouchEvent) {
-    if (lineType === 'name') return;
+    if (isTextPen) return;
     if (!context || !canvas) return;
 
     event.preventDefault();
@@ -221,7 +210,7 @@
     context.lineTo(x, y);
     context.stroke();
 
-    if (lineType === 'scribble') {
+    if (pen.scribble) {
       scribbleStutter(x, y);
     }
   }
@@ -229,6 +218,12 @@
   function handleTouchEnd(event: TouchEvent) {
     event.preventDefault();
     shouldDraw = false;
+  }
+
+  function handlePenSizeChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    pen.lineWidth = Number(input.value);
+    setLineProperties();
   }
 
   // Picks up the pen and puts it down sporadically with a random opacity each time
@@ -248,7 +243,7 @@
   }
 
   function handleTextInput(event: Event) {
-    if (!context || !canvas || !randomFont) return;
+    if (!context || !canvas || !pen.font) return;
 
     const input = event.target as HTMLInputElement;
     const text = input.value;
@@ -261,7 +256,7 @@
   }
 
   function handleColorChange(color: string) {
-    selectedColor = color;
+    pen.strokeStyle = color;
     setLineProperties();
   }
 
@@ -421,7 +416,7 @@
 
     {#if showWidget}
       <div class="widget-container">
-        {#if lineType === 'color'}
+        {#if pen.strokeStyle}
           <div class="color-picker">
             {#each COLORS as colorOption}
               <input
@@ -429,7 +424,6 @@
                 id={colorOption.color}
                 name="color"
                 value={colorOption.value}
-                checked={selectedColor === colorOption.value}
                 onchange={() => handleColorChange(colorOption.value)}
               />
               <label
@@ -438,7 +432,25 @@
               >
             {/each}
           </div>
-        {:else if lineType === 'name'}
+
+          <!-- Pen size control-->
+          <div class="pen-size-control">
+            <input
+              type="range"
+              min="4"
+              max="40"
+              step="1"
+              value={pen.lineWidth}
+              oninput={handlePenSizeChange}
+            />
+            <div class="pen-preview">
+              <span
+                class="pen-dot"
+                style="width: {pen.lineWidth}px; height: {pen.lineWidth}px; background-color: {pen.strokeStyle};"
+              />
+            </div>
+          </div>
+        {:else if pen.font}
           <input
             type="text"
             id="scribble-beast-name"
@@ -456,7 +468,7 @@
   .drawing-container {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 1rem;
     width: 100%;
     height: 100%;
     align-items: center;
@@ -562,5 +574,30 @@
     width: 200px;
     line-height: 2.5;
     background-image: none; /* remove global underline gradient */
+  }
+
+  /* Styles for color pen slider */
+  .pen-size-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .pen-size-control input[type='range'] {
+    width: 200px;
+  }
+
+  .pen-preview {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pen-dot {
+    border-radius: 50%;
+    display: inline-block;
   }
 </style>
