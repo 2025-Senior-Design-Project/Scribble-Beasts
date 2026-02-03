@@ -31,16 +31,41 @@
   const isTextPen = !!pen.font;
 
   const COLORS = [
+    // Reds / Pinks
+    { color: 'maroon', value: '#A30000' },
     { color: 'red', value: '#db2828' },
+    { color: 'coral', value: '#ff6f61' },
+    { color: 'pink', value: '#e03997' },
+    { color: 'hot-pink', value: '#ff4f9a' },
+
+    // Oranges / Yellows
     { color: 'orange', value: '#f2711c' },
     { color: 'yellow', value: '#fbbd08' },
-    { color: 'olive', value: '#b5cc18' },
+    { color: 'gold', value: '#ffd700' },
+    { color: 'lemon', value: '#fff176' },
+
+    // Greens
+    { color: 'dark-green', value: '#006400' },
     { color: 'green', value: '#21ba45' },
+    { color: 'lime', value: '#84cc16' },
+    { color: 'olive', value: '#b5cc18' },
+    { color: 'mint', value: '#6ee7b7' },
+
+    // Blues
     { color: 'teal', value: '#00b5ad' },
+    { color: 'sky-blue', value: '#38bdf8' },
     { color: 'blue', value: '#2185d0' },
+    { color: 'navy-blue', value: '#07409C' },
+
+    // Purples
     { color: 'violet', value: '#6435c9' },
     { color: 'purple', value: '#a333c8' },
-    { color: 'pink', value: '#e03997' },
+    { color: 'lavender', value: '#c4b5fd' },
+
+    // Browns / Neutrals
+    { color: 'grey', value: '#808080' },
+    { color: 'brown', value: '#a16207' },
+    { color: 'apricot', value: '#FBCEB1' },
   ];
 
   function prepareContext() {
