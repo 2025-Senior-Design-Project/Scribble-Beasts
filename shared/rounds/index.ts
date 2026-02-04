@@ -97,6 +97,7 @@ export class VoteRound extends Round {
   timeout = VOTE_TIMEOUT;
   roundName = 'Vote';
   description = 'vote for your favorite beasts';
+  hideButton = true;
 }
 
 export class WinnerRound extends Round {
