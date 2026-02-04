@@ -311,16 +311,12 @@ export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
         logAction.type === ActionEnum.SEND_DRAWING &&
         logAction.payload.image
       ) {
-        logAction.payload.image =
-          logAction.payload.image.substring(0, 50) + '...';
+        logAction.payload.image = 'image_data';
       } else if (
         logAction.type === ActionEnum.SEND_ALL_BEASTS &&
         logAction.payload.drawings
       ) {
-        logAction.payload.drawings = logAction.payload.drawings.map(
-          (drawing: { player: string; drawing: string }) =>
-            drawing.drawing.substring(0, 50) + '...',
-        );
+        logAction.payload.drawings = [];
       }
       console.log('sent:', JSON.stringify(logAction));
       this.#ws.send(msg);
