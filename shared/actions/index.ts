@@ -316,7 +316,12 @@ export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
         logAction.type === ActionEnum.SEND_ALL_BEASTS &&
         logAction.payload.drawings
       ) {
-        logAction.payload.drawings = [];
+        logAction.payload.drawings = logAction.payload.drawings.map(
+          (drawing: { playerName: string; drawing: string }) => ({
+            playerName: drawing.playerName,
+            drawing: 'image_data',
+          }),
+        );
       }
       console.log('sent:', JSON.stringify(logAction));
       this.#ws.send(msg);
