@@ -23,7 +23,7 @@
   const randomFont = FONTS[Math.floor(Math.random() * FONTS.length)];
 
   const pen: PenParams = {
-    font: randomFont,
+    textFont: randomFont,
   };
 </script>
 
