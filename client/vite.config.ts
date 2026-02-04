@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import sveltePreprocess from 'svelte-preprocess';
 import path from 'node:path';
@@ -29,8 +29,19 @@ export default defineConfig({
     },
   },
   resolve: {
+    conditions: ['browser'],
     alias: {
       '@shared': path.resolve(dirname, '../shared'),
     },
+  },
+  test: {
+    environment: 'jsdom',
+    coverage: {
+      provider: 'istanbul',
+      reporter: ['text', 'json', 'html'],
+    },
+    include: ['src/**/*.{test,spec}.{js,ts}'],
+    setupFiles: ['./src/setupTest.ts'],
+    globals: true,
   },
 });
