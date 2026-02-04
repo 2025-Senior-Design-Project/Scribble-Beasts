@@ -28,7 +28,7 @@
   let randTimerMod = $state(5);
 
   let pen = $state<PenParams>({ ...initialPen });
-  const isTextPen = !!pen.font;
+  const isTextPen = !!pen.textFont;
 
   const COLORS = [
     // Reds / Pinks
@@ -114,12 +114,14 @@
     if (!context) return;
 
     // Text / name round
-    if (pen.font) {
+    if (pen.textFont) {
       try {
-        await document.fonts.load(`${pen.font.size}px '${pen.font.name}'`);
-        context.font = `${pen.font.size}px '${pen.font.name}'`;
+        await document.fonts.load(
+          `${pen.textFont.size}px '${pen.textFont.name}'`,
+        );
+        context.font = `${pen.textFont.size}px '${pen.textFont.name}'`;
       } catch {
-        context.font = `${pen.font.size}px sans-serif`;
+        context.font = `${pen.textFont.size}px sans-serif`;
       }
 
       context.fillStyle = 'black';

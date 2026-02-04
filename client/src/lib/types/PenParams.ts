@@ -1,15 +1,11 @@
-export type PenParams = {
-  strokeStyle?: string;
-  lineWidth?: number;
-  lineJoin?: CanvasLineJoin;
-  lineCap?: CanvasLineCap;
-
+//export type PenParams = Partial<CanvasRenderingContext2D> & {
+export interface PenParams extends Partial<CanvasRenderingContext2D> {
   // scribble-specific
   scribble?: boolean;
 
   // name/text-specific
-  font?: {
+  textFont?: {
     name: string;
     size: number;
   };
-};
+}
