@@ -25,6 +25,22 @@ There is a publicly hosted instance available at `https://scribble-beasts.com` f
 - The hosted instance abstracts away deployment and is useful for non-technical players.
 - If you require private hosting or additional data controls for playtests, self-host using the Docker Compose instructions above.
 - For issues with the hosted site, open an issue on the repository or contact the maintainers; include steps to reproduce and any observed errors.
+
+### Exposing a host to LAN or the internet
+
+If you need other people on your local network or on the internet to connect to a self-hosted instance, follow these operator-level notes.
+
+- Bind services to host ports: ensure the web-facing service (Nginx or client dev server) is published to the host with Docker Compose `ports:` mappings (for example `80:80` or `5173:5173`).
+- For development servers like Vite, run with a host flag so it listens on the network: `npm run dev -- --host`.
+- LAN access: after exposing ports, find the host's local IP (e.g., `ipconfig getifaddr en0` on macOS) and test from another device: `http://<HOST_IP>` or `http://<HOST_IP>:<PORT>`.
+- Internet access: configure port forwarding on your router to forward the chosen external port to the host's local IP and port. Use dynamic DNS if the public IP is not static.
+- Alternative: use a tunnel service (ngrok, Cloudflare Tunnel) to avoid router changes and easily provide a temporary public URL.
+
+Security recommendations for public exposure
+
+- Use HTTPS in production. If using a public-facing endpoint, obtain and configure TLS certificates (Let's Encrypt or a managed provider).
+- Keep the server and container images up-to-date and monitor logs for suspicious activity.
+- Limit exposure to only required ports and consider firewall rules to restrict unwanted traffic.
 ## Room settings and behavior
 
 - Room name: free-text label used to identify the room.
