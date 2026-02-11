@@ -1,20 +1,22 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 
+# Copy root package files
+COPY package.json package-lock.json ./
+
+# Copy workspace package files
+COPY client/package.json ./client/
+COPY server/package.json ./server/
+
+# Install dependencies (using root lockfile)
+RUN npm ci
+
 # Copy shared source code
-# Needed by server tsconfig paths
 COPY shared/ ./shared/
 
-# Copy server package files
-COPY server/package*.json ./server/
+# Copy server source code and config
 COPY server/tsconfig.json ./server/
-
-# Install server dependencies
-WORKDIR /app/server
-RUN npm install
-
-# Copy server source code
-COPY server/src ./src
+COPY server/src ./server/src
 
 FROM base AS development
 WORKDIR /app/server
@@ -29,12 +31,16 @@ RUN npm run build
 FROM node:20-alpine AS production
 WORKDIR /app
 
-# Copy server package files for production install
-COPY --from=builder /app/server/package*.json ./server/
+# Copy package files for production install
+COPY package.json package-lock.json ./
+COPY client/package.json ./client/
+COPY server/package.json ./server/
 
 # Install production dependencies
+RUN npm ci --omit=dev
+
+# Setup workdir for server
 WORKDIR /app/server
-RUN npm install --omit=dev
 
 # Copy built artifacts
 COPY --from=builder /app/server/dist ./dist
@@ -46,5 +52,5 @@ ENV PORT=5001
 EXPOSE 5001
 
 # Start the server
-# Note: dist/server/src/index.js path comes from tsc output structure
+# Note: dist/server/src/index.js path comes from tsc output structure which includes parent dirs due to shared code
 CMD ["node", "dist/server/src/index.js"]
