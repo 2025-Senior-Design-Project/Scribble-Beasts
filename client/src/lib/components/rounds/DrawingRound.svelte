@@ -30,19 +30,23 @@
   let pen = $state<PenParams>({ ...initialPen });
   const isTextPen = !!pen.textFont;
 
+  let history = $state<ImageData[]>([]);
+  let redoStack = $state<ImageData[]>([]);
+
+  const isUndoRedoEnabled = !pen.scribble && !pen.textFont;
+
   const COLORS = [
     // Reds / Pinks
     { color: 'maroon', value: '#A30000' },
     { color: 'red', value: '#db2828' },
     { color: 'coral', value: '#ff6f61' },
     { color: 'pink', value: '#e03997' },
-    { color: 'hot-pink', value: '#ff4f9a' },
+    { color: 'hot-pink', value: '#f7207c' },
 
     // Oranges / Yellows
     { color: 'orange', value: '#f2711c' },
     { color: 'yellow', value: '#fbbd08' },
     { color: 'gold', value: '#ffd700' },
-    { color: 'lemon', value: '#fff176' },
 
     // Greens
     { color: 'dark-green', value: '#006400' },
@@ -147,6 +151,10 @@
     if (isTextPen || event.button !== 0) return;
     if (!context || !canvas) return;
 
+    if (isUndoRedoEnabled) {
+      saveState();
+    }
+
     shouldDraw = true;
     setLineProperties();
 
@@ -184,6 +192,10 @@
   function handleTouchStart(event: TouchEvent) {
     if (isTextPen) return;
     if (!context || !canvas) return;
+
+    if (isUndoRedoEnabled) {
+      saveState();
+    }
 
     event.preventDefault();
     shouldDraw = true;
@@ -245,7 +257,7 @@
   }
 
   function handleTextInput(event: Event) {
-    if (!context || !canvas || !pen.font) return;
+    if (!context || !canvas || !pen.textFont) return;
 
     const input = event.target as HTMLInputElement;
     const text = input.value;
@@ -358,6 +370,10 @@
 
   onMount(() => {
     prepareContext();
+    if (isUndoRedoEnabled && context && canvas) {
+      const initial = context.getImageData(0, 0, canvas.width, canvas.height);
+      history = [initial];
+    }
 
     window.addEventListener('beforeunload', handleRoundEnd);
 
@@ -397,6 +413,48 @@
       canvas.removeEventListener('touchend', handleTouchEnd);
     };
   });
+
+  // For Undo/Redo Button
+  function saveState() {
+    if (!context || !canvas) return;
+
+    const snapshot = context.getImageData(0, 0, canvas.width, canvas.height);
+    history = [...history, snapshot];
+
+    // Once you draw again, redo history is cleared
+    redoStack = [];
+  }
+
+  function restoreState(imageData: ImageData) {
+    if (!context) return;
+    context.putImageData(imageData, 0, 0);
+  }
+
+  function handleUndo() {
+    if (!context || history.length === 0) return;
+
+    const current = context.getImageData(0, 0, canvas!.width, canvas!.height);
+
+    const previous = history[history.length - 1];
+    history = history.slice(0, -1);
+
+    redoStack = [...redoStack, current];
+
+    restoreState(previous);
+  }
+
+  function handleRedo() {
+    if (!context || redoStack.length === 0) return;
+
+    const current = context.getImageData(0, 0, canvas!.width, canvas!.height);
+
+    const next = redoStack[redoStack.length - 1];
+    redoStack = redoStack.slice(0, -1);
+
+    history = [...history, current];
+
+    restoreState(next);
+  }
 </script>
 
 <Round onRoundEnd={handleRoundEnd}>
@@ -452,7 +510,7 @@
               />
             </div>
           </div>
-        {:else if pen.font}
+        {:else if pen.textFont}
           <input
             type="text"
             id="scribble-beast-name"
@@ -461,6 +519,24 @@
             class="name-input"
           />
         {/if}
+      </div>
+    {/if}
+
+    {#if isUndoRedoEnabled}
+      <div class="undo-redo-controls">
+        <button onclick={() => handleUndo()} disabled={history.length <= 1}>
+          <img
+            src="../../../../public/images/icons/undo-arrow.png"
+            alt="Undo"
+          />
+        </button>
+
+        <button onclick={() => handleRedo()} disabled={redoStack.length === 0}>
+          <img
+            src="../../../../public/images/icons/redo-arrow.png"
+            alt="Redo"
+          />
+        </button>
       </div>
     {/if}
   </div>
@@ -601,5 +677,43 @@
   .pen-dot {
     border-radius: 50%;
     display: inline-block;
+  }
+
+  /* UNDO/REDO BUTTONS */
+  .undo-redo-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .undo-redo-controls button {
+    width: 60px;
+    height: 60px;
+    padding: 0;
+    border: 2px solid #333;
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: bold;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 1.4 rem;
+    font-weight: 600;
+  }
+
+  .undo-redo-controls button img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+  }
+
+  .undo-redo-controls button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 </style>
