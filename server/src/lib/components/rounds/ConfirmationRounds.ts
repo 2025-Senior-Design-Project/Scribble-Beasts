@@ -59,7 +59,9 @@ export class ServerWinnersRound extends Mixin(
     });
     const labels = ['First', 'Second', 'Third'];
     this.winners.forEach((w, i) => {
-      console.log(`${labels[i]} place: ${w.winner} with score ${top3[i].score}`);
+      console.log(
+        `${labels[i]} place: ${w.winner} with score ${top3[i].score}`,
+      );
     });
     players.forEach((p) => {
       p.sendAction(new SendWinnersAction(this.winners));
