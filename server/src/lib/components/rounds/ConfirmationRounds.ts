@@ -2,11 +2,12 @@ import {
   ActionEnum,
   AnyRoundAction,
   SendEOTWAction as SendEotwAction,
+  SendWinnersAction,
 } from '../../../../../shared/actions/index.js';
 import {
   EndOfTheWorldRound,
   PlaceholderRound,
-  WinnerRound,
+  WinnersRound,
 } from '../../../../../shared/rounds/index.js';
 import { ServerRound } from './ServerRound.js';
 import { Player } from '../Player.js';
@@ -45,12 +46,29 @@ export class ServerEndOfTheWorldRound extends Mixin(
   }
 }
 
-export class ServerWinnerRound extends Mixin(
+export class ServerWinnersRound extends Mixin(
   ServerConfirmationRound,
-  WinnerRound,
+  WinnersRound,
 ) {
+  winners: { winner: string; beast: string }[] = [];
+  setup(players: Player[]): void {
+    this.winners = [];
+    const top3 = players.sort((a, b) => b.score - a.score).slice(0, 3);
+    top3.forEach((p) => {
+      this.winners.push({ winner: p.name, beast: p.lastUploadedImage });
+    });
+    console.log(
+      `First place: ${this.winners[0].winner} with score ${players[0].score}`,
+      `Second place: ${this.winners[1].winner} with score ${players[1].score}`,
+      `Third place: ${this.winners[2].winner} with score ${players[2].score}`,
+    );
+    players.forEach((p) => {
+      p.sendAction(new SendWinnersAction(this.winners));
+    });
+  }
   roundResponseHandler(action: AnyRoundAction, player: Player): boolean {
     // only the host can end the game from the winner round
+
     if (player.isHost) {
       this.game.endGame();
       return true;

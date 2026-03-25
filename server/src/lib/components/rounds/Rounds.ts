@@ -1,6 +1,6 @@
 import {
   ServerEndOfTheWorldRound,
-  ServerWinnerRound,
+  ServerWinnersRound,
 } from './ConfirmationRounds.js';
 import {
   ServerColorRound,
@@ -24,6 +24,6 @@ export function initializeRounds(game: Game): ServerRound[] {
     new ServerEndOfTheWorldRound(game),
     new ServerPresentRound(game),
     new ServerVoteRound(game),
-    new ServerWinnerRound(game),
+    new ServerWinnersRound(game),
   ];
 }
