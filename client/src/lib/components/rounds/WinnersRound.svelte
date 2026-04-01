@@ -20,7 +20,8 @@
     {#each $winners as winner, i}
       <div
         class="winner"
-        style="left: {podiumPositions[i].left}%; bottom: {podiumPositions[i].bottom}%;"
+        style="left: {podiumPositions[i].left}%; bottom: {podiumPositions[i]
+          .bottom}%;"
       >
         <span class="winner-name">{winner.winner}</span>
         <img src={winner.beast} alt={`${i + 1} place beast`} />
@@ -44,7 +45,7 @@
   .winner {
     position: absolute;
     transform: translateX(-50%);
-    height: 22%;
+    height: 35%;
     display: flex;
     flex-direction: column;
     align-items: center;
