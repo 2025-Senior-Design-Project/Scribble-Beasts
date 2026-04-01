@@ -35,6 +35,9 @@ const EotwCards = EotwDescriptions.map((d) => new EotwCard(d));
 
 export function getRandomEotwCard() {
   const randomId = Math.floor(Math.random() * EotwCards.length);
+  if (randomId >= EotwCards.length) {
+    return getRandomEotwCard(); // just in case, but should never happen
+  }
   if (randomId == 11) {
     return getRandomEotwCard(); // avoid the 12 inches one
   }

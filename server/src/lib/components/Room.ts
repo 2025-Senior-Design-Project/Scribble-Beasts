@@ -121,7 +121,7 @@ export class Room {
     }
     this.sendActionToAll(new Actions.StartGame());
     this.game = new Game(
-      Object.values(this.players),
+      this.getConnectedPlayers(),
       this.sendActionToAll.bind(this),
       () => {},
     );

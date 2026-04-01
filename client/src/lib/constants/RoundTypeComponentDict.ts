@@ -1,6 +1,5 @@
 import { RoundEnum } from '@shared/rounds';
 import PlaceholderRound from '../components/rounds/PlaceholderRound.svelte';
-// import UnimplementedRound from '../components/rounds/UnimplementedRound.svelte';
 import ScribbleRound from '../components/rounds/ScribbleRound.svelte';
 import LineRound from '../components/rounds/LineRound.svelte';
 import ColorRound from '../components/rounds/ColorRound.svelte';

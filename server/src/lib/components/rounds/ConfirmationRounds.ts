@@ -57,11 +57,10 @@ export class ServerWinnersRound extends Mixin(
     top3.forEach((p) => {
       this.winners.push({ winner: p.name, beast: p.lastUploadedImage });
     });
-    console.log(
-      `First place: ${this.winners[0].winner} with score ${players[0].score}`,
-      `Second place: ${this.winners[1].winner} with score ${players[1].score}`,
-      `Third place: ${this.winners[2].winner} with score ${players[2].score}`,
-    );
+    const labels = ['First', 'Second', 'Third'];
+    this.winners.forEach((w, i) => {
+      console.log(`${labels[i]} place: ${w.winner} with score ${top3[i].score}`);
+    });
     players.forEach((p) => {
       p.sendAction(new SendWinnersAction(this.winners));
     });
