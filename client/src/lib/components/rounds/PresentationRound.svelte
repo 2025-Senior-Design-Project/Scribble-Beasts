@@ -41,12 +41,12 @@
         alt="Final Scribble Beast"
         class="drawing-image"
       />
-      <button class="btn" on:click={downloadImage}> Download Image </button>
       {#if $isPresenter}
         <button class="btn" on:click={endPresentation}>
           End Presentation
         </button>
       {/if}
+      <button class="btn" on:click={downloadImage}> Download Image </button>
     {:else}
       <p>No image to display D:</p>
     {/if}
