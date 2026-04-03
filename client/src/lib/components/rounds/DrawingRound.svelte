@@ -477,6 +477,7 @@
     {#if showWidget}
       <div class="widget-container">
         {#if pen.strokeStyle}
+          <!-- ROW 1: COLORS -->
           <div class="color-picker">
             {#each COLORS as colorOption}
               <input
@@ -488,27 +489,55 @@
               />
               <label
                 for={colorOption.color}
-                style="background-color: {colorOption.value}"><!-- --></label
-              >
+                style="background-color: {colorOption.value}"
+              />
             {/each}
           </div>
 
-          <!-- Pen size control-->
-          <div class="pen-size-control">
-            <input
-              type="range"
-              min="4"
-              max="40"
-              step="1"
-              value={pen.lineWidth}
-              oninput={handlePenSizeChange}
-            />
-            <div class="pen-preview">
-              <span
-                class="pen-dot"
-                style="width: {pen.lineWidth}px; height: {pen.lineWidth}px; background-color: {pen.strokeStyle};"
+          <!-- ROW 2: SLIDER + UNDO/REDO -->
+          <div class="drawing-controls-row">
+            <!-- Pen size control -->
+            <div class="pen-size-control">
+              <input
+                type="range"
+                min="4"
+                max="40"
+                step="1"
+                value={pen.lineWidth}
+                oninput={handlePenSizeChange}
               />
+              <div class="pen-preview">
+                <span
+                  class="pen-dot"
+                  style="width: {pen.lineWidth}px; height: {pen.lineWidth}px; background-color: {pen.strokeStyle};"
+                />
+              </div>
             </div>
+
+            <!-- Undo / Redo -->
+            {#if isUndoRedoEnabled}
+              <div class="undo-redo-controls">
+                <button
+                  onclick={() => handleUndo()}
+                  disabled={history.length <= 1}
+                >
+                  <img
+                    src="../../../../public/images/icons/undo-arrow.png"
+                    alt="Undo"
+                  />
+                </button>
+
+                <button
+                  onclick={() => handleRedo()}
+                  disabled={redoStack.length === 0}
+                >
+                  <img
+                    src="../../../../public/images/icons/redo-arrow.png"
+                    alt="Redo"
+                  />
+                </button>
+              </div>
+            {/if}
           </div>
         {:else if pen.textFont}
           <input
@@ -519,24 +548,6 @@
             class="name-input"
           />
         {/if}
-      </div>
-    {/if}
-
-    {#if isUndoRedoEnabled}
-      <div class="undo-redo-controls">
-        <button onclick={() => handleUndo()} disabled={history.length <= 1}>
-          <img
-            src="../../../../public/images/icons/undo-arrow.png"
-            alt="Undo"
-          />
-        </button>
-
-        <button onclick={() => handleRedo()} disabled={redoStack.length === 0}>
-          <img
-            src="../../../../public/images/icons/redo-arrow.png"
-            alt="Redo"
-          />
-        </button>
       </div>
     {/if}
   </div>
@@ -615,8 +626,17 @@
 
   .widget-container {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     gap: 0.5rem;
+  }
+
+  .drawing-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
 
   .color-picker {
@@ -659,7 +679,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     margin-top: 0.5rem;
   }
 
