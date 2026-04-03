@@ -36,41 +36,30 @@
   const isUndoRedoEnabled = !pen.scribble && !pen.textFont;
 
   const COLORS = [
-    // Reds / Pinks
-    { color: 'maroon', value: '#A30000' },
-    { color: 'red', value: '#db2828' },
-    { color: 'coral', value: '#ff6f61' },
-    { color: 'pink', value: '#e03997' },
-    { color: 'hot-pink', value: '#f7207c' },
-
-    // Oranges / Yellows
-    { color: 'orange', value: '#f2711c' },
-    { color: 'yellow', value: '#fbbd08' },
-    { color: 'gold', value: '#ffd700' },
-
-    // Greens
-    { color: 'dark-green', value: '#006400' },
-    { color: 'green', value: '#21ba45' },
-    { color: 'lime', value: '#84cc16' },
-    { color: 'olive', value: '#b5cc18' },
-    { color: 'mint', value: '#6ee7b7' },
-
-    // Blues
-    { color: 'teal', value: '#00b5ad' },
-    { color: 'sky-blue', value: '#38bdf8' },
-    { color: 'blue', value: '#2185d0' },
-    { color: 'navy-blue', value: '#07409C' },
-
-    // Purples
-    { color: 'violet', value: '#6435c9' },
-    { color: 'purple', value: '#a333c8' },
-    { color: 'lavender', value: '#c4b5fd' },
-
-    // Browns / Neutrals
-    { color: 'grey', value: '#808080' },
-    { color: 'brown', value: '#a16207' },
-    { color: 'apricot', value: '#FBCEB1' },
-  ];
+  // Row 1: Reds to Oranges
+  '#A30000', // dark red
+  '#db2828', // red
+  '#ff6f61', // coral
+  '#f2711c', // orange
+  '#ff8c00', // dark orange
+  '#fbbd08', // yellow
+  
+  // Row 2: Greens to Blues
+  '#006400', // dark green
+  '#21ba45', // green
+  '#84cc16', // lime
+  '#38bdf8', // sky blue
+  '#2185d0', // blue
+  '#07409C', // navy
+  
+  // Row 3: Purples to Neutrals
+  '#6435c9', // violet
+  '#a333c8', // purple
+  '#e03997', // pink
+  '#00b5ad', // teal
+  '#808080', // grey
+  '#a16207', // brown
+];
 
   function prepareContext() {
     if (!canvas) return;
@@ -479,19 +468,22 @@
         {#if pen.strokeStyle}
           <!-- ROW 1: COLORS -->
           <div class="color-picker">
-            {#each COLORS as colorOption}
+            {#each COLORS as color}
               <input
                 type="radio"
-                id={colorOption.color}
+                id={color}
                 name="color"
-                value={colorOption.value}
-                onchange={() => handleColorChange(colorOption.value)}
+                value={color}
+                onchange={() => handleColorChange(color)}
               />
-              <label
-                for={colorOption.color}
-                style="background-color: {colorOption.value}"
-              />
+              <label for={color} style="background-color: {color}" />
             {/each}
+          </div>
+          <div class="custom-color">
+            <input
+              type="color"
+              oninput={(e) => handleColorChange((e.target as HTMLInputElement).value)}
+            />
           </div>
 
           <!-- ROW 2: SLIDER + UNDO/REDO -->
@@ -635,16 +627,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.75rem;
     flex-wrap: wrap;
   }
 
   .color-picker {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
+  gap: 0.75rem;
+  max-width: 300px;
+}
 
   .color-picker input[type='radio'] {
     display: none;
@@ -661,6 +654,18 @@
 
   .color-picker input[type='radio']:checked + label {
     border-color: #000;
+  }
+
+  .custom-color {
+  margin-top: 0.5rem;
+}
+
+  .custom-color input[type='color'] {
+    width: 50px;
+    height: 40px;
+    border: none;
+    padding: 0;
+    background: none;
   }
 
   .name-input {
