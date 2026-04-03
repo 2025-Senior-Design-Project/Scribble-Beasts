@@ -33,14 +33,17 @@ export class ServerVoteRound extends Mixin(ServerRound, VoteRound) {
       console.log(
         `Player ${player.name} voted: 1st=${first}, 2nd=${second}, 3rd=${third}`,
       );
+      // Self-voting: always allowed in 2-player games; otherwise respect room setting.
+      const allowSelfVote =
+        this.players.length === 2 || this.game.settings.allowSelfVote;
       this.players
-        .filter((p) => p.name === first)
+        .filter((p) => p.name === first && (allowSelfVote || p.name !== player.name))
         .forEach((p) => p.setScore(p.score + 3));
       this.players
-        .filter((p) => p.name === second)
+        .filter((p) => p.name === second && (allowSelfVote || p.name !== player.name))
         .forEach((p) => p.setScore(p.score + 2));
       this.players
-        .filter((p) => p.name === third)
+        .filter((p) => p.name === third && (allowSelfVote || p.name !== player.name))
         .forEach((p) => p.setScore(p.score + 1));
       return true;
     }

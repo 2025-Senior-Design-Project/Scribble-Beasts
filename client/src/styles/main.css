@@ -76,8 +76,11 @@
   --paper-white: #ecf0f1;
   --grid-blue: #a9cce3;
 
-  /* Font Scaling */
+  /* Font Scaling — overridden at runtime by personalSettingsStore */
   --font-scale: 1.1;
+
+  /* UI Font — overridden at runtime by personalSettingsStore */
+  --ui-font: 'Children', sans-serif;
 
   /* Font Sizes */
   --text-sm: calc(0.875rem * var(--font-scale));
@@ -96,7 +99,7 @@ html {
 
 body {
   margin: 0;
-  font-family: 'Children', sans-serif;
+  font-family: var(--ui-font);
   color: var(--pen-black);
   font-size: var(--text-base);
   overscroll-behavior: none;
@@ -125,7 +128,7 @@ button {
   padding: 10px 20px;
   border-radius: 5px;
   cursor: pointer;
-  font-family: 'Children', sans-serif;
+  font-family: var(--ui-font);
   font-size: var(--text-base);
 }
 

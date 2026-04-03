@@ -1,4 +1,5 @@
-import { Actions, ActionEnum } from '../../../../shared/actions/index.js';
+import { Actions, ActionEnum, type UpdateRoomSettingsAction } from '../../../../shared/actions/index.js';
+import { DEFAULT_ROOM_SETTINGS, type RoomSettings } from '../../../../shared/settings/index.js';
 import { Player, Host } from './Player.js';
 import { Game } from './Game.js';
 import { handleRoomless } from '../scripts/roomless-handler.js';
@@ -10,6 +11,7 @@ export class Room {
   host: Host;
   players: Record<string, Player> = {};
   game: Game | null = null;
+  settings: RoomSettings = { ...DEFAULT_ROOM_SETTINGS, roundTimers: {} };
 
   constructor(name: string, host: Player) {
     this.name = name;
@@ -38,6 +40,16 @@ export class Room {
       ActionEnum.START_GAME,
       this.startGame.bind(this),
     );
+    this.host.addActionListener<UpdateRoomSettingsAction>(
+      ActionEnum.UPDATE_ROOM_SETTINGS,
+      this.updateSettings.bind(this),
+    );
+  }
+
+  updateSettings(action: UpdateRoomSettingsAction): void {
+    this.settings = action.payload.settings;
+    console.log(`Room ${this.name} settings updated:`, this.settings);
+    this.sendActionToAll(new Actions.RoomSettingsChange(this.settings));
   }
 
   destroy() {
@@ -54,6 +66,8 @@ export class Room {
     player.addActionListener(ActionEnum.LEAVE_ROOM, () => {
       this.removePlayer(player.name, false);
     });
+    // Send current settings to the newly joined player
+    player.sendAction(new Actions.RoomSettingsChange(this.settings));
     this.playerListChanged();
   }
 
@@ -124,6 +138,7 @@ export class Room {
       this.getConnectedPlayers(),
       this.sendActionToAll.bind(this),
       () => {},
+      this.settings,
     );
     this.game.startGame();
   }
