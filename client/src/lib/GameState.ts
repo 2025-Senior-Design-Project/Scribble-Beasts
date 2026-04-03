@@ -10,6 +10,7 @@ import {
   type StartRoundAction,
   type SendPresenterChangeAction,
   type SendAllBeastsAction,
+  type SendWinnersAction,
 } from '@shared/actions';
 import { derived, get, writable } from 'svelte/store';
 import ClientWebsocket from './ClientWebsocket';
@@ -42,6 +43,9 @@ export const everyoneDoneExceptYou = derived(
 export const drawingImage = writable<string>(''); // Base64url encoded image to draw on
 export const eotwCard = writable<EotwCard>();
 export const allBeasts = writable<{ playerName: string; drawing: string }[]>(
+  [],
+);
+export const winners = writable<{ winner: string; beast: Base64URLString }[]>(
   [],
 );
 
@@ -104,6 +108,11 @@ const loadBeasts = (action: SendAllBeastsAction) => {
   allBeasts.set(action.payload.drawings);
 };
 
+const loadWinners = (action: SendWinnersAction) => {
+  winners.set(action.payload.winners);
+  console.log('Winners:', action.payload.winners);
+};
+
 export function resetState() {
   ClientWebsocket.removeActionListener(ActionEnum.JOIN_ROOM);
   ClientWebsocket.removeActionListener(ActionEnum.PLAYER_LIST_CHANGE);
@@ -117,6 +126,7 @@ export function resetState() {
   ClientWebsocket.removeActionListener(ActionEnum.PRESENTER_START);
   ClientWebsocket.removeActionListener(ActionEnum.PRESENTER_END);
   ClientWebsocket.removeActionListener(ActionEnum.SEND_ALL_BEASTS);
+  ClientWebsocket.removeActionListener(ActionEnum.SEND_WINNERS);
 
   ClientWebsocket.addActionListener<JoinRoomAction>(
     ActionEnum.JOIN_ROOM,
@@ -157,5 +167,9 @@ export function resetState() {
   ClientWebsocket.addActionListener<SendAllBeastsAction>(
     ActionEnum.SEND_ALL_BEASTS,
     loadBeasts,
+  );
+  ClientWebsocket.addActionListener<SendWinnersAction>(
+    ActionEnum.SEND_WINNERS,
+    loadWinners,
   );
 }

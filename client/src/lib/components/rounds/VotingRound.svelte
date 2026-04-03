@@ -7,19 +7,30 @@
   import { roundStore } from '../../stores/roundStore';
   import { onMount } from 'svelte';
 
-  // Two-column layout with centered final card when odd count.
-  // Compute reactive count.
-  const submissionCount = $derived($allBeasts ? $allBeasts.length : 0);
-  // How many picks the local player should make: min(3, players - 1)
+  // With <=3 players, allow voting for yourself (avoids unresolvable deadlocks).
+  const allowSelfVote = $derived($players ? $players.length <= 3 : false);
+  // Only show beasts the player is allowed to vote for.
+  const votableBeasts = $derived(
+    $allBeasts
+      ? allowSelfVote
+        ? $allBeasts
+        : $allBeasts.filter((b) => b.playerName !== $playerName)
+      : [],
+  );
+  const submissionCount = $derived(votableBeasts.length);
+  // 2-player: 2 picks (self-vote allowed fills the gap); 3-player: 2 picks; 4+: min(3, players-1)
   const maxPicks = $derived(
-    $players ? Math.max(0, Math.min(3, $players.length - 1)) : 0,
+    $players && $players.length > 0
+      ? Math.min(3, Math.max(2, $players.length - 1))
+      : 0,
   );
 
   // Store the user's picks here for now (exported so other modules can import if needed)
   export const userPicks = writable<any[]>([]);
 
-  // Local picks array of indices into $allBeasts in selection order
+  // Local picks array of indices into votableBeasts in selection order
   let picks: number[] = $state([]);
+  let submitted = $state(false);
 
   const ordinals = ['', 'second', 'third'];
 
@@ -35,17 +46,12 @@
   const cols = 2;
 
   async function handleRoundEnd() {
-    // cleans up for next round + sends actions to server
+    finishVoting();
   }
 
-  function handleCardClick(
-    i: number,
-    beast: { drawing: string; playerName: string },
-  ) {
+  function handleCardClick(i: number) {
     // If no votes required, ignore
     if (maxPicks === 0) return;
-
-    if (beast.playerName === $playerName) return; // don't vote for self
 
     const idx = picks.indexOf(i);
     if (idx !== -1) {
@@ -57,18 +63,20 @@
     }
 
     // update exported store for now
-    const selected = picks.map((pi) => $allBeasts[pi]);
+    const selected = picks.map((pi) => votableBeasts[pi]);
     userPicks.set(selected);
   }
 
   function finishVoting() {
+    if (submitted) return;
+    submitted = true;
     // send action to server with picks
     ClientWebsocket.sendAction({
       type: ActionEnum.SEND_VOTE,
       payload: {
-        first: $allBeasts[picks[0]]?.playerName ?? '',
-        second: $allBeasts[picks[1]]?.playerName ?? '',
-        third: $allBeasts[picks[2]]?.playerName ?? '',
+        first: votableBeasts[picks[0]]?.playerName ?? '',
+        second: votableBeasts[picks[1]]?.playerName ?? '',
+        third: votableBeasts[picks[2]]?.playerName ?? '',
       },
     });
     roundStore.update((state) => ({
@@ -93,8 +101,7 @@
   }
 
   function nextCard() {
-    if (!$allBeasts) return;
-    if (currentIndex < $allBeasts.length - 1) scrollToIndex(currentIndex + 1);
+    if (currentIndex < votableBeasts.length - 1) scrollToIndex(currentIndex + 1);
   }
 
   let resizeObserver: ResizeObserver | null = null;
@@ -118,14 +125,14 @@
 <Round onRoundEnd={handleRoundEnd}>
   <div class="voting-container">
     <div class="prompt">{promptText}</div>
-    {#if $allBeasts && $allBeasts.length > 0}
+    {#if votableBeasts.length > 0}
       <div
         class="voting-grid"
         bind:this={carousel}
         onscroll={handleScroll}
         style={`grid-template-columns: repeat(${cols}, minmax(var(--min-card-size), 1fr)); column-gap: var(--col-gap); row-gap: var(--row-gap);`}
       >
-        {#each $allBeasts as beast, i}
+        {#each votableBeasts as beast, i}
           <div
             class="card"
             class:center-span={submissionCount % 2 === 1 &&
@@ -134,7 +141,7 @@
             role="button"
             aria-pressed={picks.includes(i)}
             aria-label={`Drawing by ${beast.playerName}`}
-            onclick={() => handleCardClick(i, beast)}
+            onclick={() => handleCardClick(i)}
           >
             <div class="image-wrap">
               <img src={beast.drawing} alt={`Drawing by ${beast.playerName}`} />
@@ -144,6 +151,14 @@
               {/if}
             </div>
             <div class="drawer">{beast.playerName}</div>
+            <button
+              class="vote-btn"
+              class:vote-btn-selected={picks.includes(i)}
+              disabled={!picks.includes(i) && picks.length >= maxPicks}
+              onclick={(e) => { e.stopPropagation(); handleCardClick(i); }}
+            >
+              {picks.includes(i) ? 'Remove' : 'Vote'}
+            </button>
           </div>
         {/each}
       </div>
@@ -290,6 +305,30 @@
   /* hide arrows by default (visible only on small screens) */
   .carousel-arrow {
     display: none;
+  }
+
+  .vote-btn {
+    margin-top: 8px;
+    width: 100%;
+    padding: 6px 0;
+    font-weight: 700;
+    font-size: 0.9rem;
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 2px solid #2e7d32;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .vote-btn.vote-btn-selected {
+    background: #fce4ec;
+    color: #c62828;
+    border-color: #c62828;
+  }
+
+  .vote-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
   }
 
   .drawer {

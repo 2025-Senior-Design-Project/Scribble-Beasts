@@ -30,6 +30,7 @@ export const enum ActionEnum {
   SEND_VOTE = 'VOTE_ROUND',
   PLAYER_DONE = 'PLAYER_DONE',
   SEND_ALL_BEASTS = 'SEND_ALL_BEASTS',
+  SEND_WINNERS = 'SEND_WINNERS',
 }
 
 type Base64URLString = string;
@@ -166,6 +167,14 @@ export class PlayerDoneAction extends Action<{ playerName: string }> {
   }
 }
 
+export class SendWinnersAction extends Action<{
+  winners: { winner: string; beast: Base64URLString }[];
+}> {
+  constructor(winners: { winner: string; beast: Base64URLString }[]) {
+    super(ActionEnum.SEND_WINNERS, { winners });
+  }
+}
+
 export type AnyRoundAction =
   | EndRoundAction
   | StartRoundAction
@@ -188,6 +197,7 @@ export type AnyAction =
   | SendPresenterStartAction
   | SendPresenterEndAction
   | SendAllBeastsAction
+  | SendWinnersAction
   | AnyRoundAction;
 
 // Actions object for easy import and readability
@@ -210,6 +220,7 @@ export const Actions = {
   SendVote: SendVoteAction,
   SendBeasts: SendAllBeastsAction,
   PlayerDone: PlayerDoneAction,
+  SendWinners: SendWinnersAction,
 };
 
 interface IWebSocket {

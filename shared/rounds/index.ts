@@ -20,7 +20,7 @@ export const enum RoundEnum {
   END_OF_THE_WORLD = 'END_OF_THE_WORLD',
   PRESENT = 'PRESENT',
   VOTE = 'VOTE',
-  WINNER = 'WINNER',
+  WINNERS = 'WINNERS',
 }
 
 export abstract class Round {
@@ -100,11 +100,12 @@ export class VoteRound extends Round {
   hideButton = true;
 }
 
-export class WinnerRound extends Round {
-  roundType = RoundEnum.WINNER;
+export class WinnersRound extends Round {
+  roundType = RoundEnum.WINNERS;
   timeout = WINNER_TIMEOUT;
-  roundName = 'Winner';
+  roundName = 'Podium';
   description = 'congrats, gg';
+  hideButton = true;
 }
 
 /** All rounds in order of occurrence */
@@ -118,5 +119,5 @@ export const Rounds: Round[] = [
   new EndOfTheWorldRound(),
   new PresentRound(),
   new VoteRound(),
-  new WinnerRound(),
+  new WinnersRound(),
 ];

@@ -15,10 +15,10 @@ export class ServerVoteRound extends Mixin(ServerRound, VoteRound) {
   votedPlayers: Set<string> = new Set();
   setup(players: Player[]): void {
     this.players = players;
+    const drawings = players.map((pl) => {
+      return { playerName: pl.name, drawing: pl.lastUploadedImage };
+    });
     players.forEach((p) => {
-      const drawings = players.map((pl) => {
-        return { playerName: pl.name, drawing: pl.lastUploadedImage };
-      });
       p.sendAction(new SendAllBeastsAction(drawings));
     });
   }
