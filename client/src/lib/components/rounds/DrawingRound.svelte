@@ -627,7 +627,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-direction: column;
+    flex-direction: row;
     gap: 0.75rem;
     flex-wrap: wrap;
   }
@@ -682,7 +682,7 @@
   /* Styles for color pen slider */
   .pen-size-control {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     gap: 0.4rem;
     margin-top: 0.5rem;
