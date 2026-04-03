@@ -5,10 +5,13 @@
   import ClientWebsocket from '../../ClientWebsocket';
   import { ActionEnum } from '@shared/actions';
   import { roundStore } from '../../stores/roundStore';
+  import { roomSettings } from '../../stores/roomSettingsStore';
   import { onMount } from 'svelte';
 
-  // With <=3 players, allow voting for yourself (avoids unresolvable deadlocks).
-  const allowSelfVote = $derived($players ? $players.length <= 3 : false);
+  // Self-voting: always allowed in 2-player games; otherwise controlled by room setting.
+  const allowSelfVote = $derived(
+    $players ? $players.length === 2 || $roomSettings.allowSelfVote : false,
+  );
   // Only show beasts the player is allowed to vote for.
   const votableBeasts = $derived(
     $allBeasts

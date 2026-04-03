@@ -11,12 +11,14 @@ import {
   type SendPresenterChangeAction,
   type SendAllBeastsAction,
   type SendWinnersAction,
+  type RoomSettingsChangeAction,
 } from '@shared/actions';
 import { derived, get, writable } from 'svelte/store';
 import ClientWebsocket from './ClientWebsocket';
 import { View, navigateTo } from './Navigator';
 import { jumpToRound } from './stores/roundStore';
 import { getEotwCardFromId, type EotwCard } from '@shared/eotw';
+import { roomSettings } from './stores/roomSettingsStore';
 
 export const isHost = writable(false);
 export const hostName = writable<string | undefined>(undefined);
@@ -113,6 +115,10 @@ const loadWinners = (action: SendWinnersAction) => {
   console.log('Winners:', action.payload.winners);
 };
 
+const settingsChanged = (action: RoomSettingsChangeAction) => {
+  roomSettings.set(action.payload.settings);
+};
+
 export function resetState() {
   ClientWebsocket.removeActionListener(ActionEnum.JOIN_ROOM);
   ClientWebsocket.removeActionListener(ActionEnum.PLAYER_LIST_CHANGE);
@@ -127,6 +133,7 @@ export function resetState() {
   ClientWebsocket.removeActionListener(ActionEnum.PRESENTER_END);
   ClientWebsocket.removeActionListener(ActionEnum.SEND_ALL_BEASTS);
   ClientWebsocket.removeActionListener(ActionEnum.SEND_WINNERS);
+  ClientWebsocket.removeActionListener(ActionEnum.ROOM_SETTINGS_CHANGE);
 
   ClientWebsocket.addActionListener<JoinRoomAction>(
     ActionEnum.JOIN_ROOM,
@@ -171,5 +178,9 @@ export function resetState() {
   ClientWebsocket.addActionListener<SendWinnersAction>(
     ActionEnum.SEND_WINNERS,
     loadWinners,
+  );
+  ClientWebsocket.addActionListener<RoomSettingsChangeAction>(
+    ActionEnum.ROOM_SETTINGS_CHANGE,
+    settingsChanged,
   );
 }

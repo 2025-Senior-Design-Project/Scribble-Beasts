@@ -19,6 +19,10 @@ export const enum ActionEnum {
   HOST_CHANGE = 'HOST_CHANGE',
   PLAYER_LIST_CHANGE = 'PLAYER_LIST_CHANGE',
   START_GAME = 'START_GAME',
+  /** Host sends updated room settings; server validates and broadcasts ROOM_SETTINGS_CHANGE */
+  UPDATE_ROOM_SETTINGS = 'UPDATE_ROOM_SETTINGS',
+  /** Server broadcasts current room settings to all players */
+  ROOM_SETTINGS_CHANGE = 'ROOM_SETTINGS_CHANGE',
   /** Round Actions */
   END_ROUND = 'END_ROUND',
   START_ROUND = 'START_ROUND',
@@ -103,6 +107,20 @@ export class StartGameAction extends Action<{
 export class PlayerListChangeAction extends Action<{ playerList: string[] }> {
   constructor(playerList: string[]) {
     super(ActionEnum.PLAYER_LIST_CHANGE, { playerList });
+  }
+}
+
+import type { RoomSettings } from '../settings/index.js';
+
+export class UpdateRoomSettingsAction extends Action<{ settings: RoomSettings }> {
+  constructor(settings: RoomSettings) {
+    super(ActionEnum.UPDATE_ROOM_SETTINGS, { settings });
+  }
+}
+
+export class RoomSettingsChangeAction extends Action<{ settings: RoomSettings }> {
+  constructor(settings: RoomSettings) {
+    super(ActionEnum.ROOM_SETTINGS_CHANGE, { settings });
   }
 }
 
@@ -193,6 +211,8 @@ export type AnyAction =
   | HostChangeAction
   | StartGameAction
   | PlayerListChangeAction
+  | UpdateRoomSettingsAction
+  | RoomSettingsChangeAction
   | SendPresenterChangeAction
   | SendPresenterStartAction
   | SendPresenterEndAction
@@ -210,6 +230,8 @@ export const Actions = {
   HostChange: HostChangeAction,
   StartGame: StartGameAction,
   PlayerListChange: PlayerListChangeAction,
+  UpdateRoomSettings: UpdateRoomSettingsAction,
+  RoomSettingsChange: RoomSettingsChangeAction,
   EndRound: EndRoundAction,
   StartRound: StartRoundAction,
   SendDrawing: SendDrawingAction,

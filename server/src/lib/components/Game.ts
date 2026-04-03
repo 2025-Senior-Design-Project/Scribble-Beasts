@@ -10,6 +10,7 @@ import {
   SendDrawingAction,
 } from '../../../../shared/actions/index.js';
 import { Round } from '../../../../shared/rounds/index.js';
+import { DEFAULT_ROOM_SETTINGS, type RoomSettings } from '../../../../shared/settings/index.js';
 
 export class Game {
   #sendActionToAllPlayers: (action: AnyAction) => void;
@@ -20,14 +21,17 @@ export class Game {
   roundStartTime: number = 0;
   players: Player[];
   playerDrawings: Record<string, string> = {};
+  settings: RoomSettings;
   constructor(
     players: Player[],
     sendActionToAllPlayers: (action: AnyAction) => void,
     backToLobby: () => void,
+    settings: RoomSettings = DEFAULT_ROOM_SETTINGS,
   ) {
     this.players = players;
     this.#sendActionToAllPlayers = sendActionToAllPlayers;
     this.#backToLobby = backToLobby;
+    this.settings = settings;
     this.roundsLeft = initializeRounds(this);
   }
 
@@ -46,14 +50,16 @@ export class Game {
 
     this.currentRound.setup(this.players);
 
-    this.#sendActionToAllPlayers(
-      new Actions.StartRound((this.currentRound as unknown as Round).timeout),
-    );
+    const roundBase = this.currentRound as unknown as Round;
+    const customTimer = this.settings.roundTimers[roundBase.roundType];
+    const timeout = customTimer && customTimer > 0 ? customTimer : roundBase.timeout;
+
+    this.#sendActionToAllPlayers(new Actions.StartRound(timeout));
 
     await this.waitForRoundEnd(
       this.currentRound.expectedActions,
       this.currentRound.roundResponseHandler.bind(this.currentRound),
-      (this.currentRound as unknown as Round).timeout,
+      timeout,
     );
 
     this.#sendActionToAllPlayers(new Actions.EndRound());
