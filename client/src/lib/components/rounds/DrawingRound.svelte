@@ -116,18 +116,14 @@
       } catch {
         context.font = `${pen.textFont.size}px sans-serif`;
       }
-
-      context.fillStyle = 'black';
-      context.textAlign = 'center';
-      context.textBaseline = 'bottom';
       return;
     }
 
     // Drawing rounds
-    context.strokeStyle = pen.strokeStyle ?? 'black';
-    context.lineWidth = pen.lineWidth ?? 4;
-    context.lineJoin = pen.lineJoin ?? 'round';
-    context.lineCap = pen.lineCap ?? 'round';
+    context.strokeStyle = pen.strokeStyle;
+    context.lineWidth = pen.lineWidth;
+    context.lineJoin = pen.lineJoin
+    context.lineCap = pen.lineCap;
   }
 
   function getScaleFactor(): number {
@@ -246,15 +242,18 @@
   }
 
   function handleTextInput(event: Event) {
-    if (!context || !canvas || !pen.textFont) return;
+    if (!context || !canvas || !isTextPen) return;
 
     const input = event.target as HTMLInputElement;
     const text = input.value;
 
     context.clearRect(0, 0, canvas.width, canvas.height);
 
+    context.textAlign = 'center';
+    context.textBaseline = 'bottom';
+
     const xPosition = canvas.width / 2;
-    const yPosition = canvas.height - 5; // 5px from the bottom
+    const yPosition = canvas.height - 10;
     context.fillText(text, xPosition, yPosition);
   }
 
@@ -465,6 +464,7 @@
 
     {#if showWidget}
       <div class="widget-container">
+      <!-- COLOR ROUND -->
         {#if pen.strokeStyle}
           <!-- ROW 1: COLORS -->
           <div class="color-picker">
@@ -502,7 +502,7 @@
                 <span
                   class="pen-dot"
                   style="width: {pen.lineWidth}px; height: {pen.lineWidth}px; background-color: {pen.strokeStyle};"
-                />
+                ></span>
               </div>
             </div>
 
@@ -531,7 +531,7 @@
               </div>
             {/if}
           </div>
-        {:else if pen.textFont}
+        {:else if isTextPen}
           <input
             type="text"
             id="scribble-beast-name"
@@ -559,7 +559,7 @@
   .canvas-wrapper {
     position: relative;
     width: min(520px, 90vw);
-    height: min(520px, 90vw);
+    height: min(545px, 90vw);
   }
 
   .drawing-canvas {
@@ -570,7 +570,6 @@
     border-radius: 8px;
     cursor: crosshair;
     touch-action: none;
-    /* Fixed internal size of 520x520, but scale visually to fit screen */
     width: 100%;
     height: 100%;
     image-rendering: pixelated;
@@ -584,7 +583,6 @@
     border: 2px solid #333;
     border-radius: 8px;
     pointer-events: none;
-    /* Fixed internal size of 520x520, but scale visually to fit screen */
     width: 100%;
     height: 100%;
     image-rendering: pixelated;
@@ -598,7 +596,6 @@
     border: 2px solid #333;
     border-radius: 8px;
     pointer-events: none;
-    /* Fixed internal size of 520x520, but scale visually to fit screen */
     width: 100%;
     height: 100%;
     image-rendering: pixelated;
