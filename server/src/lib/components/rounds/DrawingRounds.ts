@@ -40,6 +40,11 @@ export abstract class ServerDrawingRound extends ServerRound {
     }
     return false;
   }
+
+  /** On reconnect, send the player the starting image for this round. */
+  sendReconnectState(player: Player): void {
+    player.sendAction(new SendDrawingAction(player.lastUploadedImage));
+  }
 }
 
 export class ServerScribbleRound extends Mixin(

@@ -17,7 +17,8 @@ class CWebsocket extends ActionTarget<WebSocket, MessageEvent<string>> {
     this.#attachEventListeners();
 
     this.addActionListener(ActionEnum.RECONNECT, (action: ReconnectAction) => {
-      this.setCookie('playerId', action.payload.playerId, 7);
+      // Use sessionStorage so each tab keeps its own playerId
+      sessionStorage.setItem('playerId', action.payload.playerId);
     });
   }
 
@@ -36,7 +37,7 @@ class CWebsocket extends ActionTarget<WebSocket, MessageEvent<string>> {
 
     this.#ws.onopen = () => {
       console.log('WebSocket connection established');
-      const playerId = this.getCookie('playerId');
+      const playerId = sessionStorage.getItem('playerId');
       if (playerId) {
         this.#ws.send(JSON.stringify(new Actions.Reconnect(playerId)));
       }
@@ -48,27 +49,6 @@ class CWebsocket extends ActionTarget<WebSocket, MessageEvent<string>> {
         this.reconnect();
       }, 1000);
     };
-  }
-
-  setCookie(name: string, value: string, days: number) {
-    let expires = '';
-    if (days) {
-      const date = new Date();
-      date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-      expires = '; expires=' + date.toUTCString();
-    }
-    document.cookie = name + '=' + (value || '') + expires + '; path=/';
-  }
-
-  getCookie(name: string): string | null {
-    const nameEQ = name + '=';
-    const ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-      let c = ca[i];
-      while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-      if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
   }
 }
 
@@ -83,21 +63,10 @@ function getWebsocketUrl(): string {
   const url = new URL(urlStr);
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
 
-  const playerId = getCookie('playerId');
+  const playerId = sessionStorage.getItem('playerId');
   if (playerId) {
     url.searchParams.set('playerId', playerId);
   }
 
   return url.toString();
-}
-
-function getCookie(name: string): string | null {
-  const nameEQ = name + '=';
-  const ca = document.cookie.split(';');
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-  }
-  return null;
 }

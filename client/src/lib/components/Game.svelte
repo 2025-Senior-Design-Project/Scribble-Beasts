@@ -12,11 +12,15 @@
   import type { StartRoundAction } from '@shared/actions';
 
   onMount(() => {
+    console.log('[Game.svelte] mounted, adding END_ROUND + START_ROUND listeners');
+
     const handleServerEndRound = () => {
+      console.log('[Game.svelte] END_ROUND received, calling endCurrentRound');
       endCurrentRound();
     };
 
     const handleServerStartRound = (action: StartRoundAction) => {
+      console.log('[Game.svelte] START_ROUND received, timeout:', action.payload.timeout);
       startNextRound(action.payload.timeout);
     };
 
@@ -31,6 +35,7 @@
     );
 
     return () => {
+      console.log('[Game.svelte] unmounting, removing END_ROUND + START_ROUND listeners');
       ClientWebsocket.removeActionListener(ActionEnum.END_ROUND);
       ClientWebsocket.removeActionListener(ActionEnum.START_ROUND);
     };

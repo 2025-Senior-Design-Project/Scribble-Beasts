@@ -65,7 +65,13 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
     this.disconnected = false;
     this.setWebsocket(ws);
 
+    console.log(`[Player] ${this.name} reconnect: sending JoinRoom, game=${!!room.game}, disconnected=${this.disconnected}`);
+
+    // Always restore identity so client stores (playerName, roomName) are set
+    this.sendAction(new Actions.JoinRoom(room.name, this.name, room.host.name));
+
     if (room.game) {
+      // StartGame overrides the LOBBY navigation from JoinRoom above
       this.sendAction(
         new Actions.StartGame(
           room.game.currentRoundNumber,
@@ -75,10 +81,7 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
       this.sendAction(
         new Actions.SendDrawing(room.game.playerDrawings[this.id]),
       );
-    } else {
-      this.sendAction(
-        new Actions.JoinRoom(room.name, this.name, room.host.name),
-      );
+      room.game.currentRound?.sendReconnectState(this);
     }
 
     room.playerListChanged();

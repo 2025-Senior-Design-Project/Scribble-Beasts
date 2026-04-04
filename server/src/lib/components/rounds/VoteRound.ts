@@ -13,14 +13,20 @@ export class ServerVoteRound extends Mixin(ServerRound, VoteRound) {
   expectedActions = [ActionEnum.SEND_VOTE];
   players: Player[] = [];
   votedPlayers: Set<string> = new Set();
+  currentDrawings: { playerName: string; drawing: string }[] = [];
+
   setup(players: Player[]): void {
     this.players = players;
-    const drawings = players.map((pl) => {
+    this.currentDrawings = players.map((pl) => {
       return { playerName: pl.name, drawing: pl.lastUploadedImage };
     });
     players.forEach((p) => {
-      p.sendAction(new SendAllBeastsAction(drawings));
+      p.sendAction(new SendAllBeastsAction(this.currentDrawings));
     });
+  }
+
+  sendReconnectState(player: Player): void {
+    player.sendAction(new SendAllBeastsAction(this.currentDrawings));
   }
 
   roundResponseHandler(action: AnyRoundAction, player: Player): boolean {

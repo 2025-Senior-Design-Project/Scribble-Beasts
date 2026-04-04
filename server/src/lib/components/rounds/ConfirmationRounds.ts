@@ -12,7 +12,7 @@ import {
 import { ServerRound } from './ServerRound.js';
 import { Player } from '../Player.js';
 import { Mixin } from 'ts-mixer';
-import { getRandomEotwCard } from '../../../../../shared/eotw/index.js';
+import { getRandomEotwCard, type EotwCard } from '../../../../../shared/eotw/index.js';
 
 export abstract class ServerConfirmationRound extends ServerRound {
   expectedActions = [ActionEnum.END_ROUND];
@@ -36,13 +36,21 @@ export class ServerEndOfTheWorldRound extends Mixin(
   ServerConfirmationRound,
   EndOfTheWorldRound,
 ) {
+  currentCard: EotwCard | undefined;
+
   setup(players: Player[]): void {
-    const card = getRandomEotwCard();
+    this.currentCard = getRandomEotwCard();
     players
       .filter((p) => !p.disconnected)
       .forEach((player) => {
-        player.sendAction(new SendEotwAction(card.id));
+        player.sendAction(new SendEotwAction(this.currentCard!.id));
       });
+  }
+
+  sendReconnectState(player: Player): void {
+    if (this.currentCard) {
+      player.sendAction(new SendEotwAction(this.currentCard.id));
+    }
   }
 }
 
@@ -67,13 +75,23 @@ export class ServerWinnersRound extends Mixin(
       p.sendAction(new SendWinnersAction(this.winners));
     });
   }
+
   roundResponseHandler(action: AnyRoundAction, player: Player): boolean {
     // only the host can end the game from the winner round
-
     if (player.isHost) {
+      // Force-complete all non-host players so Promise.all resolves
+      Object.values(this.game.players).forEach((p) => {
+        if (p.id !== player.id) {
+          this.game.forceCompletePlayer(p.id);
+        }
+      });
       this.game.endGame();
       return true;
     }
     return false;
+  }
+
+  sendReconnectState(player: Player): void {
+    player.sendAction(new SendWinnersAction(this.winners));
   }
 }

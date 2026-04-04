@@ -23,4 +23,7 @@ export abstract class ServerRound {
     action: AnyRoundAction,
     player: Player,
   ): boolean;
+
+  /** Called when a player reconnects mid-round. Send any round-specific state they need. */
+  sendReconnectState(_player: Player): void {}
 }

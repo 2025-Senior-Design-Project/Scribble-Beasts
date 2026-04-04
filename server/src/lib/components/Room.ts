@@ -22,20 +22,7 @@ export class Room {
 
   hostSetup() {
     // If host disconnects, make the next player the host (if any exist)
-    this.host.addEventListener('close', () => {
-      const connectedPlayers = this.getConnectedPlayers();
-      if (connectedPlayers.length === 0) return; // No players left to become host
-      const playerToBecomeHost = connectedPlayers[0];
-      playerToBecomeHost.isHost = true;
-      const newHost = playerToBecomeHost as Host;
-      this.host = newHost;
-      console.log(
-        `Host ${this.host.name} disconnected from room ${this.name}. New host is ${newHost.name}`,
-      );
-      this.hostSetup();
-      const hostChangeAction = new Actions.HostChange(this.host.name);
-      this.host.sendAction(hostChangeAction);
-    });
+    this.#attachHostCloseListener();
     this.host.addActionListener(
       ActionEnum.START_GAME,
       this.startGame.bind(this),
@@ -44,6 +31,28 @@ export class Room {
       ActionEnum.UPDATE_ROOM_SETTINGS,
       this.updateSettings.bind(this),
     );
+  }
+
+  #attachHostCloseListener() {
+    this.host.addEventListener('close', () => {
+      const connectedPlayers = this.getConnectedPlayers();
+      if (connectedPlayers.length === 0) return; // No players left to become host
+      const oldHostName = this.host.name;
+      const playerToBecomeHost = connectedPlayers[0];
+      playerToBecomeHost.isHost = true;
+      const newHost = playerToBecomeHost as Host;
+      this.host = newHost;
+      console.log(
+        `Host ${oldHostName} disconnected from room ${this.name}. New host is ${newHost.name}`,
+      );
+      this.hostSetup();
+      const hostChangeAction = new Actions.HostChange(this.host.name);
+      this.host.sendAction(hostChangeAction);
+    });
+  }
+
+  reattachHostCloseListener() {
+    this.#attachHostCloseListener();
   }
 
   updateSettings(action: UpdateRoomSettingsAction): void {
@@ -61,17 +70,21 @@ export class Room {
   addPlayer(player: Player): void {
     this.players[player.name] = player;
     player.addEventListener('close', () => {
-      this.disconnectPlayer(player.name);
+      this.deactivatePlayer(player.name);
     });
     player.addActionListener(ActionEnum.LEAVE_ROOM, () => {
-      this.removePlayer(player.name, false);
+      this.removePlayer(player.name);
     });
     // Send current settings to the newly joined player
     player.sendAction(new Actions.RoomSettingsChange(this.settings));
     this.playerListChanged();
   }
 
-  disconnectPlayer(playerName: string): void {
+  /** Called when a player's WebSocket closes unexpectedly (tab closed, network drop).
+   * Marks them inactive and starts a 3-minute timeout before permanent removal.
+   * The player can still reconnect within the timeout and resume their game slot.
+   */
+  deactivatePlayer(playerName: string): void {
     const player = this.players[playerName];
     if (player) {
       console.log(`Player ${playerName} disconnected from room ${this.name}.`);
@@ -87,12 +100,25 @@ export class Room {
     }
   }
 
-  removePlayer(playerName: string, permanently: boolean = true): void {
+  /** Forcefully and permanently removes a player from the room.
+   * Resolves their pending game round slot immediately, removes them from the room,
+   * and destroys the room if it becomes empty.
+   * - Voluntary leave (LEAVE_ROOM): WS stays alive, put back in roomless state.
+   * - Timeout after disconnect: WS is already dead, destroy it.
+   */
+  removePlayer(playerName: string): void {
     const playerToRemove = this.players[playerName];
     if (playerToRemove) {
-      if (permanently) {
+      if (this.game) {
+        this.game.forceCompletePlayer(playerToRemove.id);
+      }
+      if (playerToRemove.disconnected) {
+        // WS already dead — destroy cleanly
         playerToRemove.destroy();
       } else {
+        // Voluntary leave — WS is alive, return it to roomless state
+        console.log(`Player ${playerName} left room ${this.name}.`);
+        playerToRemove.getWebSocket().removeAllListeners();
         handleRoomless(playerToRemove.getWebSocket());
       }
       delete this.players[playerName];
@@ -123,7 +149,9 @@ export class Room {
   }
 
   sendActionToAll(action: any): void {
-    this.getConnectedPlayers().forEach((player) => {
+    const connected = this.getConnectedPlayers();
+    console.log(`[Room] sendActionToAll ${action.type} to [${connected.map((p: Player) => p.name).join(', ')}]`);
+    connected.forEach((player) => {
       player.sendAction(action);
     });
   }
@@ -133,6 +161,7 @@ export class Room {
       console.log('Not enough players to start game.');
       return;
     }
+    this.getConnectedPlayers().forEach((p) => (p.score = 0));
     this.sendActionToAll(new Actions.StartGame());
     this.game = new Game(
       this.getConnectedPlayers(),

@@ -92,3 +92,36 @@ The `shared/` package is the communication contract between client and server. I
 The server has **two tsconfig files**: `tsconfig.json` (root `..` for local dev) and `docker.tsconfig.json` (root `.` for Docker, where `shared/` is copied in). Keep them in sync when modifying compiler options.
 
 Shared code is imported with `@shared/*` path aliases — configured in both `client/tsconfig.json` and `server/tsconfig.json`.
+
+---
+
+## Connection & Reconnection System
+
+### How reconnection works (server)
+- Each `Player` has a stable UUID (`player.id`) and `lastUploadedImage` (their most recent drawing, updated by round setup and submission).
+- On disconnect, `Room.deactivatePlayer()` marks `player.disconnected = true` and starts a 3-minute cleanup timer. The player's slot is preserved.
+- On reconnect (`handleNewConnection` in `roomless-handler.ts`), the server looks up the player by `playerId` cookie/query param. If found, `Player.reconnect(ws, room)` is called:
+  1. Old WS listeners are removed; new WS is attached via `setWebsocket()`, which re-attaches all `#actionListeners` to the new socket.
+  2. Server sends `JoinRoom` → `StartGame(currentRoundNumber, remainingTimer)` → `SendDrawing(playerDrawings[id])` → `sendReconnectState()` → `PlayerListChange` → `HostChange`.
+- `playerDrawings[id]` stores the last image the player **submitted** (may be from a previous round). `player.lastUploadedImage` is always the current round's starting canvas. `sendReconnectState` is the right place for round-specific reconnect state.
+
+### How reconnection works (client)
+- `ClientWebsocket` auto-reconnects on `onclose` with a 1s delay. It sends its `playerId` cookie on the new connection.
+- On receiving `JoinRoom`, the client navigates to LOBBY (briefly), then `StartGame` jumps it back to the correct round via `jumpToRound(currentRound - 1, timer)`.
+- **Important**: `Lobby.svelte` is briefly mounted during reconnect. It must NOT add a `START_GAME` listener that sends `StartGame` back to the server — that would trigger a new game while one is already running (or log "Not enough players").
+
+### ActionTarget listener system
+- `addActionListener(actionType, fn)` **adds** a listener (multiple listeners per type are supported, stored in `#actionListeners`).
+- `removeActionListener(actionType)` **removes ALL** listeners for that type — not just one. This is a footgun: any component calling `removeActionListener(END_ROUND)` in its cleanup also destroys listeners registered by other components (e.g., `Game.svelte`'s `handleServerEndRound`).
+- `setWebsocket(ws)` re-attaches all `#actionListeners` to the new WS, so reconnecting preserves round listeners.
+
+### Round lifecycle (client-side END_ROUND listener chain)
+There are **multiple** `END_ROUND` listeners active at once while a round is ongoing:
+1. `Game.svelte` (onMount): calls `endCurrentRound()`
+2. `Round.svelte` (onMount): calls `onRoundEnd()` + `endCurrentRound()`
+3. `DrawingRound.svelte` (onMount): calls `handleRoundEnd()` (sends `SEND_DRAWING`)
+
+When a player submits early, `endCurrentRound()` sets `ongoing = false`, unmounting the round components. `Round.svelte`'s cleanup calls `removeActionListener(END_ROUND)`, which **removes all END_ROUND listeners including `Game.svelte`'s**. From that point on, server-sent `END_ROUND` messages for the rest of that round boundary are silently ignored on this client — the `START_ROUND` listener in `Game.svelte` is untouched and advances the round correctly.
+
+### Known mysteries / open bugs
+- **"a stays on Line round after timeout"**: When `a` submits early and `aa` hasn't, `a` sees "Great job! Wait for everyone else." After the line round times out, `aa` correctly advances to Color, but `a` has been observed staying stuck. The `startNextRound` call triggered by `START_ROUND` should still fire (Game.svelte's listener is independent of the END_ROUND cleanup). Root cause unconfirmed — may be a timing/race condition with the double `END_ROUND` sent at round boundaries (one at timeout, one from `nextRound()` 300ms before `START_ROUND`). There is already a `// TODO: fix race condition` comment in `Game.ts` about this.
