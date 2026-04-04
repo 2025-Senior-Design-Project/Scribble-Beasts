@@ -29,6 +29,8 @@ export const enum ActionEnum {
   PRESENTER_END = 'PRESENTER_END',
   SEND_VOTE = 'VOTE_ROUND',
   PLAYER_DONE = 'PLAYER_DONE',
+  SEND_ALL_BEASTS = 'SEND_ALL_BEASTS',
+  SEND_WINNERS = 'SEND_WINNERS',
 }
 
 type Base64URLString = string;
@@ -137,18 +139,24 @@ export class SendPresenterStartAction extends Action<{}> {
     super(ActionEnum.PRESENTER_START, {});
   }
 }
+export class SendAllBeastsAction extends Action<{
+  drawings: { playerName: string; drawing: Base64URLString }[];
+}> {
+  constructor(drawings: { playerName: string; drawing: Base64URLString }[]) {
+    super(ActionEnum.SEND_ALL_BEASTS, { drawings });
+  }
+}
 export class SendPresenterEndAction extends Action<{}> {
   constructor() {
     super(ActionEnum.PRESENTER_END, {});
   }
 }
 export class SendVoteAction extends Action<{
-  // all are string[] in the case of ties
-  first: string[]; // player who had the best
-  second?: string[]; // second best (might only be 2 players)
-  third?: string[]; // third best (might only be 3 players)
+  first: string; // player who had the best
+  second?: string; // second best (might only be 2 players)
+  third?: string; // third best (might only be 3 players)
 }> {
-  constructor(first: string[], second: string[], third: string[]) {
+  constructor(first: string, second?: string, third?: string) {
     super(ActionEnum.SEND_VOTE, { first, second, third });
   }
 }
@@ -156,6 +164,14 @@ export class SendVoteAction extends Action<{
 export class PlayerDoneAction extends Action<{ playerName: string }> {
   constructor(playerName: string) {
     super(ActionEnum.PLAYER_DONE, { playerName });
+  }
+}
+
+export class SendWinnersAction extends Action<{
+  winners: { winner: string; beast: Base64URLString }[];
+}> {
+  constructor(winners: { winner: string; beast: Base64URLString }[]) {
+    super(ActionEnum.SEND_WINNERS, { winners });
   }
 }
 
@@ -177,6 +193,11 @@ export type AnyAction =
   | HostChangeAction
   | StartGameAction
   | PlayerListChangeAction
+  | SendPresenterChangeAction
+  | SendPresenterStartAction
+  | SendPresenterEndAction
+  | SendAllBeastsAction
+  | SendWinnersAction
   | AnyRoundAction;
 
 // Actions object for easy import and readability
@@ -192,9 +213,14 @@ export const Actions = {
   EndRound: EndRoundAction,
   StartRound: StartRoundAction,
   SendDrawing: SendDrawingAction,
+  PresenterChange: SendPresenterChangeAction,
+  PresenterEnd: SendPresenterEndAction,
+  PresenterStart: SendPresenterStartAction,
   SendETOW: SendEOTWAction,
   SendVote: SendVoteAction,
+  SendBeasts: SendAllBeastsAction,
   PlayerDone: PlayerDoneAction,
+  SendWinners: SendWinnersAction,
 };
 
 interface IWebSocket {
@@ -296,8 +322,17 @@ export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
         logAction.type === ActionEnum.SEND_DRAWING &&
         logAction.payload.image
       ) {
-        logAction.payload.image =
-          logAction.payload.image.substring(0, 50) + '...';
+        logAction.payload.image = 'image_data';
+      } else if (
+        logAction.type === ActionEnum.SEND_ALL_BEASTS &&
+        logAction.payload.drawings
+      ) {
+        logAction.payload.drawings = logAction.payload.drawings.map(
+          (drawing: { playerName: string; drawing: string }) => ({
+            playerName: drawing.playerName,
+            drawing: 'image_data',
+          }),
+        );
       }
       console.log('sent:', JSON.stringify(logAction));
       this.#ws.send(msg);

@@ -152,3 +152,6 @@ fly.toml
 # Git
 .git
 .gitignore
+
+# Tests
+**/__tests__
