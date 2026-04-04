@@ -5,14 +5,15 @@
   import ClientWebsocket from '../../ClientWebsocket';
   import { roundStore, endCurrentRound } from '../../stores/roundStore';
   import { LayerMode } from '../../types/LayerMode';
+  import type { PenParams } from '../../types/PenParams';
   import Round from '../Round.svelte';
 
   let {
-    lineType = 'line',
+    pen: initialPen,
     showWidget = false,
     layerMode = LayerMode.BehindLayer,
   }: {
-    lineType?: 'scribble' | 'line' | 'color' | 'detail' | 'name';
+    pen: PenParams;
     showWidget?: boolean;
     layerMode?: LayerMode;
   } = $props();
@@ -25,44 +26,48 @@
   let shouldDraw = $state(false);
   let timer = $state(0);
   let randTimerMod = $state(5);
-  let selectedColor = $state('#db2828');
-  let randomFont = $state<{ name: string; size: number } | null>(null);
+
+  let pen = $state<PenParams>({ ...initialPen });
+  const isTextPen = !!pen.textFont;
+
+  let history = $state<ImageData[]>([]);
+  let redoStack = $state<ImageData[]>([]);
+
+  const isUndoRedoEnabled = !pen.scribble && !pen.textFont;
 
   const COLORS = [
-    { color: 'red', value: '#db2828' },
-    { color: 'orange', value: '#f2711c' },
-    { color: 'yellow', value: '#fbbd08' },
-    { color: 'olive', value: '#b5cc18' },
-    { color: 'green', value: '#21ba45' },
-    { color: 'teal', value: '#00b5ad' },
-    { color: 'blue', value: '#2185d0' },
-    { color: 'violet', value: '#6435c9' },
-    { color: 'purple', value: '#a333c8' },
-    { color: 'pink', value: '#e03997' },
-  ];
-
-  const FONTS = [
-    { name: 'AckiPreschool', size: 30 },
-    { name: 'BrownBagLunch', size: 30 },
-    { name: 'Children', size: 30 },
-    { name: 'DadHand', size: 30 },
-    { name: 'Daniel', size: 30 },
-    { name: 'OhMaria', size: 30 },
-    { name: 'PopcornMountain', size: 30 },
-    { name: 'SchoolTeacher', size: 30 },
-    { name: 'SierraNevadaRoad', size: 30 },
-    { name: 'TheDogAteMyHomework', size: 30 },
-    { name: 'ThinPencilHandwriting', size: 30 },
-    { name: 'WCManoNegraBta', size: 30 },
-    { name: 'Yahfie', size: 30 },
-  ];
+  // Row 1: Reds to Oranges
+  '#A30000', // dark red
+  '#db2828', // red
+  '#ff6f61', // coral
+  '#f2711c', // orange
+  '#ff8c00', // dark orange
+  '#fbbd08', // yellow
+  
+  // Row 2: Greens to Blues
+  '#006400', // dark green
+  '#21ba45', // green
+  '#84cc16', // lime
+  '#38bdf8', // sky blue
+  '#2185d0', // blue
+  '#07409C', // navy
+  
+  // Row 3: Purples to Neutrals
+  '#6435c9', // violet
+  '#a333c8', // purple
+  '#e03997', // pink
+  '#00b5ad', // teal
+  '#808080', // grey
+  '#a16207', // brown
+];
 
   function prepareContext() {
     if (!canvas) return;
 
     // Set canvas to fixed 520x520 for consistent sizing across devices
     canvas.width = 520;
-    canvas.height = lineType === 'name' ? 545 : 520;
+    // Adds whitespace for text if pen is adding writing to the bottom
+    canvas.height = isTextPen ? 545 : 520;
 
     context = canvas.getContext('2d');
 
@@ -101,49 +106,24 @@
   async function setLineProperties() {
     if (!context) return;
 
-    switch (lineType) {
-      case 'name':
-        randomFont = FONTS[Math.floor(Math.random() * FONTS.length)];
-        console.log('Selected font:', randomFont.name);
-        try {
-          await document.fonts.load(
-            `${randomFont.size}px '${randomFont.name}'`,
-          );
-          context.font = `${randomFont.size}px '${randomFont.name}'`;
-        } catch (e) {
-          console.error('Font could not be loaded:', e);
-          context.font = `${randomFont.size}px sans-serif`;
-        }
-        context.fillStyle = 'black';
-        context.textAlign = 'center';
-        context.textBaseline = 'bottom';
-        break;
-      case 'color':
-        context.strokeStyle = selectedColor;
-        context.lineWidth = 15;
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        break;
-      case 'scribble':
-        context.strokeStyle = 'rgb(0 0 0 / .02)';
-        context.lineWidth = 3;
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        break;
-      case 'detail':
-        context.strokeStyle = 'black';
-        context.lineWidth = 4;
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        break;
-      case 'line':
-      default:
-        context.strokeStyle = 'black';
-        context.lineWidth = 4;
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        break;
+    // Text / name round
+    if (pen.textFont) {
+      try {
+        await document.fonts.load(
+          `${pen.textFont.size}px '${pen.textFont.name}'`,
+        );
+        context.font = `${pen.textFont.size}px '${pen.textFont.name}'`;
+      } catch {
+        context.font = `${pen.textFont.size}px sans-serif`;
+      }
+      return;
     }
+
+    // Drawing rounds
+    context.strokeStyle = pen.strokeStyle;
+    context.lineWidth = pen.lineWidth;
+    context.lineJoin = pen.lineJoin
+    context.lineCap = pen.lineCap;
   }
 
   function getScaleFactor(): number {
@@ -153,8 +133,12 @@
   }
 
   function handleMouseDown(event: MouseEvent) {
-    if (lineType === 'name' || event.button !== 0) return;
+    if (isTextPen || event.button !== 0) return;
     if (!context || !canvas) return;
+
+    if (isUndoRedoEnabled) {
+      saveState();
+    }
 
     shouldDraw = true;
     setLineProperties();
@@ -185,14 +169,18 @@
     context.lineTo(x, y);
     context.stroke();
 
-    if (lineType === 'scribble') {
+    if (pen.scribble) {
       scribbleStutter(x, y);
     }
   }
 
   function handleTouchStart(event: TouchEvent) {
-    if (lineType === 'name') return;
+    if (isTextPen) return;
     if (!context || !canvas) return;
+
+    if (isUndoRedoEnabled) {
+      saveState();
+    }
 
     event.preventDefault();
     shouldDraw = true;
@@ -221,7 +209,7 @@
     context.lineTo(x, y);
     context.stroke();
 
-    if (lineType === 'scribble') {
+    if (pen.scribble) {
       scribbleStutter(x, y);
     }
   }
@@ -229,6 +217,12 @@
   function handleTouchEnd(event: TouchEvent) {
     event.preventDefault();
     shouldDraw = false;
+  }
+
+  function handlePenSizeChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    pen.lineWidth = Number(input.value);
+    setLineProperties();
   }
 
   // Picks up the pen and puts it down sporadically with a random opacity each time
@@ -248,20 +242,23 @@
   }
 
   function handleTextInput(event: Event) {
-    if (!context || !canvas || !randomFont) return;
+    if (!context || !canvas || !isTextPen) return;
 
     const input = event.target as HTMLInputElement;
     const text = input.value;
 
     context.clearRect(0, 0, canvas.width, canvas.height);
 
+    context.textAlign = 'center';
+    context.textBaseline = 'bottom';
+
     const xPosition = canvas.width / 2;
-    const yPosition = canvas.height - 5; // 5px from the bottom
+    const yPosition = canvas.height - 10;
     context.fillText(text, xPosition, yPosition);
   }
 
   function handleColorChange(color: string) {
-    selectedColor = color;
+    pen.strokeStyle = color;
     setLineProperties();
   }
 
@@ -361,6 +358,10 @@
 
   onMount(() => {
     prepareContext();
+    if (isUndoRedoEnabled && context && canvas) {
+      const initial = context.getImageData(0, 0, canvas.width, canvas.height);
+      history = [initial];
+    }
 
     window.addEventListener('beforeunload', handleRoundEnd);
 
@@ -400,6 +401,48 @@
       canvas.removeEventListener('touchend', handleTouchEnd);
     };
   });
+
+  // For Undo/Redo Button
+  function saveState() {
+    if (!context || !canvas) return;
+
+    const snapshot = context.getImageData(0, 0, canvas.width, canvas.height);
+    history = [...history, snapshot];
+
+    // Once you draw again, redo history is cleared
+    redoStack = [];
+  }
+
+  function restoreState(imageData: ImageData) {
+    if (!context) return;
+    context.putImageData(imageData, 0, 0);
+  }
+
+  function handleUndo() {
+    if (!context || history.length === 0) return;
+
+    const current = context.getImageData(0, 0, canvas!.width, canvas!.height);
+
+    const previous = history[history.length - 1];
+    history = history.slice(0, -1);
+
+    redoStack = [...redoStack, current];
+
+    restoreState(previous);
+  }
+
+  function handleRedo() {
+    if (!context || redoStack.length === 0) return;
+
+    const current = context.getImageData(0, 0, canvas!.width, canvas!.height);
+
+    const next = redoStack[redoStack.length - 1];
+    redoStack = redoStack.slice(0, -1);
+
+    history = [...history, current];
+
+    restoreState(next);
+  }
 </script>
 
 <Round onRoundEnd={handleRoundEnd}>
@@ -421,24 +464,74 @@
 
     {#if showWidget}
       <div class="widget-container">
-        {#if lineType === 'color'}
+      <!-- COLOR ROUND -->
+        {#if pen.strokeStyle}
+          <!-- ROW 1: COLORS -->
           <div class="color-picker">
-            {#each COLORS as colorOption}
+            {#each COLORS as color}
               <input
                 type="radio"
-                id={colorOption.color}
+                id={color}
                 name="color"
-                value={colorOption.value}
-                checked={selectedColor === colorOption.value}
-                onchange={() => handleColorChange(colorOption.value)}
+                value={color}
+                onchange={() => handleColorChange(color)}
               />
-              <label
-                for={colorOption.color}
-                style="background-color: {colorOption.value}"><!-- --></label
-              >
+              <label for={color} style="background-color: {color}" />
             {/each}
           </div>
-        {:else if lineType === 'name'}
+          <div class="custom-color">
+            <input
+              type="color"
+              oninput={(e) => handleColorChange((e.target as HTMLInputElement).value)}
+            />
+          </div>
+
+          <!-- ROW 2: SLIDER + UNDO/REDO -->
+          <div class="drawing-controls-row">
+            <!-- Pen size control -->
+            <div class="pen-size-control">
+              <input
+                type="range"
+                min="4"
+                max="40"
+                step="1"
+                value={pen.lineWidth}
+                oninput={handlePenSizeChange}
+              />
+              <div class="pen-preview">
+                <span
+                  class="pen-dot"
+                  style="width: {pen.lineWidth}px; height: {pen.lineWidth}px; background-color: {pen.strokeStyle};"
+                ></span>
+              </div>
+            </div>
+
+            <!-- Undo / Redo -->
+            {#if isUndoRedoEnabled}
+              <div class="undo-redo-controls">
+                <button
+                  onclick={() => handleUndo()}
+                  disabled={history.length <= 1}
+                >
+                  <img
+                    src="../../../../public/images/icons/undo-arrow.png"
+                    alt="Undo"
+                  />
+                </button>
+
+                <button
+                  onclick={() => handleRedo()}
+                  disabled={redoStack.length === 0}
+                >
+                  <img
+                    src="../../../../public/images/icons/redo-arrow.png"
+                    alt="Redo"
+                  />
+                </button>
+              </div>
+            {/if}
+          </div>
+        {:else if isTextPen}
           <input
             type="text"
             id="scribble-beast-name"
@@ -456,7 +549,7 @@
   .drawing-container {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 1rem;
     width: 100%;
     height: 100%;
     align-items: center;
@@ -466,7 +559,7 @@
   .canvas-wrapper {
     position: relative;
     width: min(520px, 90vw);
-    height: min(520px, 90vw);
+    height: min(545px, 90vw);
   }
 
   .drawing-canvas {
@@ -477,7 +570,6 @@
     border-radius: 8px;
     cursor: crosshair;
     touch-action: none;
-    /* Fixed internal size of 520x520, but scale visually to fit screen */
     width: 100%;
     height: 100%;
     image-rendering: pixelated;
@@ -491,7 +583,6 @@
     border: 2px solid #333;
     border-radius: 8px;
     pointer-events: none;
-    /* Fixed internal size of 520x520, but scale visually to fit screen */
     width: 100%;
     height: 100%;
     image-rendering: pixelated;
@@ -505,7 +596,6 @@
     border: 2px solid #333;
     border-radius: 8px;
     pointer-events: none;
-    /* Fixed internal size of 520x520, but scale visually to fit screen */
     width: 100%;
     height: 100%;
     image-rendering: pixelated;
@@ -525,16 +615,26 @@
 
   .widget-container {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     gap: 0.5rem;
   }
 
-  .color-picker {
+  .drawing-controls-row {
     display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
     gap: 0.75rem;
     flex-wrap: wrap;
-    justify-content: center;
   }
+
+  .color-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
+  gap: 0.75rem;
+  max-width: 300px;
+}
 
   .color-picker input[type='radio'] {
     display: none;
@@ -553,6 +653,18 @@
     border-color: #000;
   }
 
+  .custom-color {
+  margin-top: 0.5rem;
+}
+
+  .custom-color input[type='color'] {
+    width: 50px;
+    height: 40px;
+    border: none;
+    padding: 0;
+    background: none;
+  }
+
   .name-input {
     /* NOTE: Padding adjusted specifically for 'TheDogAteMyHomework' font baseline */
     padding: 0.5rem 1rem 0rem 1rem;
@@ -562,5 +674,68 @@
     width: 200px;
     line-height: 2.5;
     background-image: none; /* remove global underline gradient */
+  }
+
+  /* Styles for color pen slider */
+  .pen-size-control {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+
+  .pen-size-control input[type='range'] {
+    width: 200px;
+  }
+
+  .pen-preview {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pen-dot {
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* UNDO/REDO BUTTONS */
+  .undo-redo-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .undo-redo-controls button {
+    width: 60px;
+    height: 60px;
+    padding: 0;
+    border: 2px solid #333;
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: bold;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 1.4 rem;
+    font-weight: 600;
+  }
+
+  .undo-redo-controls button img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+  }
+
+  .undo-redo-controls button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 </style>

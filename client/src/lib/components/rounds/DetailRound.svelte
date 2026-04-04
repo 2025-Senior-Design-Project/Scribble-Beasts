@@ -3,4 +3,8 @@
   import { LayerMode } from '../../types/LayerMode';
 </script>
 
-<DrawingRound lineType="detail" layerMode={LayerMode.FrontLayer} />
+<DrawingRound layerMode={LayerMode.FrontLayer} 
+pen={{
+    strokeStyle: 'black',
+    lineWidth: 4,
+  }}/>

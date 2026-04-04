@@ -3,5 +3,11 @@
   import { LayerMode } from '../../types/LayerMode';
 </script>
 
-<DrawingRound lineType="color" showWidget layerMode={LayerMode.BehindLayer} />
+<DrawingRound showWidget layerMode={LayerMode.BehindLayer} 
+pen={{
+    strokeStyle: '#db2828',
+    lineWidth: 15,
+    lineJoin: 'round',
+    lineCap: 'round',
+  }}/>
 
