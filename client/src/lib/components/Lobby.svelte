@@ -1,20 +1,15 @@
 <script lang="ts">
-  import { Actions, ActionEnum } from '@shared/actions';
+  import { Actions } from '@shared/actions';
   import ClientWebsocket from '../ClientWebsocket';
   import { hostName, isHost, players, roomName } from '../GameState';
-  import { navigateTo, View } from '../Navigator';
   import RoomSettingsPanel from './RoomSettingsPanel.svelte';
   import { DEFAULT_ROOM_SETTINGS } from '@shared/settings';
 
   let showSettings = $state(false);
 
   function startGame() {
-    const startGameAction = new Actions.StartGame();
-    ClientWebsocket.sendAction(startGameAction);
-    ClientWebsocket.removeActionListener(ActionEnum.START_GAME);
-    navigateTo(View.GAME);
+    ClientWebsocket.sendAction(new Actions.StartGame());
   }
-  ClientWebsocket.addActionListener(ActionEnum.START_GAME, startGame);
 
   function resetRoomSettings() {
     ClientWebsocket.sendAction(

@@ -19,7 +19,10 @@ export const roundStore = writable<RoundState>({
 });
 
 export function endCurrentRound(action?: AnyRoundAction) {
-  if (!get(everyoneDoneExceptYou)) {
+  const state = get(roundStore);
+  const allDone = get(everyoneDoneExceptYou);
+  console.log(`[roundStore] endCurrentRound called. ongoing=${state.ongoing}, round=${state.number}, everyoneDoneExceptYou=${allDone}`);
+  if (!allDone) {
     roundStore.update((state) => ({
       ...state,
       ongoing: false,
@@ -30,6 +33,8 @@ export function endCurrentRound(action?: AnyRoundAction) {
 }
 
 export function startNextRound(timeout: number) {
+  const prev = get(roundStore);
+  console.log(`[roundStore] startNextRound called. prev round=${prev.number}, advancing to ${prev.number + 1}, timeout=${timeout}`);
   roundStore.update((state) => ({
     ...state,
     ongoing: true,
@@ -39,7 +44,17 @@ export function startNextRound(timeout: number) {
   }));
 }
 
+export function resetRoundStore() {
+  roundStore.set({
+    number: -1,
+    current: Rounds[0],
+    ongoing: false,
+    timeLeft: Rounds[0].timeout,
+  });
+}
+
 export function jumpToRound(roundNumber: number, timeout: number) {
+  console.log(`[roundStore] jumpToRound called. roundNumber=${roundNumber}, timeout=${timeout}`);
   roundStore.update((state) => {
     let current = Rounds[roundNumber];
     let actualRoundNumber = roundNumber;

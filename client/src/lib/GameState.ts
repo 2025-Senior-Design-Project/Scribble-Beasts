@@ -16,7 +16,7 @@ import {
 import { derived, get, writable } from 'svelte/store';
 import ClientWebsocket from './ClientWebsocket';
 import { View, navigateTo } from './Navigator';
-import { jumpToRound } from './stores/roundStore';
+import { jumpToRound, resetRoundStore } from './stores/roundStore';
 import { getEotwCardFromId, type EotwCard } from '@shared/eotw';
 import { roomSettings } from './stores/roomSettingsStore';
 
@@ -76,9 +76,16 @@ const hostChange = (action: HostChangeAction) => {
 
 const startGame = (action: StartGameAction) => {
   const { currentRound, timer } = action.payload;
-  // sometimes the player may reconnect mid-game, so we need to fast-forward the round store
   if (currentRound) {
+    // reconnecting mid-game: fast-forward to the correct round
     jumpToRound(currentRound - 1, timer || 0);
+  } else {
+    // fresh game start: reset all stale state from previous game
+    resetRoundStore();
+    playersDone.set([]);
+    winners.set([]);
+    eotwCard.set(undefined as any);
+    presenterName.set(undefined);
   }
   navigateTo(View.GAME);
 };

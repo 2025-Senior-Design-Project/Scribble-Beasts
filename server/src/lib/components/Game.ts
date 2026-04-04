@@ -6,7 +6,6 @@ import {
   Actions,
   AnyAction,
   AnyRoundAction,
-  EndRoundAction,
   SendDrawingAction,
 } from '../../../../shared/actions/index.js';
 import { Round } from '../../../../shared/rounds/index.js';
@@ -15,9 +14,11 @@ import { DEFAULT_ROOM_SETTINGS, type RoomSettings } from '../../../../shared/set
 export class Game {
   #sendActionToAllPlayers: (action: AnyAction) => void;
   #backToLobby: () => void;
+  #playerResolvers: Map<string, (v: boolean) => void> = new Map();
   roundsLeft: ServerRound[];
   currentRound: ServerRound | undefined;
   currentRoundNumber: number = 0;
+  currentRoundTimeout: number = 0;
   roundStartTime: number = 0;
   players: Player[];
   playerDrawings: Record<string, string> = {};
@@ -53,6 +54,7 @@ export class Game {
     const roundBase = this.currentRound as unknown as Round;
     const customTimer = this.settings.roundTimers[roundBase.roundType];
     const timeout = customTimer && customTimer > 0 ? customTimer : roundBase.timeout;
+    this.currentRoundTimeout = timeout;
 
     this.#sendActionToAllPlayers(new Actions.StartRound(timeout));
 
@@ -62,10 +64,12 @@ export class Game {
       timeout,
     );
 
+    console.log(`[Game] Round ${this.currentRoundNumber} complete. Sending post-wait EndRound. Connected: [${this.players.filter(p => !p.disconnected).map(p => p.name).join(', ')}]`);
     this.#sendActionToAllPlayers(new Actions.EndRound());
     // TODO: fix race condition where clients receive end round before start next round
     await new Promise((res) => setTimeout(res, 300)); // wait .3 seconds before next round
 
+    console.log(`[Game] Advancing to next round. Connected: [${this.players.filter(p => !p.disconnected).map(p => p.name).join(', ')}]`);
     this.nextRound();
   }
 
@@ -76,7 +80,8 @@ export class Game {
   ) {
     const playerPromises = this.players.map(
       (p) =>
-        new Promise((res) => {
+        new Promise<boolean>((res) => {
+          this.#playerResolvers.set(p.id, res);
           // player finished early or client timeout
           expectedActions.forEach((actionType) =>
             p.addActionListener<AnyRoundAction>(actionType, (action) => {
@@ -95,20 +100,6 @@ export class Game {
               }
             }),
           );
-          // end round is for unimplemented rounds
-          p.addActionListener<EndRoundAction>(
-            ActionEnum.END_ROUND,
-            (action) => {
-              roundHandler(action, p);
-              // end round is for unimplemented rounds
-              this.players.forEach((other) => {
-                if (other.id !== p.id) {
-                  other.sendAction(new Actions.PlayerDone(p.name));
-                }
-              });
-              res(true);
-            },
-          );
         }),
     );
 
@@ -124,6 +115,7 @@ export class Game {
 
     // If timeout won, we give players a grace period to respond to our EndRound signal
     if (winner === 'timeout') {
+      console.log(`[Game] Round ${this.currentRoundNumber} timed out. Sending EndRound to all. Connected: [${this.players.filter(p => !p.disconnected).map(p => p.name).join(', ')}]`);
       this.#sendActionToAllPlayers(new Actions.EndRound());
 
       const gracePeriod = new Promise((res) =>
@@ -131,14 +123,26 @@ export class Game {
       );
 
       // Wait for all players to finish or grace period to end
-      await Promise.race([Promise.all(playerPromises), gracePeriod]);
+      const graceWinner = await Promise.race([Promise.all(playerPromises), gracePeriod]);
+      console.log(`[Game] Round ${this.currentRoundNumber} grace period ended (${graceWinner === 'grace_timeout' ? 'grace timeout' : 'all responded'})`);
+    } else {
+      console.log(`[Game] Round ${this.currentRoundNumber} all players finished before timeout`);
     }
+
+    this.#playerResolvers.clear();
 
     // cleanup listeners
     expectedActions.forEach((actionType) =>
       this.players.forEach((p) => p.removeActionListener(actionType)),
     );
-    this.players.forEach((p) => p.removeActionListener(ActionEnum.END_ROUND));
+  }
+
+  forceCompletePlayer(playerId: string): void {
+    const resolve = this.#playerResolvers.get(playerId);
+    if (resolve) {
+      resolve(true);
+      this.#playerResolvers.delete(playerId);
+    }
   }
 
   endGame() {
@@ -147,8 +151,7 @@ export class Game {
 
   getRemainingTime(): number {
     if (!this.currentRound) return 0;
-    const timeout = (this.currentRound as unknown as Round).timeout;
     const elapsed = (Date.now() - this.roundStartTime) / 1000;
-    return Math.max(0, Math.floor(timeout - elapsed));
+    return Math.max(0, Math.floor(this.currentRoundTimeout - elapsed));
   }
 }

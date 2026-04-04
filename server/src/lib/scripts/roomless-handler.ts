@@ -27,6 +27,11 @@ export function handleRoomless(ws: WebSocket) {
         joinRoom(action as JoinRoomAction, ws);
         break;
 
+      case ActionEnum.RECONNECT:
+        // Reconnect was already attempted at connection time via cookie/query param.
+        // If we're here, the player wasn't found — silently ignore.
+        break;
+
       default:
         console.warn(
           'Unexpected action type while user is not in room: ',
@@ -38,10 +43,10 @@ export function handleRoomless(ws: WebSocket) {
 }
 
 export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
-  const cookies = parseCookies(req.headers.cookie);
-  let playerId = cookies.playerId;
+  let playerId: string | undefined;
 
-  if (!playerId && req.url) {
+  // Read playerId from query param (set by sessionStorage on the client)
+  if (req.url) {
     const match = req.url.match(/[?&]playerId=([^&]+)/);
     if (match) {
       playerId = match[1];
@@ -53,8 +58,14 @@ export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
     if (result) {
       const { player, room } = result;
       player.reconnect(ws, room);
+      // Re-attach the close listener that was wiped by removeAllListeners() in reconnect()
+      player.addEventListener('close', () => {
+        room.deactivatePlayer(player.name);
+      });
+      if (player.isHost) {
+        room.reattachHostCloseListener();
+      }
       console.log(`Player ${player.name} reconnected.`);
-      // Send a reconnected action to the client
       return;
     }
   }
@@ -158,20 +169,6 @@ function playerExistsInRoom(room: Room, playerName: string): boolean {
   return !!Object.values(room.players).find((p) => p.name === playerName);
 }
 
-function parseCookies(cookieHeader?: string): Record<string, string> {
-  const list: Record<string, string> = {};
-  if (!cookieHeader) return list;
-
-  cookieHeader.split(';').forEach(function (cookie) {
-    const parts = cookie.split('=');
-    const key = parts.shift()?.trim();
-    if (key) {
-      list[key] = decodeURI(parts.join('='));
-    }
-  });
-
-  return list;
-}
 
 function findGlobalPlayer(
   playerId: string,

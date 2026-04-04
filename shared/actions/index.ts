@@ -359,7 +359,7 @@ export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
       console.log('sent:', JSON.stringify(logAction));
       this.#ws.send(msg);
     } else {
-      console.error('WebSocket is not open. Ready state:', this.#ws.readyState);
+      console.error('WebSocket is not open. Ready state:', this.#ws.readyState, 'Action:', JSON.stringify(action).substring(0, 100));
     }
   }
 

@@ -36,6 +36,7 @@
       }, remainingDelay);
     }
 
+    console.log('[Round.svelte] mounted, adding END_ROUND listener');
     ClientWebsocket.addActionListener(ActionEnum.END_ROUND, handleEnd);
 
     // Initialize timer when round becomes active
@@ -60,6 +61,7 @@
     }, 1000);
 
     return () => {
+      console.log('[Round.svelte] unmounting, removing END_ROUND listener');
       clearInterval(interval);
       unsubscribe();
       ClientWebsocket.removeActionListener(ActionEnum.END_ROUND);
