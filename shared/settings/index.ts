@@ -23,6 +23,8 @@ export interface RoomSettings {
    * TODO: implement sound playback logic
    */
   soundMode: SoundMode;
+  /** Show captions/subtitles during the intro video. */
+  captions: boolean;
   /** Per-round timeout overrides in seconds. Keys are RoundEnum values. 0 = use default. */
   roundTimers: Partial<Record<RoundEnum, number>>;
 }
@@ -32,5 +34,6 @@ export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
   skipIntro: false,
   skipTutorials: false,
   soundMode: 'separate',
+  captions: true,
   roundTimers: {},
 };

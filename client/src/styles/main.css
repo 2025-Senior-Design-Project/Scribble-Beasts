@@ -30,6 +30,30 @@
     url('./font/ohmaria/OhMaria.otf') format('opentype');
 }
 @font-face {
+  font-family: 'OpenDyslexic';
+  src: url('./font/opendyslexic-0.92/OpenDyslexic-Regular.otf') format('opentype');
+  font-style: normal;
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('./font/opendyslexic-0.92/OpenDyslexic-Italic.otf') format('opentype');
+  font-style: italic;
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('./font/opendyslexic-0.92/OpenDyslexic-Bold.otf') format('opentype');
+  font-style: normal;
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('./font/opendyslexic-0.92/OpenDyslexic-BoldItalic.otf') format('opentype');
+  font-style: italic;
+  font-weight: 700;
+}
+@font-face {
   font-family: 'PopcornMountain';
   src: url('./font/popcorn-mountain/Popcorn_Mountain--Standard.otf')
       format('opentype'),

@@ -17,7 +17,7 @@
   let showPersonalSettings = $state(false);
 
   function resetPersonalSettings() {
-    personalSettings.set({ font: 'Children', fontSize: 'normal' });
+    personalSettings.set({ font: 'Children', fontSize: 'normal', soundVolume: 1 });
   }
 
   function leaveRoom() {
@@ -29,7 +29,7 @@
   // This allows direct URL access to /playtesting, /about, /rules
   const showLandingPage = $derived(
     $currentView === View.ROOM_FORM ||
-      ['/playtesting', '/about', '/rules'].includes($currentPath),
+      ['/playtesting', '/about', '/rules', '/credits'].includes($currentPath),
   );
 
   const inRoom = $derived($currentView !== View.ROOM_FORM);

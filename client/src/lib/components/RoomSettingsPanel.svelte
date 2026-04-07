@@ -37,6 +37,11 @@
     send();
   }
 
+  function toggleCaptions() {
+    draft.captions = !draft.captions;
+    send();
+  }
+
   function setSoundMode(mode: SoundMode) {
     draft.soundMode = mode;
     send();
@@ -157,6 +162,19 @@
         </button>
       </label>
 
+      <label class="toggle-row">
+        <span class="toggle-label">Captions</span>
+        <button
+          class="toggle"
+          class:active={draft.captions}
+          onclick={toggleCaptions}
+          aria-checked={draft.captions}
+          role="switch"
+        >
+          {draft.captions ? 'On' : 'Off'}
+        </button>
+      </label>
+
       <fieldset class="sound-fieldset">
         <legend class="sound-legend">Sound</legend>
         <!-- TODO: implement sound playback logic -->
@@ -223,6 +241,7 @@
         <li>Self-voting: <strong>{$roomSettings.allowSelfVote ? 'On' : 'Off'}</strong></li>
         <li>Skip Intro: <strong>{$roomSettings.skipIntro ? 'On' : 'Off'}</strong></li>
         <li>Skip Tutorials: <strong>{$roomSettings.skipTutorials ? 'On' : 'Off'}</strong></li>
+        <li>Captions: <strong>{$roomSettings.captions ? 'On' : 'Off'}</strong></li>
         <li>
           Sound: <strong>
             {$roomSettings.soundMode === 'separate' ? 'Separate' :

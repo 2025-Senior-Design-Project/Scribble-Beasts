@@ -100,6 +100,23 @@ describe('Room Unit Tests', () => {
       expect(room.host.name).toBe('Player2');
       expect(player2.isHost).toBe(true);
     });
+
+    it('reassigns host when a remaining player reconnects after stale host state', () => {
+      const player2 = new Player('Player2', ws2);
+      room.addPlayer(player2);
+
+      // Simulate a moment where no one is connected when host closes.
+      player2.disconnected = true;
+      ws1.emit('close');
+      expect(room.host.name).toBe('HostUser');
+
+      // Player2 reconnects; room should promote them.
+      player2.disconnected = false;
+      room.ensureConnectedHost();
+
+      expect(room.host.name).toBe('Player2');
+      expect(player2.isHost).toBe(true);
+    });
   });
 
   describe('TC-15: Minimum Players', () => {

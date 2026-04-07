@@ -35,24 +35,31 @@ export class Room {
 
   #attachHostCloseListener() {
     this.host.addEventListener('close', () => {
-      const connectedPlayers = this.getConnectedPlayers();
-      if (connectedPlayers.length === 0) return; // No players left to become host
-      const oldHostName = this.host.name;
-      const playerToBecomeHost = connectedPlayers[0];
-      playerToBecomeHost.isHost = true;
-      const newHost = playerToBecomeHost as Host;
-      this.host = newHost;
-      console.log(
-        `Host ${oldHostName} disconnected from room ${this.name}. New host is ${newHost.name}`,
-      );
-      this.hostSetup();
-      const hostChangeAction = new Actions.HostChange(this.host.name);
-      this.host.sendAction(hostChangeAction);
+      this.ensureConnectedHost();
     });
   }
 
   reattachHostCloseListener() {
     this.#attachHostCloseListener();
+  }
+
+  /** Ensures room.host always points to a currently connected player when one exists. */
+  ensureConnectedHost(): void {
+    if (!this.host.disconnected) return;
+
+    const connectedPlayers = this.getConnectedPlayers();
+    if (connectedPlayers.length === 0) return;
+
+    const oldHostName = this.host.name;
+    const playerToBecomeHost = connectedPlayers[0];
+    this.host.isHost = false;
+    playerToBecomeHost.isHost = true;
+    this.host = playerToBecomeHost as Host;
+    console.log(
+      `Host ${oldHostName} unavailable in room ${this.name}. New host is ${this.host.name}`,
+    );
+    this.hostSetup();
+    this.sendActionToAll(new Actions.HostChange(this.host.name));
   }
 
   updateSettings(action: UpdateRoomSettingsAction): void {
@@ -122,6 +129,7 @@ export class Room {
         handleRoomless(playerToRemove.getWebSocket());
       }
       delete this.players[playerName];
+      this.ensureConnectedHost();
       this.playerListChanged();
     }
     if (Object.keys(this.players).length === 0) {
@@ -135,6 +143,7 @@ export class Room {
   }
 
   playerListChanged() {
+    this.ensureConnectedHost();
     this.sendActionToAll(
       new Actions.PlayerListChange(
         this.getConnectedPlayers().map((p) => p.name),

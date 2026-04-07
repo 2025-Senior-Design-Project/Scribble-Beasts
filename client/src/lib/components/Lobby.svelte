@@ -1,11 +1,67 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { Actions } from '@shared/actions';
   import ClientWebsocket from '../ClientWebsocket';
   import { hostName, isHost, players, roomName } from '../GameState';
   import RoomSettingsPanel from './RoomSettingsPanel.svelte';
   import { DEFAULT_ROOM_SETTINGS } from '@shared/settings';
+  import { roomSettings } from '../stores/roomSettingsStore';
+  import { personalSettings } from '../stores/personalSettingsStore';
 
   let showSettings = $state(false);
+  let lobbyMusicEl: HTMLAudioElement | undefined = $state();
+  let resumeOnInteractionAttached = false;
+
+  const shouldPlayMusic = $derived.by(() => {
+    const mode = $roomSettings.soundMode;
+    if (mode === 'none') return false;
+    if (mode === 'shared') return $isHost;
+    return true;
+  });
+
+  function tryPlayLobbyMusic() {
+    if (!lobbyMusicEl || !shouldPlayMusic) return;
+    const playPromise = lobbyMusicEl.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {
+        if (resumeOnInteractionAttached) return;
+        resumeOnInteractionAttached = true;
+        const resume = () => {
+          if (shouldPlayMusic) {
+            void lobbyMusicEl?.play().catch(() => {});
+          }
+          window.removeEventListener('pointerdown', resume, true);
+          window.removeEventListener('keydown', resume, true);
+          resumeOnInteractionAttached = false;
+        };
+        window.addEventListener('pointerdown', resume, true);
+        window.addEventListener('keydown', resume, true);
+      });
+    }
+  }
+
+  function pauseLobbyMusic() {
+    if (!lobbyMusicEl) return;
+    lobbyMusicEl.pause();
+    lobbyMusicEl.currentTime = 0;
+  }
+
+  $effect(() => {
+    if (shouldPlayMusic) {
+      tryPlayLobbyMusic();
+      return;
+    }
+    pauseLobbyMusic();
+  });
+
+  $effect(() => {
+    if (!lobbyMusicEl) return;
+    lobbyMusicEl.volume = $personalSettings.soundVolume;
+  });
+
+  onDestroy(() => {
+    pauseLobbyMusic();
+  });
 
   function startGame() {
     ClientWebsocket.sendAction(new Actions.StartGame());
@@ -22,6 +78,13 @@
 </script>
 
 <div class="flex-center-page">
+  <audio
+    bind:this={lobbyMusicEl}
+    src="/files/Scribble%20Beasts%20Bossa%20Nova%20Loopable.wav"
+    loop
+    preload="auto"
+    aria-hidden="true"
+  ></audio>
   <div class="paper-card lobby-card">
     <div class="room-header">
       <h3>Room: {$roomName}</h3>

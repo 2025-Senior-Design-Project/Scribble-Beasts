@@ -36,8 +36,50 @@ export class Game {
     this.roundsLeft = initializeRounds(this);
   }
 
-  startGame() {
+  async startGame() {
+    if (!this.settings.skipIntro) {
+      await this.playIntro();
+    }
     this.nextRound();
+  }
+
+  /**
+   * Broadcast INTRO_START and wait for the host to confirm INTRO_END (either
+   * because the video finished naturally or the host clicked skip). A safety
+   * timeout prevents the game from hanging if the host disconnects mid-intro.
+   */
+  async playIntro() {
+    const INTRO_SAFETY_TIMEOUT_MS = 120 * 1000;
+    console.log('[Game] Playing intro, waiting for host INTRO_END');
+    this.#sendActionToAllPlayers(new Actions.IntroStart());
+
+    await new Promise<void>((resolve) => {
+      let resolved = false;
+      const finish = () => {
+        if (resolved) return;
+        resolved = true;
+        // cleanup listeners on all players
+        this.players.forEach((p) => p.removeActionListener(ActionEnum.INTRO_END));
+        clearTimeout(safety);
+        resolve();
+      };
+
+      const safety = setTimeout(() => {
+        console.log('[Game] Intro safety timeout reached');
+        finish();
+      }, INTRO_SAFETY_TIMEOUT_MS);
+
+      // Accept INTRO_END from any host (host may change on disconnect)
+      this.players.forEach((p) =>
+        p.addActionListener(ActionEnum.INTRO_END, () => {
+          if (!p.isHost) return;
+          console.log(`[Game] INTRO_END received from host ${p.name}`);
+          // Tell everyone the intro is over so non-host clients hide it.
+          this.#sendActionToAllPlayers(new Actions.IntroEnd());
+          finish();
+        }),
+      );
+    });
   }
 
   async nextRound() {
