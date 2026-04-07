@@ -1,6 +1,6 @@
 import type { RoomSettings } from '../../../../shared/settings/index.js';
 
-const hostRoomSettings: Record<string, RoomSettings> = {};
+const hostRoomSettings: Record<string, RoomSettings> = Object.create(null);
 
 function cloneSettings(settings: RoomSettings): RoomSettings {
   return {

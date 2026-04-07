@@ -7,6 +7,7 @@
   import { LayerMode } from '../../types/LayerMode';
   import type { PenParams } from '../../types/PenParams';
   import Round from '../Round.svelte';
+  import { MAX_NAME_LENGTH, normalizeBeastName } from '@shared/inputValidation';
 
   let {
     pen: initialPen,
@@ -235,7 +236,10 @@
     if (!context || !canvas || !isTextPen) return;
 
     const input = event.target as HTMLInputElement;
-    const text = input.value;
+    const text = normalizeBeastName(input.value);
+    if (input.value !== text) {
+      input.value = text;
+    }
 
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -529,6 +533,7 @@
             type="text"
             id="scribble-beast-name"
             placeholder="Enter beast name..."
+            maxlength={MAX_NAME_LENGTH}
             oninput={handleTextInput}
             class="name-input"
           />

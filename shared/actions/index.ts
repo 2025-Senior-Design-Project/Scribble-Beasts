@@ -8,6 +8,7 @@ HOW TO ADD A NEW ACTION:
 4. Update the Actions object with the new action class.
 */
 import type { RoomSettings } from '../settings/index.js';
+import { isPlainObject } from '../inputValidation.js';
 
 export const enum ActionEnum {
   /* Room Actions */
@@ -396,15 +397,15 @@ export function ParseAction<T extends AnyAction>(
     // check that data has the structure of an Action
     const parsedAction = JSON.parse(data) as T;
     if (
-      !parsedAction || // null, undefined, etc.
-      typeof parsedAction !== 'object' || // not an object
+      !isPlainObject(parsedAction) || // not a plain object
       typeof parsedAction.type !== 'string' || // missing or invalid value for type
-      !('payload' in parsedAction) // missing payload (can be any type)
+      !('payload' in parsedAction) || // missing payload
+      !isPlainObject(parsedAction.payload) // payload must be a plain object
     ) {
       console.error('Received non-action: ', parsedAction);
       return null;
     }
-    if (desiredType && parsedAction.type != desiredType) {
+    if (desiredType && parsedAction.type !== desiredType) {
       return null;
     }
     return parsedAction;

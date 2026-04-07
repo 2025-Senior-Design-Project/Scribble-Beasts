@@ -12,6 +12,10 @@ import { Player, Host } from '../components/Player.js';
 import { IncomingMessage } from 'http';
 import { getHostRoomSettings } from '../components/HostRoomSettings.js';
 import { DEFAULT_ROOM_SETTINGS, type RoomSettings } from '../../../../shared/settings/index.js';
+import {
+  normalizePlayerName,
+  normalizeRoomName,
+} from '../../../../shared/inputValidation.js';
 
 export function handleRoomless(ws: WebSocket) {
   ws.on('error', console.error);
@@ -77,10 +81,13 @@ export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
 }
 
 function createRoom(action: CreateRoomAction, ws: WebSocket) {
-  const { roomName, hostName, settings } = action.payload;
+  const normalizedRoomName = normalizeRoomName(action.payload.roomName);
+  const normalizedHostName = normalizePlayerName(action.payload.hostName);
+  const { settings } = action.payload;
+
   let { roomInputMessage, nameInputMessage } = checkIfParamsAreEmpty(
-    roomName,
-    hostName,
+    normalizedRoomName,
+    normalizedHostName,
   );
 
   if (roomInputMessage && nameInputMessage) {
@@ -90,7 +97,7 @@ function createRoom(action: CreateRoomAction, ws: WebSocket) {
     return;
   }
 
-  if (findRoom(roomName)) {
+  if (findRoom(normalizedRoomName)) {
     ws.send(
       JSON.stringify(
         new Actions.RoomError(nameInputMessage, 'Room name already taken.'),
@@ -99,16 +106,16 @@ function createRoom(action: CreateRoomAction, ws: WebSocket) {
     return;
   }
 
-  const host = new Host(hostName, ws);
-  const settingsFromHostHistory = getHostRoomSettings(hostName);
+  const host = new Host(normalizedHostName, ws);
+  const settingsFromHostHistory = getHostRoomSettings(normalizedHostName);
   const initialSettings = normalizeRoomSettings(
     settings ?? settingsFromHostHistory,
   );
-  const newRoom = new Room(roomName, host, initialSettings);
-  Rooms[roomName] = newRoom;
-  ws.send(JSON.stringify(new Actions.CreateRoom(roomName, hostName)));
+  const newRoom = new Room(normalizedRoomName, host, initialSettings);
+  Rooms[normalizedRoomName] = newRoom;
+  ws.send(JSON.stringify(new Actions.CreateRoom(normalizedRoomName, normalizedHostName)));
   ws.send(JSON.stringify(new Actions.Reconnect(host.id)));
-  console.log(`Room ${roomName} created with host ${hostName}`);
+  console.log(`Room ${normalizedRoomName} created with host ${normalizedHostName}`);
 }
 
 function normalizeRoomSettings(settings?: RoomSettings): RoomSettings {
@@ -131,10 +138,12 @@ function normalizeRoomSettings(settings?: RoomSettings): RoomSettings {
 }
 
 function joinRoom(action: JoinRoomAction, ws: WebSocket) {
-  const { roomName, playerName } = action.payload;
+  const normalizedRoomName = normalizeRoomName(action.payload.roomName);
+  const normalizedPlayerName = normalizePlayerName(action.payload.playerName);
+
   let { roomInputMessage, nameInputMessage } = checkIfParamsAreEmpty(
-    roomName,
-    playerName,
+    normalizedRoomName,
+    normalizedPlayerName,
   );
 
   if (roomInputMessage && nameInputMessage) {
@@ -144,12 +153,12 @@ function joinRoom(action: JoinRoomAction, ws: WebSocket) {
     return;
   }
 
-  const room = findRoom(roomName);
+  const room = findRoom(normalizedRoomName);
   if (!room) {
     roomInputMessage = 'Room does not exist.';
   }
 
-  if (room && playerExistsInRoom(room, playerName)) {
+  if (room && playerExistsInRoom(room, normalizedPlayerName)) {
     nameInputMessage = 'Name already taken in this room.';
   }
 
@@ -160,13 +169,15 @@ function joinRoom(action: JoinRoomAction, ws: WebSocket) {
     return;
   }
 
-  const player = new Player(playerName, ws);
+  const player = new Player(normalizedPlayerName, ws);
   room.addPlayer(player);
   ws.send(
-    JSON.stringify(new Actions.JoinRoom(roomName, playerName, room.host.name)),
+    JSON.stringify(
+      new Actions.JoinRoom(normalizedRoomName, normalizedPlayerName, room.host.name),
+    ),
   );
   ws.send(JSON.stringify(new Actions.Reconnect(player.id)));
-  console.log(`Player ${playerName} joined room ${roomName}`);
+  console.log(`Player ${normalizedPlayerName} joined room ${normalizedRoomName}`);
 }
 
 function checkIfParamsAreEmpty(
