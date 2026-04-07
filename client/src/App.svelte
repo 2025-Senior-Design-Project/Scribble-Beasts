@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import ClientWebsocket from './lib/ClientWebsocket';
   import { Actions } from '@shared/actions';
   import ErrorToast from './lib/components/ErrorToast.svelte';
@@ -15,6 +16,8 @@
 
   let showLeaveConfirm = $state(false);
   let showPersonalSettings = $state(false);
+  let FontTestPage = $state<any>(null);
+  const isDev = import.meta.env.DEV;
 
   function resetPersonalSettings() {
     personalSettings.set({ font: 'Children', fontSize: 'normal', soundVolume: 1 });
@@ -33,6 +36,13 @@
   );
 
   const inRoom = $derived($currentView !== View.ROOM_FORM);
+  const showFontTest = $derived(isDev && $currentPath === '/fonttest');
+
+  onMount(async () => {
+    if (!isDev || window.location.pathname !== '/fonttest') return;
+    const module = await import('./lib/components/FontTestPage.svelte');
+    FontTestPage = module.default;
+  });
 </script>
 
 <main>
@@ -88,7 +98,13 @@
     </div>
   {/if}
 
-  {#if showLandingPage}
+  {#if showFontTest}
+    {#if FontTestPage}
+      <FontTestPage />
+    {:else}
+      <p>Loading font tester...</p>
+    {/if}
+  {:else if showLandingPage}
     <LandingPage />
   {:else if $currentView === View.LOBBY}
     <Lobby />

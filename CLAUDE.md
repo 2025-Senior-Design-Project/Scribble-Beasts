@@ -16,6 +16,8 @@ npm run down           # Stop all services
 npm run down:clean     # Stop and remove all containers, images, volumes
 ```
 
+`/fonttest` is a **dev-only** client route for NameRound font calibration (live font-size inputs + preview). It is only available when running in development (`npm run dev`) and is not exposed in production builds.
+
 ### Testing
 ```bash
 npm test               # Run all tests (client + server)
