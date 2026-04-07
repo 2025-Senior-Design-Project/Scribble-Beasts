@@ -2,7 +2,6 @@ import { get, writable } from 'svelte/store';
 import { Actions, type AnyRoundAction } from '@shared/actions';
 import ClientWebsocket from '../ClientWebsocket';
 import { Round, Rounds } from '@shared/rounds';
-import { everyoneDoneExceptYou } from '../GameState';
 
 export interface RoundState {
   number: number;
@@ -20,9 +19,10 @@ export const roundStore = writable<RoundState>({
 
 export function endCurrentRound(action?: AnyRoundAction) {
   const state = get(roundStore);
-  const allDone = get(everyoneDoneExceptYou);
-  console.log(`[roundStore] endCurrentRound called. ongoing=${state.ongoing}, round=${state.number}, everyoneDoneExceptYou=${allDone}`);
-  if (!allDone) {
+  console.log(
+    `[roundStore] endCurrentRound called. ongoing=${state.ongoing}, round=${state.number}`,
+  );
+  if (state.ongoing) {
     roundStore.update((state) => ({
       ...state,
       ongoing: false,

@@ -12,8 +12,11 @@
   } = $props();
 
   let canClickDone = $state(false);
+  let isEnding = $state(false);
 
   async function handleEnd() {
+    if (isEnding) return;
+    isEnding = true;
     // Let the round send its end action (same for timeout or button click)
     await onRoundEnd();
     endCurrentRound();
@@ -37,7 +40,12 @@
     }
 
     console.log('[Round.svelte] mounted, adding END_ROUND listener');
-    ClientWebsocket.addActionListener(ActionEnum.END_ROUND, handleEnd);
+    const removeServerEndRoundListener = ClientWebsocket.addActionListener(
+      ActionEnum.END_ROUND,
+      () => {
+        void handleEnd();
+      },
+    );
 
     // Initialize timer when round becomes active
     const unsubscribe = roundStore.subscribe((state) => {
@@ -64,7 +72,7 @@
       console.log('[Round.svelte] unmounting, removing END_ROUND listener');
       clearInterval(interval);
       unsubscribe();
-      ClientWebsocket.removeActionListener(ActionEnum.END_ROUND);
+      removeServerEndRoundListener();
       clearTimeout(enableButtonTimer);
     };
   });

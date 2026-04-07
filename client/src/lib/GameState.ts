@@ -60,6 +60,7 @@ const joinRoom = (action: JoinRoomAction) => {
   roomName.set(roomNameValue);
   playerName.set(playerNameValue);
   hostName.set(hostNameValue);
+  isHost.set(hostNameValue === playerNameValue);
   navigateTo(View.LOBBY);
 };
 
