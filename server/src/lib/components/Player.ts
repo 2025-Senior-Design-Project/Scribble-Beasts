@@ -64,6 +64,7 @@ export class Player extends ActionTarget<WebSocket, MessageEvent> {
 
     this.disconnected = false;
     this.setWebsocket(ws);
+    room.ensureConnectedHost();
 
     console.log(`[Player] ${this.name} reconnect: sending JoinRoom, game=${!!room.game}, disconnected=${this.disconnected}`);
 

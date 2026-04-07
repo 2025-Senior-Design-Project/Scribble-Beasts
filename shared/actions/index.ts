@@ -23,6 +23,9 @@ export const enum ActionEnum {
   UPDATE_ROOM_SETTINGS = 'UPDATE_ROOM_SETTINGS',
   /** Server broadcasts current room settings to all players */
   ROOM_SETTINGS_CHANGE = 'ROOM_SETTINGS_CHANGE',
+  /** Intro Actions */
+  INTRO_START = 'INTRO_START',
+  INTRO_END = 'INTRO_END',
   /** Round Actions */
   END_ROUND = 'END_ROUND',
   START_ROUND = 'START_ROUND',
@@ -124,6 +127,18 @@ export class RoomSettingsChangeAction extends Action<{ settings: RoomSettings }>
   }
 }
 
+// Intro Actions
+export class IntroStartAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.INTRO_START, {});
+  }
+}
+export class IntroEndAction extends Action<{}> {
+  constructor() {
+    super(ActionEnum.INTRO_END, {});
+  }
+}
+
 // Round Actions
 export class EndRoundAction extends Action<{}> {
   constructor() {
@@ -213,6 +228,8 @@ export type AnyAction =
   | PlayerListChangeAction
   | UpdateRoomSettingsAction
   | RoomSettingsChangeAction
+  | IntroStartAction
+  | IntroEndAction
   | SendPresenterChangeAction
   | SendPresenterStartAction
   | SendPresenterEndAction
@@ -232,6 +249,8 @@ export const Actions = {
   PlayerListChange: PlayerListChangeAction,
   UpdateRoomSettings: UpdateRoomSettingsAction,
   RoomSettingsChange: RoomSettingsChangeAction,
+  IntroStart: IntroStartAction,
+  IntroEnd: IntroEndAction,
   EndRound: EndRoundAction,
   StartRound: StartRoundAction,
   SendDrawing: SendDrawingAction,

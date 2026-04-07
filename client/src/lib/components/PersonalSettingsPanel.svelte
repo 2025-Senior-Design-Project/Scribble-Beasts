@@ -23,6 +23,10 @@
   function setFontSize(value: FontSize) {
     personalSettings.update((s) => ({ ...s, fontSize: value }));
   }
+
+  function setSoundVolume(value: number) {
+    personalSettings.update((s) => ({ ...s, soundVolume: value }));
+  }
 </script>
 
 <div class="settings-panel">
@@ -71,8 +75,21 @@
   <!-- ── Sound ─────────────────────────────────────────────── -->
   <section>
     <h3 class="section-title">Sound</h3>
-    <!-- TODO: implement personal sound/volume settings -->
-    <p class="section-note todo">Sound controls coming soon.</p>
+    <p class="section-note">Controls sound volume on your device only.</p>
+
+    <div class="field">
+      <label class="field-label" for="sound-volume">Volume: {Math.round($personalSettings.soundVolume * 100)}%</label>
+      <input
+        id="sound-volume"
+        class="volume-slider"
+        type="range"
+        min="0"
+        max="100"
+        step="1"
+        value={Math.round($personalSettings.soundVolume * 100)}
+        oninput={(e) => setSoundVolume(Number((e.target as HTMLInputElement).value) / 100)}
+      />
+    </div>
   </section>
 </div>
 
@@ -103,10 +120,6 @@
     margin: 0;
     font-size: var(--text-sm);
     opacity: 0.7;
-  }
-
-  .section-note.todo {
-    font-style: italic;
   }
 
   .field {
@@ -163,5 +176,10 @@
   .size-btn.active {
     border-color: var(--pen-red);
     background: white;
+  }
+
+  .volume-slider {
+    width: 100%;
+    accent-color: var(--pen-red);
   }
 </style>

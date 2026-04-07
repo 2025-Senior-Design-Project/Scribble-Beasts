@@ -9,8 +9,8 @@ export interface PersonalSettings {
   /** UI font. 'OpenDyslexic' enables dyslexia-friendly rendering. */
   font: FontChoice;
   fontSize: FontSize;
-  // TODO: implement sound settings
-  // soundVolume: number; // 0–1
+  /** Personal sound volume from 0 (muted) to 1 (full). */
+  soundVolume: number;
 }
 
 const STORAGE_KEY = 'scribble-beasts-personal-settings';
@@ -25,14 +25,25 @@ const FONT_SCALE: Record<FontSize, number> = {
 const defaults: PersonalSettings = {
   font: 'Children',
   fontSize: 'normal',
+  soundVolume: 1,
 };
+
+function normalize(settings: PersonalSettings): PersonalSettings {
+  const next = { ...settings };
+  if (typeof next.soundVolume !== 'number' || Number.isNaN(next.soundVolume)) {
+    next.soundVolume = defaults.soundVolume;
+  } else {
+    next.soundVolume = Math.min(1, Math.max(0, next.soundVolume));
+  }
+  return next;
+}
 
 function loadFromStorage(): PersonalSettings {
   if (!browser) return defaults;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaults;
-    return { ...defaults, ...JSON.parse(raw) };
+    return normalize({ ...defaults, ...JSON.parse(raw) });
   } catch {
     return defaults;
   }
@@ -55,8 +66,13 @@ export const personalSettings = writable<PersonalSettings>(initial);
 
 personalSettings.subscribe((settings) => {
   if (!browser) return;
+  const normalized = normalize(settings);
+  if (normalized.soundVolume !== settings.soundVolume) {
+    personalSettings.set(normalized);
+    return;
+  }
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
   } catch {}
-  applyToDom(settings);
+  applyToDom(normalized);
 });

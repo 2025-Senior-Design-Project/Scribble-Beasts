@@ -146,3 +146,4 @@ shared/actions/index.d.ts
 
 # macOS system files
 .DS_Store
+client/public/files/sb-intro.mp4

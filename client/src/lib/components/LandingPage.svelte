@@ -84,6 +84,13 @@
   >
     Rules
   </a>
+  <a
+    href="/credits"
+    class:active={$currentSubRoute === 'credits'}
+    onclick={(e) => handleNav(e, '/credits')}
+  >
+    Credits
+  </a>
 </nav>
 
 <div
@@ -183,8 +190,124 @@
                   <a href="/files/ogRules.pdf" target="_blank" class="pdf-link"
                     >View Original Physical Game Rules (PDF)</a
                   >
+                  <br />
+                  <a href="/credits" onclick={(e) => handleNav(e, '/credits')}
+                    >See game asset credits</a
+                  >
                 </div>
               </div>
+            </div>
+          </div>
+        {:else if $currentSubRoute === 'credits'}
+          <div class="paper-sheet">
+            <div class="content credits">
+              <h2>Credits</h2>
+              <p>
+                The following sound assets are used in the game's intro
+                animation. Thank you to these creators on <a
+                  href="https://freesound.org"
+                  target="_blank"
+                  rel="noopener noreferrer">freesound.org</a
+                > for sharing their work.
+              </p>
+
+              <h3>Intro Animation Sounds</h3>
+              <ul class="credits-list">
+                <li>
+                  <a
+                    href="https://freesound.org/s/733914/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >140617-001 Sopot Bohaterów Monte Cassino Children passing
+                    by</a
+                  >
+                  by MaciekKubera — License: Creative Commons 0
+                </li>
+                <li>
+                  <a
+                    href="https://freesound.org/s/276937/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >breaking_glass_mirror_Oktava_MK-012.wav</a
+                  >
+                  by gladkiy — License: Creative Commons 0
+                </li>
+                <li>
+                  <a
+                    href="https://freesound.org/s/491926/"
+                    target="_blank"
+                    rel="noopener noreferrer">Falling Glass.wav</a
+                  >
+                  by cmilo1269 — License: Creative Commons 0
+                </li>
+                <li>
+                  <a
+                    href="https://freesound.org/s/344149/"
+                    target="_blank"
+                    rel="noopener noreferrer">Thump_001.wav</a
+                  >
+                  by Brokenphono — License: Creative Commons 0
+                </li>
+                <li>
+                  <a
+                    href="https://freesound.org/s/175670/"
+                    target="_blank"
+                    rel="noopener noreferrer">weird_door_open.wav</a
+                  >
+                  by simpsi — License: Attribution 3.0
+                </li>
+                <li>
+                  <a
+                    href="https://freesound.org/s/789609/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >Three People Walking on Concrete – Group Footsteps</a
+                  >
+                  by ZackSoundLab — License: Creative Commons 0
+                </li>
+                <li>
+                  <a
+                    href="https://freesound.org/s/47375/"
+                    target="_blank"
+                    rel="noopener noreferrer">baby_voice16.wav</a
+                  >
+                  by reinsamba — License: Attribution 4.0
+                </li>
+                <li>
+                  <a
+                    href="https://freesound.org/s/133742/"
+                    target="_blank"
+                    rel="noopener noreferrer">baby.mp3</a
+                  >
+                  by skyangel38 — License: Attribution 3.0
+                </li>
+                <li>
+                  <a
+                    href="https://freesound.org/s/463395/"
+                    target="_blank"
+                    rel="noopener noreferrer">VS Pop_5.mp3</a
+                  >
+                  by Vilkas_Sound — License: Attribution 4.0
+                </li>
+                <li>
+                  <a
+                    href="https://freesound.org/s/546167/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >Keyboard Typing 10 (WhiteFox, Mechanical)</a
+                  >
+                  by grcekh — License: Creative Commons 0
+                </li>
+                <li>
+                  <a
+                    href="https://freesound.org/s/470189/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >55_Coger_Foto.wav (Sliding Paper)</a
+                  >
+                  by Atrius1 — License: Creative Commons 0
+                </li>
+              </ul>
             </div>
           </div>
         {:else if $currentSubRoute === 'rules'}
@@ -460,6 +583,24 @@
 
   .round-item p {
     margin: 0;
+  }
+
+  /* Credits */
+  .credits-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .credits-list li {
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 0.5rem;
+    border: 1px dashed var(--pen-blue);
+    line-height: 1.5;
   }
 
   /* Keyframes for page transitions */

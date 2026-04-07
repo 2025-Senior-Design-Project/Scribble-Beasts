@@ -8,6 +8,8 @@
   import { ActionEnum } from '@shared/actions';
   import ClientWebsocket from '../ClientWebsocket';
   import { ROUND_TYPE_COMPONENT_DICT } from '../constants/RoundTypeComponentDict';
+  import Intro from './Intro.svelte';
+  import { introPlaying } from '../stores/introStore';
 
   import type { StartRoundAction } from '@shared/actions';
 
@@ -21,7 +23,19 @@
 
     const handleServerStartRound = (action: StartRoundAction) => {
       console.log('[Game.svelte] START_ROUND received, timeout:', action.payload.timeout);
+      // First START_ROUND implicitly ends any intro that was still on screen.
+      introPlaying.set(false);
       startNextRound(action.payload.timeout);
+    };
+
+    const handleIntroStart = () => {
+      console.log('[Game.svelte] INTRO_START received');
+      introPlaying.set(true);
+    };
+
+    const handleIntroEnd = () => {
+      console.log('[Game.svelte] INTRO_END received');
+      introPlaying.set(false);
     };
 
     ClientWebsocket.addActionListener(
@@ -34,15 +48,31 @@
       handleServerStartRound,
     );
 
+    ClientWebsocket.addActionListener(
+      ActionEnum.INTRO_START,
+      handleIntroStart,
+    );
+
+    ClientWebsocket.addActionListener(
+      ActionEnum.INTRO_END,
+      handleIntroEnd,
+    );
+
     return () => {
       console.log('[Game.svelte] unmounting, removing END_ROUND + START_ROUND listeners');
       ClientWebsocket.removeActionListener(ActionEnum.END_ROUND);
       ClientWebsocket.removeActionListener(ActionEnum.START_ROUND);
+      ClientWebsocket.removeActionListener(ActionEnum.INTRO_START);
+      ClientWebsocket.removeActionListener(ActionEnum.INTRO_END);
+      introPlaying.set(false);
     };
   });
 </script>
 
 <div class="game-viewport overflow-hidden relative">
+  {#if $introPlaying}
+    <Intro />
+  {/if}
   {#if $roundStore}
     <div class="paper-card game-card">
       <h1 class="text-pen-red">{$roundStore.current.roundName}</h1>
