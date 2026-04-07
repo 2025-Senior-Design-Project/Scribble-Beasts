@@ -15,6 +15,11 @@
   } from '../GameState';
   import { navigateTo, View } from '../Navigator';
   import { roomSettings } from '../stores/roomSettingsStore';
+  import {
+    MAX_NAME_LENGTH,
+    normalizePlayerName,
+    normalizeRoomName,
+  } from '@shared/inputValidation';
 
   let roomName: string = $state('');
   let roomNameError: string = $state('');
@@ -73,17 +78,35 @@
 
   function joinRoom(event: Event): void {
     event.preventDefault();
-    const joinRoomAction = new Actions.JoinRoom(roomName, playerName);
+    const safeRoomName = normalizeRoomName(roomName);
+    const safePlayerName = normalizePlayerName(playerName);
+    roomName = safeRoomName;
+    playerName = safePlayerName;
+    const joinRoomAction = new Actions.JoinRoom(safeRoomName, safePlayerName);
     ClientWebsocket.sendAction(joinRoomAction);
   }
   function createRoom(event: Event): void {
     event.preventDefault();
+    const safeRoomName = normalizeRoomName(roomName);
+    const safePlayerName = normalizePlayerName(playerName);
+    roomName = safeRoomName;
+    playerName = safePlayerName;
     const createRoomAction = new Actions.CreateRoom(
-      roomName,
-      playerName,
+      safeRoomName,
+      safePlayerName,
       $roomSettings,
     );
     ClientWebsocket.sendAction(createRoomAction);
+  }
+
+  function onRoomNameInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    roomName = normalizeRoomName(input.value);
+  }
+
+  function onPlayerNameInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    playerName = normalizePlayerName(input.value);
   }
 </script>
 
@@ -95,7 +118,9 @@
         type="text"
         id="roomName"
         bind:value={roomName}
+        maxlength={MAX_NAME_LENGTH}
         placeholder="Enter Room Name"
+        oninput={onRoomNameInput}
         required
       />
       <div class="text-error">{roomNameError}</div>
@@ -106,7 +131,9 @@
         type="text"
         id="playerName"
         bind:value={playerName}
+        maxlength={MAX_NAME_LENGTH}
         placeholder="Enter Your Player Name"
+        oninput={onPlayerNameInput}
         required
       />
       <div class="text-error">{playerNameError}</div>

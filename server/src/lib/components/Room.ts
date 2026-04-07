@@ -5,12 +5,12 @@ import { Game } from './Game.js';
 import { handleRoomless } from '../scripts/roomless-handler.js';
 import { setHostRoomSettings } from './HostRoomSettings.js';
 
-export const Rooms: Record<string, Room> = {};
+export const Rooms: Record<string, Room> = Object.create(null);
 
 export class Room {
   name: string;
   host: Host;
-  players: Record<string, Player> = {};
+  players: Record<string, Player> = Object.create(null);
   game: Game | null = null;
   settings: RoomSettings = { ...DEFAULT_ROOM_SETTINGS, roundTimers: {} };
 
