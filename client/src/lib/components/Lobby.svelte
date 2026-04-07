@@ -80,7 +80,7 @@
 <div class="flex-center-page">
   <audio
     bind:this={lobbyMusicEl}
-    src="/files/Scribble%20Beasts%20Bossa%20Nova%20Loopable.wav"
+    src="/files/Scribble%20Beasts%20Bossa%20Nova%20Level%204.wav"
     loop
     preload="auto"
     aria-hidden="true"
