@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Room } from '../lib/components/Room';
 import { Player, Host } from '../lib/components/Player';
 import WebSocket from 'ws';
+import { Actions } from '../../../shared/actions/index';
+import {
+  clearHostRoomSettingsForTests,
+  getHostRoomSettings,
+} from '../lib/components/HostRoomSettings';
 
 // Mock WebSocket
 vi.mock('ws', () => {
@@ -55,6 +60,7 @@ describe('Room Unit Tests', () => {
   let room: Room;
 
   beforeEach(() => {
+    clearHostRoomSettingsForTests();
     ws1 = new WebSocket('ws://localhost') as any;
     ws2 = new WebSocket('ws://localhost') as any;
     host = new Host('HostUser', ws1);
@@ -155,6 +161,47 @@ describe('Room Unit Tests', () => {
       expect(specialRoom.name).toBe(specialRoomName);
       expect(specialRoom.host.name).toBe(specialName);
       expect(specialRoom.players[specialName]).toBe(specialHost);
+    });
+  });
+
+  describe('Host Settings Persistence', () => {
+    it('stores host settings when host updates room settings', () => {
+      const customSettings = {
+        allowSelfVote: true,
+        skipIntro: true,
+        skipTutorials: true,
+        soundMode: 'shared' as const,
+        captions: false,
+        roundTimers: {},
+      };
+
+      room.updateSettings(new Actions.UpdateRoomSettings(customSettings));
+
+      expect(getHostRoomSettings('HostUser')).toEqual(customSettings);
+    });
+
+    it('stores host settings when host leaves, and new room reuses them', () => {
+      const customSettings = {
+        allowSelfVote: true,
+        skipIntro: false,
+        skipTutorials: true,
+        soundMode: 'none' as const,
+        captions: false,
+        roundTimers: {},
+      };
+      const player2 = new Player('Player2', ws2);
+      room.addPlayer(player2);
+
+      room.updateSettings(new Actions.UpdateRoomSettings(customSettings));
+      room.removePlayer('HostUser');
+
+      const savedSettings = getHostRoomSettings('HostUser');
+      expect(savedSettings).toEqual(customSettings);
+
+      const ws3 = new WebSocket('ws://localhost') as any;
+      const nextHost = new Host('HostUser', ws3);
+      const nextRoom = new Room('NextRoom', nextHost, savedSettings);
+      expect(nextRoom.settings).toEqual(customSettings);
     });
   });
 });

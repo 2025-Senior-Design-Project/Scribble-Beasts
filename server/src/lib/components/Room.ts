@@ -3,6 +3,7 @@ import { DEFAULT_ROOM_SETTINGS, type RoomSettings } from '../../../../shared/set
 import { Player, Host } from './Player.js';
 import { Game } from './Game.js';
 import { handleRoomless } from '../scripts/roomless-handler.js';
+import { setHostRoomSettings } from './HostRoomSettings.js';
 
 export const Rooms: Record<string, Room> = {};
 
@@ -13,9 +14,12 @@ export class Room {
   game: Game | null = null;
   settings: RoomSettings = { ...DEFAULT_ROOM_SETTINGS, roundTimers: {} };
 
-  constructor(name: string, host: Player) {
+  constructor(name: string, host: Player, initialSettings?: RoomSettings) {
     this.name = name;
     this.host = host;
+    if (initialSettings) {
+      this.settings = { ...initialSettings, roundTimers: { ...initialSettings.roundTimers } };
+    }
     this.addPlayer(host);
     this.hostSetup();
   }
@@ -64,6 +68,7 @@ export class Room {
 
   updateSettings(action: UpdateRoomSettingsAction): void {
     this.settings = action.payload.settings;
+    setHostRoomSettings(this.host.name, this.settings);
     console.log(`Room ${this.name} settings updated:`, this.settings);
     this.sendActionToAll(new Actions.RoomSettingsChange(this.settings));
   }
@@ -116,6 +121,9 @@ export class Room {
   removePlayer(playerName: string): void {
     const playerToRemove = this.players[playerName];
     if (playerToRemove) {
+      if (playerToRemove.isHost) {
+        setHostRoomSettings(playerToRemove.name, this.settings);
+      }
       if (this.game) {
         this.game.forceCompletePlayer(playerToRemove.id);
       }

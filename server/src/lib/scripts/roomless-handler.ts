@@ -10,6 +10,8 @@ import {
 } from '../../../../shared/actions/index.js';
 import { Player, Host } from '../components/Player.js';
 import { IncomingMessage } from 'http';
+import { getHostRoomSettings } from '../components/HostRoomSettings.js';
+import { DEFAULT_ROOM_SETTINGS, type RoomSettings } from '../../../../shared/settings/index.js';
 
 export function handleRoomless(ws: WebSocket) {
   ws.on('error', console.error);
@@ -75,7 +77,7 @@ export function handleNewConnection(ws: WebSocket, req: IncomingMessage) {
 }
 
 function createRoom(action: CreateRoomAction, ws: WebSocket) {
-  const { roomName, hostName } = action.payload;
+  const { roomName, hostName, settings } = action.payload;
   let { roomInputMessage, nameInputMessage } = checkIfParamsAreEmpty(
     roomName,
     hostName,
@@ -98,11 +100,34 @@ function createRoom(action: CreateRoomAction, ws: WebSocket) {
   }
 
   const host = new Host(hostName, ws);
-  const newRoom = new Room(roomName, host);
+  const settingsFromHostHistory = getHostRoomSettings(hostName);
+  const initialSettings = normalizeRoomSettings(
+    settings ?? settingsFromHostHistory,
+  );
+  const newRoom = new Room(roomName, host, initialSettings);
   Rooms[roomName] = newRoom;
   ws.send(JSON.stringify(new Actions.CreateRoom(roomName, hostName)));
   ws.send(JSON.stringify(new Actions.Reconnect(host.id)));
   console.log(`Room ${roomName} created with host ${hostName}`);
+}
+
+function normalizeRoomSettings(settings?: RoomSettings): RoomSettings {
+  const defaults: RoomSettings = { ...DEFAULT_ROOM_SETTINGS, roundTimers: {} };
+  if (!settings) return defaults;
+  return {
+    allowSelfVote: !!settings.allowSelfVote,
+    skipIntro: !!settings.skipIntro,
+    skipTutorials: !!settings.skipTutorials,
+    soundMode:
+      settings.soundMode === 'shared' || settings.soundMode === 'none'
+        ? settings.soundMode
+        : 'separate',
+    captions: !!settings.captions,
+    roundTimers: {
+      ...defaults.roundTimers,
+      ...(settings.roundTimers ?? {}),
+    },
+  };
 }
 
 function joinRoom(action: JoinRoomAction, ws: WebSocket) {

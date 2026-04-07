@@ -7,6 +7,7 @@ HOW TO ADD A NEW ACTION:
 3. Add the new action class to the AnyAction union type.
 4. Update the Actions object with the new action class.
 */
+import type { RoomSettings } from '../settings/index.js';
 
 export const enum ActionEnum {
   /* Room Actions */
@@ -55,9 +56,10 @@ class Action<Payload> {
 export class CreateRoomAction extends Action<{
   roomName: string;
   hostName: string;
+  settings?: RoomSettings;
 }> {
-  constructor(roomName: string, hostName: string) {
-    super(ActionEnum.CREATE_ROOM, { roomName, hostName });
+  constructor(roomName: string, hostName: string, settings?: RoomSettings) {
+    super(ActionEnum.CREATE_ROOM, { roomName, hostName, settings });
   }
 }
 
@@ -112,8 +114,6 @@ export class PlayerListChangeAction extends Action<{ playerList: string[] }> {
     super(ActionEnum.PLAYER_LIST_CHANGE, { playerList });
   }
 }
-
-import type { RoomSettings } from '../settings/index.js';
 
 export class UpdateRoomSettingsAction extends Action<{ settings: RoomSettings }> {
   constructor(settings: RoomSettings) {

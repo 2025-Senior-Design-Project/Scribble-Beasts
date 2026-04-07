@@ -14,6 +14,7 @@
     playerName as playerNameState,
   } from '../GameState';
   import { navigateTo, View } from '../Navigator';
+  import { roomSettings } from '../stores/roomSettingsStore';
 
   let roomName: string = $state('');
   let roomNameError: string = $state('');
@@ -77,7 +78,11 @@
   }
   function createRoom(event: Event): void {
     event.preventDefault();
-    const createRoomAction = new Actions.CreateRoom(roomName, playerName);
+    const createRoomAction = new Actions.CreateRoom(
+      roomName,
+      playerName,
+      $roomSettings,
+    );
     ClientWebsocket.sendAction(createRoomAction);
   }
 </script>
