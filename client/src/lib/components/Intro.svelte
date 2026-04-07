@@ -82,19 +82,33 @@
     }
   }
 
+  function completeIntro() {
+    sendEnd();
+    introPlaying.set(false);
+  }
+
   function handleSkip() {
     try {
       videoEl?.pause();
     } catch {}
-    sendEnd();
     // Hide our own overlay immediately for snappy host UX. Other players
     // will hide when the server broadcasts IntroEnd.
-    introPlaying.set(false);
+    completeIntro();
   }
 
   function handleEnded() {
-    sendEnd();
-    introPlaying.set(false);
+    completeIntro();
+  }
+
+  function handleTimeUpdate() {
+    if (!videoEl) return;
+    const { currentTime, duration } = videoEl;
+    if (!Number.isFinite(duration) || duration <= 0) return;
+    // Some browsers occasionally skip `ended` on streamed/seeked media.
+    // Treat the final 100ms as completion to avoid stalling round start.
+    if (currentTime >= duration - 0.1) {
+      completeIntro();
+    }
   }
 </script>
 
@@ -106,6 +120,7 @@
     autoplay
     playsinline
     {muted}
+    ontimeupdate={handleTimeUpdate}
     onended={handleEnded}
   >
     {#if $roomSettings.captions && captionsUrl}

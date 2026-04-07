@@ -179,32 +179,32 @@
       introPlaying.set(false);
     };
 
-    ClientWebsocket.addActionListener(
+    const removeEndRoundListener = ClientWebsocket.addActionListener(
       ActionEnum.END_ROUND,
       handleServerEndRound,
     );
 
-    ClientWebsocket.addActionListener(
+    const removeStartRoundListener = ClientWebsocket.addActionListener(
       ActionEnum.START_ROUND,
       handleServerStartRound,
     );
 
-    ClientWebsocket.addActionListener(
+    const removeIntroStartListener = ClientWebsocket.addActionListener(
       ActionEnum.INTRO_START,
       handleIntroStart,
     );
 
-    ClientWebsocket.addActionListener(
+    const removeIntroEndListener = ClientWebsocket.addActionListener(
       ActionEnum.INTRO_END,
       handleIntroEnd,
     );
 
     return () => {
       console.log('[Game.svelte] unmounting, removing END_ROUND + START_ROUND listeners');
-      ClientWebsocket.removeActionListener(ActionEnum.END_ROUND);
-      ClientWebsocket.removeActionListener(ActionEnum.START_ROUND);
-      ClientWebsocket.removeActionListener(ActionEnum.INTRO_START);
-      ClientWebsocket.removeActionListener(ActionEnum.INTRO_END);
+      removeEndRoundListener();
+      removeStartRoundListener();
+      removeIntroStartListener();
+      removeIntroEndListener();
       pauseRoundMusic(true);
       introPlaying.set(false);
     };

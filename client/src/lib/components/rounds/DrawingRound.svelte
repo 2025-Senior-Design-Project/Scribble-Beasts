@@ -126,10 +126,14 @@
     context.lineCap = pen.lineCap;
   }
 
-  function getScaleFactor(): number {
-    if (!canvas) return 1;
+  function getCanvasCoordinates(clientX: number, clientY: number) {
+    if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    return 520 / rect.width;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (clientX - rect.left - canvas.clientLeft) * scaleX;
+    const y = (clientY - rect.top - canvas.clientTop) * scaleY;
+    return { x, y };
   }
 
   function handleMouseDown(event: MouseEvent) {
@@ -144,12 +148,8 @@
     setLineProperties();
 
     context.beginPath();
-    const rect = canvas.getBoundingClientRect();
-    const scale = getScaleFactor();
-    context.moveTo(
-      (event.clientX - rect.left) * scale,
-      (event.clientY - rect.top) * scale,
-    );
+    const { x, y } = getCanvasCoordinates(event.clientX, event.clientY);
+    context.moveTo(x, y);
   }
 
   function handleMouseUp(event: MouseEvent) {
@@ -161,10 +161,7 @@
   function handleMouseMove(event: MouseEvent) {
     if (!shouldDraw || !context || !canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const scale = getScaleFactor();
-    const x = (event.clientX - rect.left) * scale;
-    const y = (event.clientY - rect.top) * scale;
+    const { x, y } = getCanvasCoordinates(event.clientX, event.clientY);
 
     context.lineTo(x, y);
     context.stroke();
@@ -187,13 +184,9 @@
     setLineProperties();
 
     const touch = event.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const scale = getScaleFactor();
+    const { x, y } = getCanvasCoordinates(touch.clientX, touch.clientY);
     context.beginPath();
-    context.moveTo(
-      (touch.clientX - rect.left) * scale,
-      (touch.clientY - rect.top) * scale,
-    );
+    context.moveTo(x, y);
   }
 
   function handleTouchMove(event: TouchEvent) {
@@ -201,10 +194,7 @@
 
     event.preventDefault();
     const touch = event.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const scale = getScaleFactor();
-    const x = (touch.clientX - rect.left) * scale;
-    const y = (touch.clientY - rect.top) * scale;
+    const { x, y } = getCanvasCoordinates(touch.clientX, touch.clientY);
 
     context.lineTo(x, y);
     context.stroke();
@@ -447,7 +437,10 @@
 
 <Round onRoundEnd={handleRoundEnd}>
   <div class="drawing-container">
-    <div class="canvas-wrapper">
+    <div
+      class="canvas-wrapper"
+      style={`--canvas-height: ${isTextPen ? 545 : 520}px;`}
+    >
       <div class="white-bg"><!-- --></div>
       {#if layerMode === LayerMode.FrontLayer}
         <canvas bind:this={backgroundCanvas} class="background-canvas"
@@ -514,7 +507,7 @@
                   disabled={history.length <= 1}
                 >
                   <img
-                    src="../../../../public/images/icons/undo-arrow.png"
+                    src="/images/icons/undo-arrow.png"
                     alt="Undo"
                   />
                 </button>
@@ -524,7 +517,7 @@
                   disabled={redoStack.length === 0}
                 >
                   <img
-                    src="../../../../public/images/icons/redo-arrow.png"
+                    src="/images/icons/redo-arrow.png"
                     alt="Redo"
                   />
                 </button>
@@ -559,7 +552,7 @@
   .canvas-wrapper {
     position: relative;
     width: min(520px, 90vw);
-    height: min(545px, 90vw);
+    height: min(var(--canvas-height), 90vw);
   }
 
   .drawing-canvas {
@@ -687,6 +680,45 @@
 
   .pen-size-control input[type='range'] {
     width: 200px;
+    appearance: none;
+    -webkit-appearance: none;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    border-radius: 0;
+  }
+
+  .pen-size-control input[type='range']::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
+    background: #cfd8dc;
+  }
+
+  .pen-size-control input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #333;
+    background: #ffffff;
+    margin-top: -5px;
+    cursor: pointer;
+  }
+
+  .pen-size-control input[type='range']::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: #cfd8dc;
+  }
+
+  .pen-size-control input[type='range']::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #333;
+    background: #ffffff;
+    cursor: pointer;
   }
 
   .pen-preview {

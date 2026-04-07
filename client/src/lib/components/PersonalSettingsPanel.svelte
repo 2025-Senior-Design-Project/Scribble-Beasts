@@ -82,6 +82,7 @@
       <input
         id="sound-volume"
         class="volume-slider"
+        style={`--volume-percent: ${Math.round($personalSettings.soundVolume * 100)}%;`}
         type="range"
         min="0"
         max="100"
@@ -180,6 +181,56 @@
 
   .volume-slider {
     width: 100%;
-    accent-color: var(--pen-red);
+    appearance: none;
+    -webkit-appearance: none;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    border-radius: 0;
+  }
+
+  .volume-slider::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(
+      to right,
+      var(--pen-red) 0%,
+      var(--pen-red) var(--volume-percent, 100%),
+      #cfd8dc var(--volume-percent, 100%),
+      #cfd8dc 100%
+    );
+  }
+
+  .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--pen-red);
+    background: #fff;
+    margin-top: -5px;
+    cursor: pointer;
+  }
+
+  .volume-slider::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: #cfd8dc;
+  }
+
+  .volume-slider::-moz-range-progress {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--pen-red);
+  }
+
+  .volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--pen-red);
+    background: #fff;
+    cursor: pointer;
   }
 </style>
