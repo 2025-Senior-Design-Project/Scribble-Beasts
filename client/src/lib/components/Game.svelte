@@ -16,11 +16,19 @@
 
   import type { StartRoundAction } from '@shared/actions';
 
-  let roundMusicEl: HTMLAudioElement | undefined = $state();
+  const CROSSFADE_MS = 1000;
+
+  // Plain variable (not $state) — avoids Svelte's deep proxy on a native DOM object,
+  // which caused DOMException when setting .volume inside a RAF callback.
+  let activeAudio: HTMLAudioElement | null = null;
+  let pendingAudio: HTMLAudioElement | null = null;
+  let fadingOutAudio: HTMLAudioElement | null = null;
+  let fadeRafId: number | null = null;
+  let isFading: boolean = $state(false);
   let resumeOnInteractionAttached = false;
   let playbackOffsetSeconds = 0;
   let playbackStartedAtMs: number | undefined = undefined;
-  let trackDurationSeconds = 0;
+
   let needsSeekOnCanPlay = false;
   let lastAppliedMusicSrc: string | undefined = undefined;
 
@@ -56,21 +64,56 @@
     playbackStartedAtMs = undefined;
   }
 
-  function applyOffsetToCurrentTrack() {
-    if (!roundMusicEl) return;
-    const duration =
-      Number.isFinite(roundMusicEl.duration) && roundMusicEl.duration > 0
-        ? roundMusicEl.duration
-        : trackDurationSeconds;
-    if (!Number.isFinite(duration) || duration <= 0) return;
-    trackDurationSeconds = duration;
-    roundMusicEl.currentTime = mod(playbackOffsetSeconds, duration);
+  function cancelFade() {
+    if (fadeRafId !== null) {
+      cancelAnimationFrame(fadeRafId);
+      fadeRafId = null;
+    }
+    isFading = false;
+    if (fadingOutAudio) {
+      fadingOutAudio.pause();
+      fadingOutAudio.src = '';
+      fadingOutAudio = null;
+    }
+  }
+
+  function startCrossfade(
+    old: HTMLAudioElement | null,
+    next: HTMLAudioElement,
+    targetVol: number,
+  ) {
+    cancelFade();
+    fadingOutAudio = old;
+    isFading = true; // tells the volume $effect to stand down during the fade
+
+    const startOldVol = old ? old.volume : 0;
+    const start = performance.now();
+    next.volume = 0;
+
+    const tick = (now: number) => {
+      const t = Math.min(Math.max((now - start) / CROSSFADE_MS, 0), 1);
+      if (old) old.volume = startOldVol * (1 - t);
+      next.volume = targetVol * t;
+
+      if (t < 1) {
+        fadeRafId = requestAnimationFrame(tick);
+      } else {
+        fadeRafId = null;
+        fadingOutAudio = null;
+        isFading = false; // lets the volume $effect re-confirm final volume
+        if (old) {
+          old.pause();
+          old.src = '';
+        }
+      }
+    };
+    fadeRafId = requestAnimationFrame(tick);
   }
 
   function tryPlayRoundMusic() {
-    if (!roundMusicEl || !shouldPlayMusic || needsSeekOnCanPlay) return;
+    if (!activeAudio || !shouldPlayMusic || needsSeekOnCanPlay) return;
 
-    const playPromise = roundMusicEl.play();
+    const playPromise = activeAudio.play();
     if (playPromise && typeof playPromise.then === 'function') {
       playPromise
         .then(() => {
@@ -84,8 +127,8 @@
           resumeOnInteractionAttached = true;
           const resume = () => {
             if (shouldPlayMusic) {
-              if (!roundMusicEl) return;
-              const p = roundMusicEl.play();
+              if (!activeAudio) return;
+              const p = activeAudio.play();
               if (p && typeof p.then === 'function') {
                 p.then(() => {
                   if (playbackStartedAtMs === undefined) {
@@ -107,30 +150,15 @@
   }
 
   function pauseRoundMusic(reset = false) {
-    if (!roundMusicEl) return;
+    cancelFade();
+    if (!activeAudio) return;
     if (!reset) freezeGlobalOffset();
-    roundMusicEl.pause();
+    activeAudio.pause();
     if (reset) {
-      roundMusicEl.currentTime = 0;
+      activeAudio.currentTime = 0;
       playbackOffsetSeconds = 0;
       playbackStartedAtMs = undefined;
-      trackDurationSeconds = 0;
       needsSeekOnCanPlay = false;
-    }
-  }
-
-  function handleRoundMusicLoadedMetadata() {
-    if (!roundMusicEl) return;
-    const duration = roundMusicEl.duration;
-    if (!Number.isFinite(duration) || duration <= 0) return;
-    trackDurationSeconds = duration;
-    if (needsSeekOnCanPlay) {
-      applyOffsetToCurrentTrack();
-      needsSeekOnCanPlay = false;
-    }
-
-    if (shouldPlayMusic) {
-      tryPlayRoundMusic();
     }
   }
 
@@ -143,20 +171,81 @@
   });
 
   $effect(() => {
-    if (!roundMusicEl) return;
-    roundMusicEl.volume = $personalSettings.soundVolume;
+    if (!activeAudio || isFading) return;
+    activeAudio.volume = $personalSettings.soundVolume;
   });
 
   $effect(() => {
     const src = currentRoundMusicSrc;
-    if (!roundMusicEl) return;
     if (lastAppliedMusicSrc === src) return;
-
-    freezeGlobalOffset();
-    needsSeekOnCanPlay = true;
     lastAppliedMusicSrc = src;
-    roundMusicEl.src = src;
-    roundMusicEl.load();
+
+    // Cancel any in-progress preload
+    if (pendingAudio) {
+      pendingAudio.src = '';
+      pendingAudio = null;
+    }
+
+    // Preload the new track in the background while the current one keeps playing
+    const pre = new Audio();
+    pre.loop = true;
+    pre.preload = 'auto';
+    pre.volume = $personalSettings.soundVolume;
+    pendingAudio = pre;
+
+    pre.addEventListener(
+      'loadedmetadata',
+      () => {
+        if (pendingAudio !== pre) return; // superseded by a newer src change
+        pendingAudio = null;
+
+        freezeGlobalOffset();
+
+        const duration = pre.duration;
+        if (Number.isFinite(duration) && duration > 0) {
+          pre.currentTime = mod(playbackOffsetSeconds, duration);
+          needsSeekOnCanPlay = false;
+        } else {
+          // Duration not yet available; seek once canplay fires
+          needsSeekOnCanPlay = true;
+          pre.addEventListener(
+            'canplay',
+            () => {
+              if (Number.isFinite(pre.duration) && pre.duration > 0) {
+                pre.currentTime = mod(playbackOffsetSeconds, pre.duration);
+                needsSeekOnCanPlay = false;
+                if (shouldPlayMusic) {
+                  startCrossfade(fadingOutAudio ?? null, pre, $personalSettings.soundVolume);
+                  tryPlayRoundMusic();
+                }
+              }
+            },
+            { once: true },
+          );
+        }
+
+        const old = activeAudio;
+        const targetVol = $personalSettings.soundVolume;
+        activeAudio = pre; // reactive: re-triggers shouldPlayMusic effect
+
+        if (shouldPlayMusic && !needsSeekOnCanPlay) {
+          // Crossfade: new fades in while old fades out simultaneously.
+          // startCrossfade sets isFading=true before the microtask flush so the
+          // volume $effect stands down and doesn't override pre.volume = 0.
+          startCrossfade(old, pre, targetVol);
+          tryPlayRoundMusic();
+        } else {
+          if (old) {
+            old.pause();
+            old.src = '';
+          }
+        }
+      },
+      { once: true },
+    );
+
+    pre.src = src;
+    pre.load();
   });
 
   onMount(() => {
@@ -217,20 +306,22 @@
       removeStartRoundListener();
       removeIntroStartListener();
       removeIntroEndListener();
+      if (pendingAudio) {
+        pendingAudio.src = '';
+        pendingAudio = null;
+      }
+      cancelFade();
       pauseRoundMusic(true);
+      if (activeAudio) {
+        activeAudio.src = '';
+        activeAudio = null;
+      }
       introPlaying.set(false);
     };
   });
 </script>
 
 <div class="game-viewport overflow-hidden relative">
-  <audio
-    bind:this={roundMusicEl}
-    loop
-    preload="auto"
-    aria-hidden="true"
-    onloadedmetadata={handleRoundMusicLoadedMetadata}
-  />
   {#if $introPlaying}
     <Intro />
   {/if}
