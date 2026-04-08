@@ -1,9 +1,11 @@
 <script lang="ts">
   import { roundStore, endCurrentRound } from '../stores/roundStore';
+  import { presenterTimeLeft } from '../GameState';
   import { get } from 'svelte/store';
   import ClientWebsocket from '../ClientWebsocket';
   import { onMount } from 'svelte';
   import { ActionEnum } from '@shared/actions';
+  import { RoundEnum } from '@shared/rounds';
   import { type Snippet } from 'svelte';
 
   let { children, onRoundEnd }: { 
@@ -83,7 +85,13 @@
   {@render children()}
 
   <div class="round-footer">
-    <div class="timer">{$roundStore?.timeLeft ?? 0}s</div>
+    <div class="timer">
+      {#if $roundStore?.current.roundType === RoundEnum.PRESENT && $presenterTimeLeft !== undefined}
+        {$presenterTimeLeft}s
+      {:else}
+        {$roundStore?.timeLeft ?? 0}s
+      {/if}
+    </div>
 
     {#if !$roundStore?.current.hideButton}
       <button

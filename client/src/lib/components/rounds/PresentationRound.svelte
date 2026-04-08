@@ -1,8 +1,14 @@
 <script lang="ts">
   import Round from '../Round.svelte';
-  import { drawingImage, presenterName, isPresenter } from '../../GameState';
+  import {
+    drawingImage,
+    presenterName,
+    isPresenter,
+    presenterTimeLeft,
+  } from '../../GameState';
   import ClientWebsocket from '../../ClientWebsocket';
   import { ActionEnum } from '@shared/actions';
+  import { onMount } from 'svelte';
 
   async function handleRoundEnd() {
     // base function will already send end round action for us
@@ -26,6 +32,20 @@
     link.click();
     document.body.removeChild(link);
   }
+
+  onMount(() => {
+    const interval = setInterval(() => {
+      if ($presenterTimeLeft === undefined || $presenterTimeLeft <= 0) {
+        return;
+      }
+      presenterTimeLeft.update((timeLeft) => {
+        if (timeLeft === undefined || timeLeft <= 0) return timeLeft;
+        return timeLeft - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  });
 </script>
 
 <Round onRoundEnd={handleRoundEnd}>

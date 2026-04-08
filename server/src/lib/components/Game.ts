@@ -8,7 +8,7 @@ import {
   AnyRoundAction,
   SendDrawingAction,
 } from '../../../../shared/actions/index.js';
-import { Round } from '../../../../shared/rounds/index.js';
+import { Round, RoundEnum } from '../../../../shared/rounds/index.js';
 import { DEFAULT_ROOM_SETTINGS, type RoomSettings } from '../../../../shared/settings/index.js';
 
 export class Game {
@@ -85,18 +85,24 @@ export class Game {
   async nextRound() {
     this.currentRound = this.roundsLeft.shift();
     this.currentRoundNumber++;
-    this.roundStartTime = Date.now();
 
     if (this.currentRound === undefined) {
       return this.endGame();
     }
 
-    this.currentRound.setup(this.players);
-
     const roundBase = this.currentRound as unknown as Round;
     const customTimer = this.settings.roundTimers[roundBase.roundType];
-    const timeout = customTimer && customTimer > 0 ? customTimer : roundBase.timeout;
+    const baseTimeout =
+      customTimer && customTimer > 0 ? customTimer : roundBase.timeout;
+    const timeout =
+      roundBase.roundType === RoundEnum.PRESENT
+        ? baseTimeout * this.players.filter((p) => !p.disconnected).length
+        : baseTimeout;
+
     this.currentRoundTimeout = timeout;
+    this.roundStartTime = Date.now();
+
+    this.currentRound.setup(this.players);
 
     this.#sendActionToAllPlayers(new Actions.StartRound(timeout));
 

@@ -163,9 +163,10 @@ export class SendEOTWAction extends Action<{ eotwId: number }> {
 }
 export class SendPresenterChangeAction extends Action<{
   newPresenter: string;
+  timeout?: number;
 }> {
-  constructor(newPresenter: string) {
-    super(ActionEnum.PRESENTER_CHANGE, { newPresenter });
+  constructor(newPresenter: string, timeout?: number) {
+    super(ActionEnum.PRESENTER_CHANGE, { newPresenter, timeout });
   }
 }
 export class SendPresenterStartAction extends Action<{}> {
