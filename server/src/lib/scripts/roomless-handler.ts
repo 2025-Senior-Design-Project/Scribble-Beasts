@@ -158,7 +158,11 @@ function joinRoom(action: JoinRoomAction, ws: WebSocket) {
     roomInputMessage = 'Room does not exist.';
   }
 
-  if (room && playerExistsInRoom(room, normalizedPlayerName)) {
+  if (room && room.game) {
+    roomInputMessage = 'Game already started.';
+  }
+
+  if (room && !room.game && playerExistsInRoom(room, normalizedPlayerName)) {
     nameInputMessage = 'Name already taken in this room.';
   }
 
