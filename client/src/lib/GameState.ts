@@ -23,6 +23,7 @@ import { roomSettings } from './stores/roomSettingsStore';
 export const isHost = writable(false);
 export const hostName = writable<string | undefined>(undefined);
 export const presenterName = writable<string | undefined>(undefined);
+export const presenterTimeLeft = writable<number | undefined>(undefined);
 export const playerName = writable('');
 export const isPresenter = derived(
   [presenterName, playerName],
@@ -87,6 +88,7 @@ const startGame = (action: StartGameAction) => {
     winners.set([]);
     eotwCard.set(undefined as any);
     presenterName.set(undefined);
+    presenterTimeLeft.set(undefined);
   }
   navigateTo(View.GAME);
 };
@@ -97,8 +99,9 @@ const drawingImageChange = (action: SendDrawingAction) => {
 };
 
 const presenterChange = (action: SendPresenterChangeAction) => {
-  const { newPresenter } = action.payload;
+  const { newPresenter, timeout } = action.payload;
   presenterName.set(newPresenter);
+  presenterTimeLeft.set(typeof timeout === 'number' ? timeout : undefined);
 };
 const eotwChange = (action: SendEotwAction) => {
   const { eotwId } = action.payload;
