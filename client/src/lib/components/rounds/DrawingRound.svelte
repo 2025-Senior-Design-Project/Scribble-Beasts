@@ -7,7 +7,7 @@
   import { LayerMode } from '../../types/LayerMode';
   import type { PenParams } from '../../types/PenParams';
   import Round from '../Round.svelte';
-  import { MAX_NAME_LENGTH, normalizeBeastName } from '@shared/inputValidation';
+  import { MAX_NAME_LENGTH, sanitizeNameDraftInput } from '@shared/inputValidation';
 
   let {
     pen: initialPen,
@@ -236,7 +236,7 @@
     if (!context || !canvas || !isTextPen) return;
 
     const input = event.target as HTMLInputElement;
-    const text = normalizeBeastName(input.value);
+    const text = sanitizeNameDraftInput(input.value);
     if (input.value !== text) {
       input.value = text;
     }

@@ -46,7 +46,9 @@
     if (playbackStartedAtMs === undefined) {
       return playbackOffsetSeconds;
     }
-    return playbackOffsetSeconds + (performance.now() - playbackStartedAtMs) / 1000;
+    return (
+      playbackOffsetSeconds + (performance.now() - playbackStartedAtMs) / 1000
+    );
   }
 
   function freezeGlobalOffset() {
@@ -56,9 +58,10 @@
 
   function applyOffsetToCurrentTrack() {
     if (!roundMusicEl) return;
-    const duration = Number.isFinite(roundMusicEl.duration) && roundMusicEl.duration > 0
-      ? roundMusicEl.duration
-      : trackDurationSeconds;
+    const duration =
+      Number.isFinite(roundMusicEl.duration) && roundMusicEl.duration > 0
+        ? roundMusicEl.duration
+        : trackDurationSeconds;
     if (!Number.isFinite(duration) || duration <= 0) return;
     trackDurationSeconds = duration;
     roundMusicEl.currentTime = mod(playbackOffsetSeconds, duration);
@@ -69,35 +72,37 @@
 
     const playPromise = roundMusicEl.play();
     if (playPromise && typeof playPromise.then === 'function') {
-      playPromise.then(() => {
-        if (playbackStartedAtMs === undefined) {
-          playbackStartedAtMs = performance.now();
-        }
-      }).catch(() => {
-        playbackStartedAtMs = undefined;
-        if (resumeOnInteractionAttached) return;
-        resumeOnInteractionAttached = true;
-        const resume = () => {
-          if (shouldPlayMusic) {
-            if (!roundMusicEl) return;
-            const p = roundMusicEl.play();
-            if (p && typeof p.then === 'function') {
-              p.then(() => {
-                if (playbackStartedAtMs === undefined) {
-                  playbackStartedAtMs = performance.now();
-                }
-              }).catch(() => {
-                playbackStartedAtMs = undefined;
-              });
-            }
+      playPromise
+        .then(() => {
+          if (playbackStartedAtMs === undefined) {
+            playbackStartedAtMs = performance.now();
           }
-          window.removeEventListener('pointerdown', resume, true);
-          window.removeEventListener('keydown', resume, true);
-          resumeOnInteractionAttached = false;
-        };
-        window.addEventListener('pointerdown', resume, true);
-        window.addEventListener('keydown', resume, true);
-      });
+        })
+        .catch(() => {
+          playbackStartedAtMs = undefined;
+          if (resumeOnInteractionAttached) return;
+          resumeOnInteractionAttached = true;
+          const resume = () => {
+            if (shouldPlayMusic) {
+              if (!roundMusicEl) return;
+              const p = roundMusicEl.play();
+              if (p && typeof p.then === 'function') {
+                p.then(() => {
+                  if (playbackStartedAtMs === undefined) {
+                    playbackStartedAtMs = performance.now();
+                  }
+                }).catch(() => {
+                  playbackStartedAtMs = undefined;
+                });
+              }
+            }
+            window.removeEventListener('pointerdown', resume, true);
+            window.removeEventListener('keydown', resume, true);
+            resumeOnInteractionAttached = false;
+          };
+          window.addEventListener('pointerdown', resume, true);
+          window.addEventListener('keydown', resume, true);
+        });
     }
   }
 
@@ -155,7 +160,9 @@
   });
 
   onMount(() => {
-    console.log('[Game.svelte] mounted, adding END_ROUND + START_ROUND listeners');
+    console.log(
+      '[Game.svelte] mounted, adding END_ROUND + START_ROUND listeners',
+    );
 
     const handleServerEndRound = () => {
       console.log('[Game.svelte] END_ROUND received, calling endCurrentRound');
@@ -163,7 +170,10 @@
     };
 
     const handleServerStartRound = (action: StartRoundAction) => {
-      console.log('[Game.svelte] START_ROUND received, timeout:', action.payload.timeout);
+      console.log(
+        '[Game.svelte] START_ROUND received, timeout:',
+        action.payload.timeout,
+      );
       // First START_ROUND implicitly ends any intro that was still on screen.
       introPlaying.set(false);
       startNextRound(action.payload.timeout);
@@ -200,7 +210,9 @@
     );
 
     return () => {
-      console.log('[Game.svelte] unmounting, removing END_ROUND + START_ROUND listeners');
+      console.log(
+        '[Game.svelte] unmounting, removing END_ROUND + START_ROUND listeners',
+      );
       removeEndRoundListener();
       removeStartRoundListener();
       removeIntroStartListener();
@@ -218,7 +230,7 @@
     preload="auto"
     aria-hidden="true"
     onloadedmetadata={handleRoundMusicLoadedMetadata}
-  ></audio>
+  />
   {#if $introPlaying}
     <Intro />
   {/if}
@@ -262,6 +274,7 @@
     flex-direction: column;
     align-items: center;
     transform: rotate(-1deg);
+    padding-bottom: 2rem;
   }
 
   h1,

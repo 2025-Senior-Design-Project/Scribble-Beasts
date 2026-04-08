@@ -123,7 +123,13 @@ const loadBeasts = (action: SendAllBeastsAction) => {
 
 const loadWinners = (action: SendWinnersAction) => {
   winners.set(action.payload.winners);
-  console.log('Winners:', action.payload.winners);
+  console.log(
+    'Winners:',
+    action.payload.winners.map((w) => ({
+      winner: w.winner,
+      beast: w.beast.length > 10 ? w.beast.substring(0, 10) + '…' : w.beast,
+    })),
+  );
 };
 
 const settingsChanged = (action: RoomSettingsChangeAction) => {

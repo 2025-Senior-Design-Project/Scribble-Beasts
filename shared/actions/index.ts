@@ -376,6 +376,16 @@ export class ActionTarget<T extends IWebSocket, E extends MessageEvent> {
             drawing: 'image_data',
           }),
         );
+      } else if (
+        logAction.type === ActionEnum.SEND_WINNERS &&
+        logAction.payload.winners
+      ) {
+        logAction.payload.winners = logAction.payload.winners.map(
+          (w: { winner: string; beast: string }) => ({
+            winner: w.winner,
+            beast: w.beast.length > 10 ? w.beast.substring(0, 10) + '…' : w.beast,
+          }),
+        );
       }
       console.log('sent:', JSON.stringify(logAction));
       this.#ws.send(msg);

@@ -4,6 +4,7 @@ import {
   normalizeBeastName,
   normalizePlayerName,
   normalizeRoomName,
+  sanitizeNameDraftInput,
 } from '../../../shared/inputValidation.js';
 
 describe('inputValidation', () => {
@@ -19,5 +20,10 @@ describe('inputValidation', () => {
 
   it('removes control characters while keeping visible symbols', () => {
     expect(normalizePlayerName("A\nB\t⭐")).toBe('AB⭐');
+  });
+
+  it('preserves trailing spaces while typing', () => {
+    expect(sanitizeNameDraftInput('Beast  ')).toBe('Beast  ');
+    expect(sanitizeNameDraftInput("A\nB ")).toBe('AB ');
   });
 });
