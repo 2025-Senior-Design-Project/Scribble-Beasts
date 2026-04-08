@@ -19,6 +19,7 @@
     MAX_NAME_LENGTH,
     normalizePlayerName,
     normalizeRoomName,
+    sanitizeNameDraftInput,
   } from '@shared/inputValidation';
 
   let roomName: string = $state('');
@@ -101,12 +102,12 @@
 
   function onRoomNameInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    roomName = normalizeRoomName(input.value);
+    roomName = sanitizeNameDraftInput(input.value).toUpperCase();
   }
 
   function onPlayerNameInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    playerName = normalizePlayerName(input.value);
+    playerName = sanitizeNameDraftInput(input.value);
   }
 </script>
 

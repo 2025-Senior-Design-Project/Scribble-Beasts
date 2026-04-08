@@ -20,6 +20,13 @@ export function sanitizeNameInput(value: unknown, max = MAX_NAME_LENGTH): string
   return truncateToMaxChars(cleaned, max);
 }
 
+export function sanitizeNameDraftInput(value: unknown, max = MAX_NAME_LENGTH): string {
+  if (typeof value !== 'string') return '';
+  const cleaned = value.normalize('NFKC').replace(CONTROL_CHARS_REGEX, '');
+
+  return truncateToMaxChars(cleaned, max);
+}
+
 export function normalizeRoomName(value: unknown): string {
   return sanitizeNameInput(value).toUpperCase();
 }
