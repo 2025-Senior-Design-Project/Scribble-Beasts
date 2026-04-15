@@ -1,7 +1,11 @@
 # Self-Assessment Essays
 
-[Jasmine Mogadam](/documents/essays/mogadajh-individual-capstone-assessment.md)
+## Initial Self-Assessments (Fall)
 
-[Ana Cedillo](/documents/essays/ana-cedillo-individual-capstone-assessment.md)
+- [Jasmine Mogadam](./mogadajh-individual-capstone-assessment.md)
+- [Ana Cedillo](./ana-cedillo-individual-capstone-assessment.md)
+- [Ethan Chaplin](./ethan-chaplin-individual-capstone-assessment.md)
 
-[Ethan Chaplin](/documents/essays/ethan-chaplin-individual-capstone-assessment.md)
+## Final Self-Assessments (Spring)
+
+- [Jasmine Mogadam](./mogadajh-final-self-assessment-spring.md)
