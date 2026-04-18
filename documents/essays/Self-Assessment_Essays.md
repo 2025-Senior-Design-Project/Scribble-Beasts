@@ -9,3 +9,4 @@
 ## Final Self-Assessments (Spring)
 
 - [Jasmine Mogadam](./mogadajh-final-self-assessment-spring.md)
+- [Ethan Chaplin](./chapliep-final-self-assessment-spring.md)
